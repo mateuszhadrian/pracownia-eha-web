@@ -1,0 +1,156 @@
+# ── Gdzie zapisywana jest treść ──────────────────────────────────────────
+backend:
+  name: github
+  repo: mateuszhadrian/pracownia-eha-web # właściciel/nazwa repo
+  branch: main
+  # Worker-logowania (OAuth proxy) — osobny deploy dla eha (Etap 2):
+  base_url: https://auth.pracownia-eha.pl
+  # Bez tego panel na localhoscie wysyła site_id=cms.netlify.com (dziedzictwo
+  # Netlify w Sveltii) i wpada na ALLOWED_DOMAINS Workera (gotcha z poprzedniego wdrożenia):
+  site_domain: pracownia-eha.pl
+
+# ── Gdzie trafiają media: Cloudflare R2 ──────────────────────────────────
+# Secret Access Key NIE trafia do tego pliku — Sveltia poprosi o niego
+# w panelu przy pierwszym uploadzie i trzyma go w pamięci przeglądarki.
+# account_id i access_key_id są jawne (autoryzuje dopiero sekret).
+# ⚠️ Placeholdery <…> — realne wartości wchodzą w Etapie 2 po utworzeniu
+# bucketa `eha-media` i tokenu R2 (Object R&W, scope: tylko ten bucket).
+media_libraries:
+  cloudflare_r2:
+    account_id: "<ACCOUNT_ID>"
+    access_key_id: "<ACCESS_KEY_ID>"
+    bucket: "eha-media"
+    public_url: "https://media.pracownia-eha.pl" # custom domain bucketa
+    prefix: "realizacje/" # pliki wewnątrz bucketa w podfolderze
+    jurisdiction: "eu"
+
+# ── Czyste JSON-y: pomijaj niewypełnione pola opcjonalne (np. liveUrl) ────
+output:
+  omit_empty_optional_fields: true
+
+# ── Nazwy plików wpisów: zawsze czyste ASCII ─────────────────────────────
+# Nazwa pliku powstaje z pola „Slug" (patrz `slug:` w kolekcji niżej), a to
+# pole klient wypełnia ręcznie — często wklejając tekst z telefonu albo
+# z aplikacji Apple. Taki tekst bywa zapisany w formie ROZŁOŻONEJ (NFD: „ą"
+# jako „a" + ogonek); wygląda identycznie, ale to inne bajty. Skutek na macOS:
+# git trzyma w indeksie nazwę NFD, a odczytuje z dysku NFC, więc ten sam plik
+# widać dwa razy — raz jako śledzony, raz jako nieśledzony. Przypadkowe
+# `git add .` zrobiłoby z tego DWA wpisy na Linuksie i wywróciło test
+# unikalności slugów (zdarzyło się 2026-08-06, trzy realizacje).
+# `clean_accents` transliteruje polskie znaki (Sveltia ma wbudowaną tablicę:
+# ą→a, ć→c, ę→e, ł→l, ń→n, ś→s, ź→z, ż→z), `encoding: ascii` wycina resztę.
+# Dotyczy WYŁĄCZNIE nazwy pliku — tytuł, opis i wartość pola „Slug" zostają
+# takie, jak wpisał klient. Istniejących plików nie rusza (przemianowanie
+# następuje dopiero przy zmianie pola „Slug" w panelu).
+slug:
+  encoding: "ascii"
+  clean_accents: true
+
+# ── PL-only: zwykłe pola, bez obiektów {pl,en} ────────────────────────────
+# BEZ pola „Kategoria" (E5 — eha nie ma kategorii). Docelowy schemat §6.1
+# (place, paras[] zamiast description) wchodzi w Etapie 2. Zmiana zawsze
+# w TRZECH miejscach naraz (src/content.schema.ts / ten plik /
+# src/components/sections/work/*) — reguła cms-realizacje.
+
+collections:
+  - name: "realizacje"
+    label: "Realizacje"
+    label_singular: "Realizacja"
+    folder: "src/content/realizacje" # tu leżą pliki JSON kolekcji
+    extension: "json"
+    format: "json"
+    create: true # pozwól DODAWAĆ nowe realizacje
+    delete: true # pozwól USUWAĆ realizacje
+    identifier_field: "title" # co pokazać na liście wpisów
+    slug: "{{fields.slug}}" # nazwa pliku = wartość pola slug
+    summary: "{{fields.title}} ({{fields.year}})"
+    fields:
+      - {
+          label: "Slug (adres, np. kuchnia-kaszmirowa)",
+          name: "slug",
+          widget: "string",
+        }
+      - {
+          label: "Kolejność (mniejsze = wyżej)",
+          name: "order",
+          widget: "number",
+          value_type: "int",
+          default: 10,
+        }
+      - { label: "Tytuł", name: "title", widget: "string" }
+      - { label: "Rok realizacji", name: "year", widget: "string" }
+      - { label: "Opis", name: "description", widget: "text" }
+
+      # ── Galeria detalu ────────────────────────────────────────────────
+      # Osobnego pola „Kafel (cover)" NIE MA (remont panelu, D-RP2): kaflem
+      # realizacji jest PIERWSZA pozycja galerii — dlatego musi być zdjęciem
+      # (pilnuje tego schemat Zod, panel nie umie warunku „na tej pozycji").
+      # Pozycja to WARIANT: albo zdjęcie, albo film — nigdy oba naraz (D-RP1).
+      # Wariantami steruje `types` Sveltii; klucz `type` w JSON-ie dopisuje
+      # sam panel. „Zdjęcie" stoi pierwsze celowo: domyślny wybór ma być
+      # poprawny także na pozycji nr 1.
+      - label: "Galeria (pierwsza pozycja = kafel na liście)"
+        name: "gallery"
+        widget: "list"
+        label_singular: "Pozycja galerii"
+        # Panel NIE zablokuje zapisu z filmem na pierwszej pozycji: ma
+        # walidację wyłącznie pojedynczych pól (wymagane / wzorzec), bez
+        # żadnego hooka na cały wpis — sprawdzone w binarium 0.170.0.
+        # Regułę egzekwuje schemat Zod (build staje), więc jedyne, co panel
+        # może zrobić, to powiedzieć o niej ZANIM klient kliknie zapis.
+        hint: >-
+          Pierwsza pozycja to okładka widoczna na liście realizacji — musi
+          być zdjęciem. Film dodaj jako drugą lub dalszą pozycję. Rodzaju
+          dodanej pozycji nie da się zmienić: usuń ją i dodaj nową.
+        min: 1 # schemat Zod wymaga ≥1 pozycji
+        types:
+          - label: "Zdjęcie"
+            name: "photo"
+            summary: "{{fields.image}}"
+            fields:
+              - { label: "Zdjęcie", name: "image", widget: "image" }
+              - {
+                  label: "Kadr (object-position, np. 50% 42%)",
+                  name: "position",
+                  widget: "string",
+                  required: false,
+                }
+          - label: "Film"
+            name: "video"
+            summary: "{{fields.video}}"
+            fields:
+              - {
+                  # Plan A ze spike'a Etapu 2: widget file wgrywa MP4 do R2.
+                  # Limity: H.264+AAC, 1080p, ≤ ~30 MB (reguła cms-realizacje).
+                  label: "Wideo MP4 (miniatura powstanie sama z klatki filmu)",
+                  name: "video",
+                  widget: "file",
+                }
+              - {
+                  # Podwójna rola: podpis przy znaczku play ORAZ środek filmu,
+                  # z którego wycinana jest miniatura. Puste = klatka z 1 s.
+                  label: "Długość wideo (np. 0:24 — podpis i środek miniatury)",
+                  name: "duration",
+                  widget: "string",
+                  required: false,
+                }
+              - {
+                  label: "Kadr (object-position, np. 50% 42%)",
+                  name: "position",
+                  widget: "string",
+                  required: false,
+                }
+
+      # ── Tabela parametrów detalu ──
+      - label: "Parametry (specs)"
+        name: "specs"
+        widget: "list"
+        label_singular: "Parametr"
+        summary: "{{fields.label}}"
+        fields:
+          - {
+              label: "Etykieta (np. MATERIAŁY / BLAT / ZAKRES)",
+              name: "label",
+              widget: "string",
+            }
+          - { label: "Wartość", name: "value", widget: "string" }

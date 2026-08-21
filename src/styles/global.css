@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+@theme {
+  /* Role fontów wg eksportów designów (E10, wybór wariantów — Etap 0.4,
+     test A/B variable vs statyczne na tekstach z eksportu):
+     serif = EB Garamond Variable (nagłówki, cytaty, italiki),
+     body/display = IBM Plex Sans Variable (tekst i UI),
+     mono = IBM Plex Mono statyczne 400/500/600 (etykiety uppercase;
+     Fontsource nie wydaje go jako variable). */
+  --font-serif: "EB Garamond Variable", Georgia, serif;
+  --font-body: "IBM Plex Sans Variable", system-ui, Arial, sans-serif;
+  --font-display: "IBM Plex Sans Variable", system-ui, Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+/* ── Rezerwacja miejsca na pasek scrolla (root scroller).
+   Na Windows/Linux pasek jest klasyczny — zajmuje szerokość i „spycha" treść.
+   `stable` rezerwuje tę szerokość ZAWSZE, także gdy paska chwilowo nie ma
+   (np. modal ustawia body:fixed → html traci przewijalną treść → pasek znika).
+   Bez tego obszar treści rozszerzałby się o szerokość paska i strona skakała
+   przy każdym otwarciu nakładki. Na macOS paski są nakładkowe → bez efektu. ── */
+html {
+  scrollbar-gutter: stable;
+}
+
+/* ── Design system: tokeny brandowe „papier/atrament" (jedno źródło prawdy —
+   paleta zmierzona na eksportach designów, Etap 0.4):
+   #f5efe3 papier / #faf7f1 papier jasny (panele) / #f3ede1 karty /
+   #211d18 atrament / #3e382e tekst / #5f574a przygaszony /
+   #57654a zieleń (akcent; hover #414d37) / #4c3b2b sepia (cytaty) /
+   #d8cfb8 linie / #241e17 ciemne bloki.
+   Breakpoint projektu: 1024 px (spójnie wszędzie — desktop ≥1024px,
+   mobile <1024px). Drugi próg 700 px dotyczy WYŁĄCZNIE siatki realizacji
+   (Etap 4.3). Skalowanie desktopu eksportów (cqw + mnożniki --k/--w w JS)
+   to artefakt Claude Design — tutaj zastępują je clamp()/tokeny. ── */
+:root {
+  /* Strona eha jest ZAWSZE jasna („papier"; designy nie mają wariantu
+     ciemnego). Jawna deklaracja z „only" wyłącza WYMUSZANE ciemnienie
+     przeglądarek Androida (Chrome Auto-Dark / Samsung Internet dark mode). */
+  color-scheme: only light;
+
+  /* foreground */
+  --ink: #211d18; /* nagłówki, elementy najciemniejsze */
+  --muted: #3e382e; /* tekst akapitów */
+  --faint: #5f574a; /* tekst drugorzędny/podpisy — AA na papierze */
+  --sepia: #4c3b2b; /* cytaty serif, akcent „starego druku" */
+  --line: #d8cfb8;
+
+  /* background */
+  --bg: #f5efe3; /* papier — tło bazowe (pod tile z 0.6) */
+  --bg-cream: #faf7f1; /* papier jasny — panele, navbar */
+  --bg-card: #f3ede1; /* karty/ramki */
+  --bg-dark: #241e17; /* ciemne bloki (CTA, „świadome granice") */
+
+  /* accent — zieleń mchu z designów (linki, etykiety mono) */
+  --accent: #57654a;
+  --accent-ink: #414d37; /* hover + drobny tekst na jasnym tle (kontrast) */
+  --glow: 87, 101, 74; /* składowe RGB → rgba(var(--glow), α) */
+
+  /* Layout: margines boczny + maks. szerokość kolumny treści (wzorce
+     390/1440 eksportów). Wartości desktop w @media niżej — próg 1024
+     to breakpoint projektu (para ze stałą NAV_DESKTOP_MIN_PX). */
+  --pad: clamp(18px, 6.67vw, 26px);
+  --col: 560px;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --pad: clamp(34px, 3.89vw, 56px);
+    --col: 1520px;
+  }
+}
+
+/* Tło „papieru" na każdej stronie: mały tileable WebP wycięty
+   z paper-background.png eksportów (Etap 0.6) na kolorze bazowym. */
+body {
+  background: var(--bg) url("../assets/paper-tile.webp") repeat;
+  color: var(--muted);
+}
+
+/* Nakładki (overlay.ts): obszar przewijalny sheeta nie oddaje przewijania
+   przeglądarce. Bez tego mocniejszy gest w dół na przewiniętej do góry
+   treści uruchamiał na Androidzie odświeżenie strony zamiast zamknąć sheet.
+   Drugą połową naprawy jest przejęcie gestu w overlay.ts. */
+[data-overlay-scroll],
+[data-overlay-panel] {
+  overscroll-behavior: contain;
+}

@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /admin
+
+Sitemap: https://pracownia-eha.pl/sitemap-index.xml

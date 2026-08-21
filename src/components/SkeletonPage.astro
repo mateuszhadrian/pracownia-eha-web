@@ -1,0 +1,53 @@
+---
+// Strona-szkielet Etapu 0: nagłówek + tytuł + stopka. Daje działającą
+// nawigację po wszystkich 8 trasach ZANIM powstaną widoki (Etap 4 wymienia
+// szkielety na docelowe sekcje po jednym PR-ze). Selektor `main h1` to
+// kontrakt testów smoke/navigation — zostaje w widokach docelowych.
+import Footer from "@/components/Footer.astro";
+import Navbar from "@/components/navbar/Navbar.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+
+interface Props {
+  /** <title> dokumentu (BaseLayout dokleja canonical/OG). */
+  title: string;
+  /** Nagłówek h1 widoczny na szkielecie. */
+  heading: string;
+  /** Opcjonalny meta description (podstrony). */
+  description?: string;
+}
+const { title, heading, description } = Astro.props;
+---
+
+<BaseLayout title={title} description={description}>
+  <Navbar />
+  <main class="skel">
+    <h1>{heading}</h1>
+    <p>Strona w przygotowaniu.</p>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+  .skel {
+    min-height: 60vh;
+    max-width: var(--col);
+    margin-inline: auto;
+    padding: clamp(48px, 10vw, 96px) var(--pad);
+  }
+  .skel h1 {
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: clamp(30px, 6vw, 52px);
+    line-height: 1.15;
+    color: var(--ink);
+    margin: 0 0 14px;
+  }
+  .skel p {
+    font-family: var(--font-mono), monospace;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin: 0;
+  }
+</style>

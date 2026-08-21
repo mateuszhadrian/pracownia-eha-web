@@ -1,0 +1,81 @@
+# Smoke produkcji po każdym push na main (main = produkcja; deploy robi
+# Cloudflare Pages automatycznie). Strategia: zbuduj dist lokalnie, wyciągnij
+# zahashowaną nazwę assetu i czekaj, aż produkcja zacznie ją serwować
+# (hash Astro jest deterministyczny dla tej samej treści) — dopiero wtedy
+# odpal testy @prod-smoke przeciw https://pracownia-eha.pl. Porażka = mail
+# z GitHuba natychmiast po zepsutym deployu.
+name: Prod smoke
+on:
+  push:
+    branches: [main]
+  # Ręczne odpalenie: smoke bywa czerwony przez wyścig z deployem Cloudflare
+  # (dokument już nowy, chunk JS jeszcze zwraca stronę 404 jako text/html),
+  # a przy awarii Actions push w ogóle nie tworzy biegu.
+  workflow_dispatch:
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Czekaj na świeży deploy Cloudflare Pages
+        run: |
+          # KOMPLET assetów z buildu, nie pierwszy z brzegu: pierwszym bywa
+          # font (stały hash między buildami → strażnik zawsze „świeży"),
+          # przez co smoke startował w środku propagacji (2026-07-31: nowy
+          # HTML + 404 na nowym CSS → console.error). Deploy uznajemy za
+          # świeży dopiero, gdy prod-HTML zawiera wszystkie assety buildu
+          # i KAŻDY z nich odpowiada 200.
+          # Wzorzec ucina też na spacji i przecinku: atrybuty srcset/
+          # imagesrcset (hero 4.2) trzymają w jednej wartości ścieżkę +
+          # deskryptor gęstości ("…webp 1.8x, …webp 3x") — [^"]+ łykał
+          # całość, a word-splitting robił z deskryptorów śmieciowe tokeny
+          # i strażnik curl-ował "pracownia-eha.pl1.8x," aż do timeoutu.
+          assets=$(grep -oE '/_astro/[^" ,]+' dist/index.html | sort -u)
+          if [ -z "$assets" ]; then
+            echo "Nie znalazłem zahashowanych assetów w dist/index.html" >&2
+            exit 1
+          fi
+          echo "Czekam, aż https://pracownia-eha.pl poda komplet:"
+          echo "$assets"
+          for i in $(seq 1 30); do
+            html=$(curl -s -H "Cache-Control: no-cache" https://pracownia-eha.pl/)
+            fresh=1
+            for a in $assets; do
+              if ! echo "$html" | grep -q "$a"; then fresh=0; break; fi
+              code=$(curl -s -o /dev/null -w '%{http_code}' "https://pracownia-eha.pl$a")
+              if [ "$code" != "200" ]; then fresh=0; break; fi
+            done
+            if [ "$fresh" = "1" ]; then
+              ray=$(curl -sI https://pracownia-eha.pl/ | tr -d '\r' | grep -i '^cf-ray' || true)
+              echo "Deploy świeży (próba $i; $ray)"
+              exit 0
+            fi
+            echo "  próba $i/30 — build niekompletny na produkcji, czekam 20 s…"
+            sleep 20
+          done
+          echo "Timeout (10 min): produkcja nadal nie serwuje kompletu assetów" >&2
+          exit 1
+      - name: Playwright version (klucz cache)
+        id: pw
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+      # Jak w ci.yml: feedy packages.microsoft.com bywają zepsute i nie są potrzebne.
+      - name: Wyłącz feedy packages.microsoft.com (flaky)
+        run: sudo bash -c 'grep -rl packages.microsoft.com /etc/apt/sources.list.d/ | xargs -r rm -f'
+      - run: pnpm exec playwright install --with-deps chromium webkit firefox
+      - run: pnpm test:smoke:prod
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: prod-smoke-report
+          path: playwright-report/

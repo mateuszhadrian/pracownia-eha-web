@@ -1,0 +1,762 @@
+---
+// Chrome globalny — pasek `hdr` + menu mobilne (bottom sheet) na
+// szkielecie scripts/overlay.ts (focus-trap, Esc, scrim, swipe-down,
+// blokada scrolla). STAN SZKIELETU Etapu 0: mechanika odziedziczona
+// z szablonu z brandingiem EH/A i płaską listą pozycji. Docelowy chrome eha
+// (dropdown „O nas", AUTO-HIDE przy scrollu — E11, skin „papieru") wchodzi
+// w Etapie 4.1 wg docs/design/*.html.
+import { navItems } from "@/i18n/nav";
+import { CONTACT_PATH, HOME_PATH } from "@/lib/routes";
+import logo from "@/assets/logo/eha-logo.svg";
+
+interface Props {
+  /** `plain` (domyślny) = biały pasek; `over` = transparentny nad hero —
+   *  wymaga elementu hero pod paskiem ([data-navref] mierzy postęp).
+   *  Aktywacja `over`: strona główna, o-nas, proces, kontakt. */
+  variant?: "plain" | "over";
+  /** Ton wariantu `over` (D-P2, `hdr dark` z eksportów proces/o-nas):
+   *  `dark` = po scrollu wjeżdża CIEMNE tło z blur zamiast białego,
+   *  logo i linki zostają białe, pill telefonu obwódkowy. Desktop-only
+   *  (mobile zawsze biały pasek); bez wpływu na `plain`. */
+  tone?: "light" | "dark";
+}
+const { variant = "plain", tone = "light" } = Astro.props;
+
+// Normalizacja ukośnika — w dev Astro.url.pathname bywa bez końcowego "/".
+const currentPath = Astro.url.pathname.endsWith("/")
+  ? Astro.url.pathname
+  : `${Astro.url.pathname}/`;
+
+const t = {
+  nav: "Główna nawigacja",
+  mobileNav: "Menu mobilne",
+  openMenu: "Otwórz menu",
+  closeMenu: "Zamknij menu",
+  menu: "Menu",
+  call: "Zadzwoń do nas",
+};
+---
+
+<header
+  class:list={["hdr", variant, { dark: variant === "over" && tone === "dark" }]}
+  data-nav={variant}
+  data-variant={variant}
+>
+  <span class="hdr-scrim" aria-hidden="true"></span>
+  <span class="hdr-bg" aria-hidden="true"></span>
+
+  <a class="hdr-logo" href={HOME_PATH}>
+    <img
+      class="logo-d"
+      src={logo.src}
+      width={logo.width}
+      height={logo.height}
+      alt="Pracownia EH/A — remonty domów z historią"
+    />
+  </a>
+
+  <nav class="hdr-nav" aria-label={t.nav}>
+    {
+      navItems.map((item) => (
+        <a
+          class="nav-link"
+          href={item.href}
+          aria-current={item.href === currentPath ? "page" : undefined}
+          aria-label={item.label}
+        >
+          {[...item.label].map((ch, ci) =>
+            ch === " " ? (
+              <span class="char char--space" aria-hidden="true" />
+            ) : (
+              <span class="char" aria-hidden="true" style={`--i:${ci}`}>
+                <span>{ch}</span>
+                <span>{ch}</span>
+              </span>
+            ),
+          )}
+          {item.href === currentPath && <span class="ul" aria-hidden="true" />}
+        </a>
+      ))
+    }
+  </nav>
+
+  <button
+    class="mbtn"
+    type="button"
+    data-burger
+    aria-expanded="false"
+    aria-controls="nav-sheet"
+    aria-label={t.openMenu}
+    data-open-label={t.openMenu}
+    data-close-label={t.closeMenu}
+  >
+    <span class="mbtn-t" aria-hidden="true">{t.menu}</span>
+    <i aria-hidden="true"><b></b><b></b><b></b></i>
+  </button>
+</header>
+
+{/* Bottom sheet menu — kontrakt overlay.ts (portalowany do <body>). */}
+<div
+  class="sheet-ov"
+  id="nav-sheet"
+  data-overlay
+  data-overlay-kind="sheet"
+  role="dialog"
+  aria-modal="true"
+  aria-label={t.menu}
+  hidden
+>
+  <div class="sheet" data-overlay-panel tabindex="-1">
+    <span class="sheet-tint" aria-hidden="true"></span>
+    <span class="sheet-hair" aria-hidden="true"></span>
+    <div class="sheet-in" data-overlay-scroll>
+      <div class="sheet-head" data-overlay-drag>
+        <span class="sheet-grab" aria-hidden="true"></span>
+      </div>
+      <nav aria-label={t.mobileNav}>
+        {
+          navItems.map((item) => (
+            <a
+              class="m-link"
+              href={item.href}
+              aria-current={item.href === currentPath ? "page" : undefined}
+            >
+              {item.label}
+            </a>
+          ))
+        }
+      </nav>
+      <div class="sheet-call">
+        <span>{t.call}</span>
+        {
+          /* dwa telefony MACIEK/ŁUKASZ — numery i href składane w JS
+             (antyscraping); etykieta imienia zostaje w SSR, numer idzie
+             do [data-slot] (lib/contact-details) */
+        }
+        <a data-tel="maciek" href={CONTACT_PATH} hidden>
+          <b>Maciek</b>
+          <span data-slot>Telefon</span>
+        </a>
+        <a data-tel="lukasz" href={CONTACT_PATH} hidden>
+          <b>Łukasz</b>
+          <span data-slot>Telefon</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* ── pasek ──
+     Kolory chrome'u NIEZALEŻNE od tokenów strony — pasek ma wyglądać
+     identycznie na każdym widoku, niezależnie od jego palety (D-CH9). */
+  .hdr {
+    --hdr-ink: #1a1a1a;
+    --hdr-bg: #ffffff;
+    --hdr-hair: rgba(26, 26, 26, 0.08);
+    /* postęp scrolla wariantu over (0 = nad hero, 1 = tło wjechało);
+       plain trzyma 1 na stałe. */
+    --p: 1;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-block: clamp(16px, 5.6vw, 22px) clamp(14px, 5.1vw, 20px);
+    padding-inline: var(--pad);
+    background: var(--hdr-bg);
+  }
+  .hdr-bg,
+  .hdr-scrim {
+    display: none;
+  }
+
+  .hdr-logo {
+    position: relative;
+    display: block;
+    flex: 0 1 auto;
+    min-width: 0;
+    /* logo EH/A jest ~kwadratowe (znak + podpis) — pasek trzyma je
+       wysokością, nie szerokością jak poziome logo szablonu */
+    width: clamp(48px, 13vw, 60px);
+  }
+  .hdr-logo img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .hdr-nav {
+    display: none;
+  }
+
+  /* ── przycisk „MENU" (mobile) ── */
+  .mbtn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: none;
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--hdr-ink);
+    font-family: var(--font-display), sans-serif;
+    font-weight: 500;
+    font-size: clamp(13px, 3.85vw, 16px);
+    line-height: 1;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mbtn:hover {
+    opacity: 0.6;
+  }
+  .mbtn:focus-visible {
+    outline: 2px solid var(--hdr-ink);
+    outline-offset: 4px;
+  }
+  .mbtn i {
+    position: relative;
+    display: block;
+    width: 26px;
+    height: 14px;
+    flex: none;
+  }
+  .mbtn i b {
+    position: absolute;
+    left: 0;
+    width: 26px;
+    height: 2px;
+    background: var(--hdr-ink);
+    transition:
+      transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.2s ease;
+  }
+  .mbtn i b:nth-child(1) {
+    top: 0;
+  }
+  .mbtn i b:nth-child(2) {
+    top: 6px;
+  }
+  .mbtn i b:nth-child(3) {
+    top: 12px;
+  }
+  .mbtn-t {
+    transition: opacity 0.3s ease;
+  }
+  .hdr[data-open] .mbtn-t {
+    opacity: 0;
+  }
+  .hdr[data-open] .mbtn i b:nth-child(1) {
+    transform: translateY(6px) rotate(45deg);
+  }
+  .hdr[data-open] .mbtn i b:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0.3);
+  }
+  .hdr[data-open] .mbtn i b:nth-child(3) {
+    transform: translateY(-6px) rotate(-45deg);
+  }
+
+  /* ── bottom sheet menu ── */
+  .sheet-ov {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: flex-end;
+    background: rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    transition: opacity 0.38s ease;
+  }
+  .sheet-ov[hidden] {
+    display: none;
+  }
+  .sheet-ov.is-open {
+    opacity: 1;
+  }
+
+  .sheet {
+    position: relative;
+    width: 100%;
+    border-radius: 22px 22px 0 0;
+    overflow: hidden;
+    /* fallback pod zdjęciem, zanim się zdekoduje */
+    background: #161616;
+    /* grab + pierwszy link zawsze widoczne — zapas na notch (safe-area)
+       i dynamiczny pasek przeglądarki (svh). */
+    max-height: 92vh;
+    max-height: min(92svh, calc(100svh - env(safe-area-inset-top, 0px) - 20px));
+    display: flex;
+    transform: translateY(105%);
+    transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .sheet-ov.is-open .sheet {
+    transform: none;
+  }
+  /* Panel bywa programowo fokusowany przy otwarciu dotykiem (tabindex=-1) —
+     bez pierścienia; to kontener, nie kontrolka. */
+  .sheet:focus {
+    outline: none;
+  }
+  .sheet-tint {
+    position: absolute;
+    inset: 0;
+    background: rgba(22, 22, 22, 0.44);
+    pointer-events: none;
+  }
+  .sheet-hair {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.18);
+  }
+  .sheet-in {
+    position: relative;
+    width: 100%;
+    max-width: var(--col);
+    margin-inline: auto;
+    padding: 0 var(--pad) calc(34px + env(safe-area-inset-bottom, 0px));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  .sheet-head {
+    /* strefa chwytu gestu swipe-down — pełna szerokość, powiększona;
+       touch-action:none blokuje natywny scroll podczas gestu. */
+    padding: 14px 0 0;
+    touch-action: none;
+    cursor: grab;
+  }
+  .sheet-head:active {
+    cursor: grabbing;
+  }
+  .sheet-grab {
+    display: block;
+    width: 40px;
+    height: 4px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.35);
+    margin: 0 auto 22px;
+  }
+  .sheet-in nav {
+    display: flex;
+    flex-direction: column;
+  }
+  .m-link {
+    display: block;
+    padding: 19px 2px;
+    font-family: var(--font-display), sans-serif;
+    font-weight: 200;
+    font-size: clamp(26px, 7.95vw, 34px);
+    line-height: 1.15;
+    color: #fff;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.25);
+    opacity: 0;
+    transform: translateY(16px);
+    transition:
+      opacity 0.3s ease,
+      transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .m-link:last-child {
+    border-bottom: none;
+  }
+  .m-link:hover {
+    color: rgba(255, 255, 255, 0.6);
+  }
+  .m-link:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+  .sheet-ov.is-open .m-link {
+    opacity: 1;
+    transform: none;
+  }
+  .sheet-ov.is-open .m-link:nth-child(1) {
+    transition-delay: 0.1s;
+  }
+  .sheet-ov.is-open .m-link:nth-child(2) {
+    transition-delay: 0.16s;
+  }
+  .sheet-ov.is-open .m-link:nth-child(3) {
+    transition-delay: 0.22s;
+  }
+  .sheet-ov.is-open .m-link:nth-child(4) {
+    transition-delay: 0.28s;
+  }
+  .sheet-ov.is-open .m-link:nth-child(5) {
+    transition-delay: 0.34s;
+  }
+  .sheet-ov.is-open .m-link:nth-child(6) {
+    transition-delay: 0.4s;
+  }
+  .sheet-call {
+    margin-top: 14px;
+    padding-top: 22px;
+    border-top: 1px solid rgba(255, 255, 255, 0.16);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    opacity: 0;
+    transform: translateY(16px);
+    transition:
+      opacity 0.3s ease 0.34s,
+      transform 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.34s;
+  }
+  .sheet-ov.is-open .sheet-call {
+    opacity: 1;
+    transform: none;
+  }
+  .sheet-call span {
+    font-family: var(--font-display), sans-serif;
+    font-weight: 500;
+    font-size: 10.5px;
+    line-height: 1;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    /* design .55 — podbite (drobny druk na ciemnym tle, ratchet axe) */
+    color: rgba(255, 255, 255, 0.7);
+  }
+  .sheet-call a {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    font-family: var(--font-body), sans-serif;
+    font-weight: 300;
+    font-size: clamp(19px, 5.64vw, 24px);
+    line-height: 1.2;
+    color: #fff;
+    text-decoration: none;
+  }
+  .sheet-call a b {
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.7);
+  }
+  .sheet-call a[hidden] {
+    display: none;
+  }
+
+  /* ════ DESKTOP ≥1024 (para: NAV_DESKTOP_MIN_PX w nav-config.ts) ════ */
+  @media (min-width: 1024px) {
+    .hdr {
+      height: clamp(70px, 6.39vw, 92px);
+      padding-block: 0;
+    }
+    .hdr.over {
+      --p: 0;
+      background: none;
+      margin-bottom: clamp(-92px, -6.39vw, -70px);
+    }
+    .hdr.plain {
+      border-bottom: 1px solid var(--hdr-hair);
+    }
+    /* tło wjeżdżające scrollem + scrim czytelności nad hero (over) */
+    .hdr.over .hdr-bg {
+      display: block;
+      position: absolute;
+      inset: 0;
+      background: var(--hdr-bg);
+      border-bottom: 1px solid var(--hdr-hair);
+      opacity: var(--p);
+    }
+    .hdr.over .hdr-scrim {
+      display: block;
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: clamp(150px, 13.2vw, 190px);
+      pointer-events: none;
+      background: linear-gradient(
+        to bottom,
+        rgba(12, 11, 10, 0.55),
+        rgba(12, 11, 10, 0.22) 46%,
+        rgba(12, 11, 10, 0)
+      );
+      opacity: calc(1 - var(--p));
+    }
+
+    .hdr-logo {
+      flex: none;
+      width: clamp(50px, 4.2vw, 60px);
+      z-index: 1;
+    }
+
+    .hdr-nav {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: clamp(18px, 2.22vw, 32px);
+    }
+
+    .nav-link {
+      position: relative;
+      isolation: isolate;
+      display: inline-flex;
+      align-items: baseline;
+      white-space: nowrap;
+      text-decoration: none;
+      font-family: var(--font-display), sans-serif;
+      font-weight: 500;
+      font-size: clamp(11px, 0.87vw, 12.5px);
+      line-height: 1;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: color-mix(
+        in srgb,
+        var(--hdr-ink) calc(var(--p) * 100%),
+        rgba(255, 255, 255, 0.9)
+      );
+      text-shadow: 0 1px 6px rgba(0, 0, 0, calc(0.35 * (1 - var(--p))));
+    }
+    .nav-link[aria-current="page"] {
+      color: color-mix(in srgb, var(--hdr-ink) calc(var(--p) * 100%), #fff);
+    }
+    /* plain: bez mieszania z bielą (pasek zawsze biały).
+       design .6 — podbite do .64 (AA z zapasem przy 11–12.5px). */
+    .hdr.plain .nav-link {
+      color: rgba(26, 26, 26, 0.64);
+      text-shadow: none;
+    }
+    .hdr.plain .nav-link:hover,
+    .hdr.plain .nav-link:focus-visible,
+    .hdr.plain .nav-link[aria-current="page"] {
+      color: var(--hdr-ink);
+    }
+
+    /* halo za linkiem na hover */
+    .nav-link::before {
+      content: "";
+      position: absolute;
+      inset: -16px -20px;
+      z-index: -1;
+      border-radius: 40px;
+      opacity: 0;
+      filter: blur(4px);
+      transition: opacity 0.4s ease;
+      background: radial-gradient(
+        closest-side,
+        rgba(255, 255, 255, 0.32) 0%,
+        rgba(0, 0, 0, 0) 75%
+      );
+    }
+    .hdr.plain .nav-link::before {
+      background: radial-gradient(
+        closest-side,
+        rgba(47, 143, 91, 0.17) 0%,
+        rgba(0, 0, 0, 0) 75%
+      );
+    }
+    .nav-link:hover::before,
+    .nav-link:focus-visible::before {
+      opacity: 1;
+    }
+
+    /* podkreślenie na hover */
+    .nav-link::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0.16em;
+      bottom: -7px;
+      height: 1px;
+      background: currentColor;
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .nav-link:hover::after {
+      transform: scaleX(1);
+    }
+
+    /* fala liter na hover */
+    .nav-link .char {
+      --i: 0; /* indeks litery (stagger) — inline z markupu */
+      position: relative;
+      display: inline-block;
+      /* clip-path maskuje wjeżdżającą kopię BEZ zmiany baseline */
+      clip-path: inset(0);
+      line-height: 1;
+      vertical-align: baseline;
+    }
+    .nav-link .char--space {
+      width: 0.3em;
+    }
+    .nav-link .char > span {
+      display: block;
+      transition: transform 0.42s cubic-bezier(0.76, 0, 0.24, 1);
+      transition-delay: calc(var(--i) * 0.028s);
+    }
+    .nav-link .char > span:nth-child(2) {
+      position: absolute;
+      top: 100%;
+      left: 0;
+    }
+    .nav-link:hover .char > span,
+    .nav-link:focus-visible .char > span {
+      transform: translateY(-100%);
+    }
+
+    /* stałe zielone podkreślenie aktywnej pozycji */
+    .nav-link .ul {
+      position: absolute;
+      left: 0;
+      right: 0.18em;
+      bottom: -7px;
+      height: 1px;
+      background: var(--accent);
+    }
+
+    .mbtn,
+    .sheet-ov {
+      display: none;
+    }
+
+    /* ── ton ciemny wariantu over (D-P2 — blok `.hdr.dark` z proces.html):
+       po scrollu wjeżdża ciemne szkło (blur) zamiast bieli; logo i linki
+       białe przez cały przebieg --p, pill telefonu obwódkowy. ── */
+    .hdr.dark .hdr-bg {
+      background: rgba(18, 17, 15, 0.75);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .hdr.dark .hdr-scrim {
+      display: none;
+    }
+    .hdr.dark .nav-link {
+      color: rgba(255, 255, 255, 0.88);
+      letter-spacing: 0.16em;
+      font-size: clamp(11.5px, 0.9vw, 13px);
+      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+    }
+    .hdr.dark .nav-link[aria-current="page"] {
+      color: #fff;
+    }
+  }
+
+  /* ── reduced motion ── */
+  @media (prefers-reduced-motion: reduce) {
+    .mbtn i b,
+    .mbtn-t,
+    .sheet-ov,
+    .sheet,
+    .m-link,
+    .sheet-call {
+      transition: none;
+    }
+    .m-link,
+    .sheet-call {
+      opacity: 1;
+      transform: none;
+    }
+    .nav-link .char > span {
+      transition: none;
+    }
+    .nav-link:hover .char > span,
+    .nav-link:focus-visible .char > span {
+      transform: none;
+    }
+  }
+</style>
+
+<script>
+  import "@/scripts/overlay";
+  import { fillContactSlots } from "@/lib/contact-details";
+  import { NAV_DESKTOP_MIN_PX } from "@/components/navbar/nav-config";
+
+  const hdr = document.querySelector<HTMLElement>("[data-nav]");
+  if (hdr) {
+    const burger = hdr.querySelector<HTMLButtonElement>("[data-burger]")!;
+    const SHEET_ID = "nav-sheet";
+    const desktopMQ = matchMedia(`(min-width:${NAV_DESKTOP_MIN_PX}px)`);
+
+    // telefon w pasku i sheecie (antyscraping — patrz lib/contact-details)
+    fillContactSlots();
+
+    // Wysokość paska jako zmienna globalna — hero mobile (4.2) wypełnia
+    // nią dokładnie pierwszy ekran (100dvh - pasek).
+    const setHdrH = () =>
+      document.documentElement.style.setProperty(
+        "--hdr-h",
+        `${Math.round(hdr.getBoundingClientRect().height)}px`,
+      );
+    new ResizeObserver(setHdrH).observe(hdr);
+    setHdrH();
+
+    // ── menu mobilne: bottom sheet przez overlay.ts ──
+    let isOpen = false;
+    function setMenuState(open: boolean) {
+      isOpen = open;
+      hdr!.toggleAttribute("data-open", open);
+      burger.setAttribute("aria-expanded", String(open));
+      burger.setAttribute(
+        "aria-label",
+        (open ? burger.dataset.closeLabel : burger.dataset.openLabel) || "",
+      );
+    }
+    burger.addEventListener("click", () => {
+      if (isOpen) {
+        window.overlay?.close(SHEET_ID);
+      } else {
+        setMenuState(true);
+        // onClose łapie KAŻDĄ drogę zamknięcia (Esc, scrim, swipe, link)
+        window.overlay?.open(SHEET_ID, {
+          onClose: () => setMenuState(false),
+        });
+      }
+    });
+    // zmiana progu przy otwartym menu — domknij (spójny stan nakładek)
+    desktopMQ.addEventListener("change", (e) => {
+      if (e.matches && isOpen) window.overlay?.close(SHEET_ID);
+    });
+
+    // ── wariant over: postęp scrolla → --p (tło, logo, kolory linków) ──
+    if (hdr.dataset.variant === "over") {
+      const ref = document.querySelector<HTMLElement>("[data-navref]");
+      const target = () => {
+        const h = ref?.offsetHeight || 600;
+        const e = Math.max(0, Math.min(1, window.scrollY / (h * 0.5)));
+        // smoothstep — miękkie wejście/wyjście jak w eksportach
+        return e * e * (3 - 2 * e);
+      };
+
+      // Pasek dogania cel WŁASNĄ pętlą rAF (D-Q1). Po wyprowadzeniu Lenisa
+      // scroll jest natywny, a Safari dostarcza zdarzenia `scroll` rzadziej,
+      // niż faktycznie przewija (async scrolling) — przejście przezroczysty
+      // → biały robiło się wtedy skokowe. Wygładzamy WYŁĄCZNIE pasek, czyli
+      // dekorację: scroll strony zostaje natywny, a sceny przypięte dalej
+      // czytają prawdziwą pozycję scrolla (muszą trzymać się jej co do
+      // piksela). Lerp 0.18 — wartość zaakceptowana przez Mateusza w teście
+      // A/B na fizycznym Macu (Safari/Chrome/Firefox).
+      let cur: number | null = null;
+      let raf = 0;
+      const paint = () => {
+        raf = 0;
+        const t = target();
+        cur = cur === null ? t : cur + (t - cur) * 0.18;
+        if (Math.abs(t - cur) < 0.002) cur = t;
+        hdr!.style.setProperty("--p", cur.toFixed(3));
+        if (cur !== t) raf = requestAnimationFrame(paint);
+      };
+      const onScroll = () => {
+        if (!raf) raf = requestAnimationFrame(paint);
+      };
+      addEventListener("scroll", onScroll, { passive: true });
+      addEventListener("resize", onScroll, { passive: true });
+      paint();
+    }
+  }
+</script>
