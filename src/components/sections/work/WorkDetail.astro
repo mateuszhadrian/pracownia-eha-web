@@ -39,6 +39,8 @@ const pad = (n: number) => String(n).padStart(2, "0");
 
 <div class="dt-txt">
   <div class="dt-meta">
+    <span class="dt-place">{p.place}</span>
+    <span class="dt-meta-dash" aria-hidden="true"></span>
     <span class="dt-year">{p.year}</span>
   </div>
   <h2 class="dt-title">{p.title}</h2>
@@ -195,7 +197,7 @@ const pad = (n: number) => String(n).padStart(2, "0");
 
 <div class="dt-about">
   <p class="dt-about-h">O PROJEKCIE</p>
-  <p class="dt-desc">{p.description}</p>
+  {p.paras.map((t) => <p class="dt-desc">{t}</p>)}
 </div>
 
 <div class="dt-specs">
@@ -244,6 +246,10 @@ const pad = (n: number) => String(n).padStart(2, "0");
     gap: 12px;
     margin-bottom: 9px;
   }
+  /* Miejscowość + rok: na mobile (jak w szablonie) schowane do Etapu 4.3,
+     na desktopie w jednej linii „CZERNICA — 2023" (design realizacje.html). */
+  .dt-place,
+  .dt-meta-dash,
   .dt-year {
     display: none;
   }
@@ -408,6 +414,10 @@ const pad = (n: number) => String(n).padStart(2, "0");
     color: rgba(26, 26, 26, 0.78);
     text-wrap: pretty;
   }
+  /* Opis to lista akapitów (paras[]) — odstęp między nimi, nie pod ostatnim. */
+  .dt-desc + .dt-desc {
+    margin-top: 0.85em;
+  }
 
   .dt-specs {
     padding-block: 20px 150px;
@@ -559,6 +569,7 @@ const pad = (n: number) => String(n).padStart(2, "0");
     .dt-meta {
       margin-bottom: 14px;
     }
+    .dt-place,
     .dt-year {
       display: block;
       font-family: var(--font-display), sans-serif;
@@ -567,6 +578,16 @@ const pad = (n: number) => String(n).padStart(2, "0");
       line-height: 1;
       letter-spacing: 0.18em;
       color: var(--faint);
+    }
+    /* Kapitalik z CSS — klient wpisuje „Czernica", czytnik czyta oryginał. */
+    .dt-place {
+      text-transform: uppercase;
+    }
+    .dt-meta-dash {
+      display: block;
+      width: 16px;
+      height: 1px;
+      background: var(--faint);
     }
     .dt-title {
       font-size: clamp(26px, 2.36vw, 34px);

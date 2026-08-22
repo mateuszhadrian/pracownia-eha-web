@@ -44,13 +44,11 @@ paths:
 3. konsumenci: `src/components/sections/work/*`.
    Niespójność = build przechodzi lokalnie, a wpis z panelu wybucha w CI.
 
-- Schemat PRZEJŚCIOWY (Etap 0): `slug`, `order`, `title`, `year`,
-  `description`, `gallery[]` (min 1), `specs[] {label, value}`.
-  **BEZ pola `category`** (E5 — eha nie ma kategorii ani filtrów).
-- Schemat DOCELOWY wchodzi w Etapie 2 (§6.1 analizy): dochodzi `place`,
-  `description` → `paras[]` (min 1, hint „najlepiej 3 akapity"), `specs`
-  min 1 (hint „7 par jak w designie") — zmiana we wszystkich trzech
-  miejscach naraz + testy kontraktu.
+- Schemat DOCELOWY (§6.1 analizy, od Etapu 2): `slug`, `order`, `title`,
+  `place`, `year`, `paras[]` (min 1, hint „najlepiej 3 akapity"),
+  `gallery[]` (min 1), `specs[] {label, value}` (min 1, hint „7 par jak
+  w designie"). **BEZ pola `category`** (E5 — eha nie ma kategorii ani
+  filtrów) i bez `description` (zastąpione przez `paras`).
 - **Pola `cover` NIE MA.** Kaflem realizacji na `/realizacje/` i w zajawce
   na stronie głównej jest **pierwsza pozycja galerii**; `viewProject()`
   (`work-data.ts`) wylicza z niej `cover` dla komponentów.
@@ -74,7 +72,9 @@ paths:
 
 - Bucket `eha-media` (EU), domena publiczna `https://media.pracownia-eha.pl`,
   prefix `realizacje/`. Zdjęcia i wideo NIE trafiają do repo.
-  ⚠️ Do Etapu 2 `account_id`/`access_key_id` w `config.yml` to placeholdery.
+  `account_id`/`access_key_id` w `config.yml` są jawne (token
+  `eha-media-sveltia`, Object R&W, scope tylko `eha-media`); Secret Access
+  Key żyje w menedżerze haseł i w pamięci przeglądarki panelu.
 - Sveltia wgrywa do R2 przez pola wpisu: Image (zdjęcia) oraz `file`
   (wideo MP4 — plan A potwierdzony w szablonie na tej samej przypiętej
   wersji Sveltii; krok weryfikacyjny w Etapie 2 zostaje). Upload przez
@@ -107,7 +107,7 @@ paths:
 - `site_domain: pracownia-eha.pl` w config.yml jest OBOWIĄZKOWE: bez niego
   panel na localhoscie wysyła `site_id=cms.netlify.com` (dziedzictwo
   Netlify w Sveltii) i wpada na ALLOWED_DOMAINS Workera.
-- Klient loguje się kontem technicznym `eha-cms` (collaborator write
+- Klient loguje się kontem technicznym `pracownia-eha-cms` (login `eha-cms` był zajęty) (collaborator write
   wyłącznie do tego repo); konto dostanie wpis User-bypass (tryb Always)
   w rulesecie `main-protection` — dodawany przez API (UI repo osobistego
   nie wyszukuje userów) — commituje na `main` z panelu; ludzie chodzą

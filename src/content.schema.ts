@@ -10,8 +10,8 @@
 // kaflem realizacji jest pierwsza pozycja galerii, która z tego powodu
 // musi być zdjęciem.
 //
-// Docelowy schemat eha (§6.1 analizy: place, paras[] zamiast description)
-// wchodzi w Etapie 2 RAZEM z config.yml i komponentami.
+// Schemat DOCELOWY eha (§6.1 analizy, Etap 2): `place`, `paras[]` (min 1)
+// zamiast `description`, `specs` min 1.
 // Zmiana schematu = zmiana w TRZECH miejscach naraz (reguła cms-realizacje):
 // ten plik, public/admin/config.yml, src/components/sections/work/*.
 import { z } from "zod";
@@ -40,8 +40,12 @@ export const realizacjaSchema = z.object({
   slug: z.string(), // np. "dom-z-bala-czernica" — nazwa pliku = slug (konwencja Sveltii)
   order: z.number().default(0), // kolejność na liście (mniejsze = wyżej)
   title: z.string(), // np. "Dom z bala przeniesiony i zrekonstruowany"
+  place: z.string(), // np. "Czernica" — na kaflu i w detalu uppercase z CSS
   year: z.string(), // np. "2023"
-  description: z.string(), // opis (Etap 2: wymiana na paras[] wg §6.1)
+  // Opis detalu jako lista akapitów (design: 3 akapity; min 1). Każdy
+  // akapit to osobna pozycja listy w panelu — klient nie składa ich
+  // w jednym polu tekstowym, więc łamanie wierszy nie jest jego problemem.
+  paras: z.array(z.string().min(1)).min(1),
   // Galeria detalu. PIERWSZA POZYCJA JEST KAFLEM realizacji na /realizacje/
   // i na stronie głównej — dlatego musi być zdjęciem.
   // Sveltia nie ma walidacji zależnej od miejsca na liście, więc ten jeden
@@ -61,6 +65,6 @@ export const realizacjaSchema = z.object({
         });
       }
     }),
-  // RODZAJ OBIEKTU / ZAKRES / ROK … — pary z designu (7 par).
-  specs: z.array(z.object({ label: z.string(), value: z.string() })),
+  // RODZAJ OBIEKTU / ZAKRES / ROK … — pary z designu (7 par; min 1).
+  specs: z.array(z.object({ label: z.string(), value: z.string() })).min(1),
 });
