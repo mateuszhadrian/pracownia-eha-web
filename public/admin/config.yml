@@ -13,12 +13,13 @@ backend:
 # Secret Access Key NIE trafia do tego pliku — Sveltia poprosi o niego
 # w panelu przy pierwszym uploadzie i trzyma go w pamięci przeglądarki.
 # account_id i access_key_id są jawne (autoryzuje dopiero sekret).
-# ⚠️ Placeholdery <…> — realne wartości wchodzą w Etapie 2 po utworzeniu
-# bucketa `eha-media` i tokenu R2 (Object R&W, scope: tylko ten bucket).
+# Token R2 `eha-media-sveltia` (Object R&W, scope: tylko bucket `eha-media`).
 media_libraries:
   cloudflare_r2:
-    account_id: "<ACCOUNT_ID>"
-    access_key_id: "<ACCESS_KEY_ID>"
+    # ⚠️ Account ID = 32 znaki hex (Cloudflare → R2 → Overview → Account ID),
+    # NIE „Token value" z ekranu tworzenia tokenu.
+    account_id: "a1f687532595bb8659c557adba293d53"
+    access_key_id: "ad81e69ebb1ab90a868a9b03e7559d58"
     bucket: "eha-media"
     public_url: "https://media.pracownia-eha.pl" # custom domain bucketa
     prefix: "realizacje/" # pliki wewnątrz bucketa w podfolderze
@@ -47,8 +48,8 @@ slug:
   clean_accents: true
 
 # ── PL-only: zwykłe pola, bez obiektów {pl,en} ────────────────────────────
-# BEZ pola „Kategoria" (E5 — eha nie ma kategorii). Docelowy schemat §6.1
-# (place, paras[] zamiast description) wchodzi w Etapie 2. Zmiana zawsze
+# BEZ pola „Kategoria" (E5 — eha nie ma kategorii). Schemat docelowy §6.1
+# (place, paras[] zamiast description; Etap 2). Zmiana zawsze
 # w TRZECH miejscach naraz (src/content.schema.ts / ten plik /
 # src/components/sections/work/*) — reguła cms-realizacje.
 
@@ -63,7 +64,7 @@ collections:
     delete: true # pozwól USUWAĆ realizacje
     identifier_field: "title" # co pokazać na liście wpisów
     slug: "{{fields.slug}}" # nazwa pliku = wartość pola slug
-    summary: "{{fields.title}} ({{fields.year}})"
+    summary: "{{fields.title}} — {{fields.place}} ({{fields.year}})"
     fields:
       - {
           label: "Slug (adres, np. kuchnia-kaszmirowa)",
@@ -78,8 +79,23 @@ collections:
           default: 10,
         }
       - { label: "Tytuł", name: "title", widget: "string" }
-      - { label: "Rok realizacji", name: "year", widget: "string" }
-      - { label: "Opis", name: "description", widget: "text" }
+      - {
+          label: "Miejscowość (np. Czernica — na stronie wielkimi literami)",
+          name: "place",
+          widget: "string",
+        }
+      - { label: "Rok realizacji (np. 2023)", name: "year", widget: "string" }
+
+      # ── Opis: lista akapitów ──────────────────────────────────────────
+      # Jeden akapit = jedna pozycja listy (design: 3 akapity). Dzięki temu
+      # klient nie musi pamiętać o pustych liniach w jednym polu tekstowym.
+      - label: "Opis (akapity)"
+        name: "paras"
+        widget: "list"
+        label_singular: "Akapit"
+        field: { label: "Treść akapitu", name: "para", widget: "text" }
+        hint: "Najlepiej 3 akapity — tak jak w projekcie strony. Minimum 1."
+        min: 1 # schemat Zod wymaga ≥1 akapitu
 
       # ── Galeria detalu ────────────────────────────────────────────────
       # Osobnego pola „Kafel (cover)" NIE MA (remont panelu, D-RP2): kaflem
@@ -146,7 +162,12 @@ collections:
         name: "specs"
         widget: "list"
         label_singular: "Parametr"
-        summary: "{{fields.label}}"
+        summary: "{{fields.label}}: {{fields.value}}"
+        hint: >-
+          7 par jak w projekcie strony: Rodzaj obiektu, Zakres prac,
+          Powierzchnia, Czas realizacji, Materiał, Ciesiołka/Zaprawa,
+          Rok zakończenia. Minimum 1.
+        min: 1 # schemat Zod wymaga ≥1 pary
         fields:
           - {
               label: "Etykieta (np. MATERIAŁY / BLAT / ZAKRES)",

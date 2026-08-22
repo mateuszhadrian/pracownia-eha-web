@@ -33,8 +33,9 @@ export interface WorkProject {
   slug: string;
   order: number;
   title: string;
+  place: string; // miejscowość — uppercase robi CSS (design: „CZERNICA — 2023")
   year: string;
-  description: string;
+  paras: string[]; // opis detalu jako akapity (min 1; design: 3)
   gallery: WorkGalleryItem[];
   specs: WorkSpec[];
 }

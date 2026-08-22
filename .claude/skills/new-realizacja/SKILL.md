@@ -39,7 +39,7 @@ konwencja designu).
 Przypomnij checklistę (sam NIE edytuj JSON-ów — pisze je Sveltia):
 
 - panel: https://pracownia-eha.pl/admin (login przez GitHub — konto
-  `eha-cms`; lokalnie: `pnpm dev` → `http://localhost:4321/admin/index.html`);
+  `pracownia-eha-cms`; lokalnie: `pnpm dev` → `http://localhost:4321/admin/index.html`);
 - zdjęcia wgrywać przez pola Image, wideo przez pole „Wideo MP4" w pozycji
   galerii (widget file; upload przez bibliotekę Assets poza polami NIE
   trafia do R2!);
