@@ -85,7 +85,7 @@ i od tego momentu wszystko ma być zielone.
 
 ## Przypadki specjalne
 
-- **Zapis z panelu Sveltia (od Etapu 2):** konto `eha-cms` commituje
+- **Zapis z panelu Sveltia (od Etapu 2):** konto `pracownia-eha-cms` commituje
   PROSTO na main (User-bypass w rulesecie — jedyny legalny wyjątek).
   Po zapisie klienta: `git checkout main && git pull` przed dalszą pracą.
 - **Zmiana schematu CMS:** zawsze trzy miejsca naraz

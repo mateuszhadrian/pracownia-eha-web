@@ -113,13 +113,35 @@ zostają, widoki budowane od nowa wg `docs/design/` — patrz
   renderowane (podpięcie + geo = Etap 6); specy sekcji szablonu
   skasowane — wracają z widokami w Etapie 4 (mechanizm work bez
   własnych speców do 4.3; przy porcie zajrzyj do speców work
-  w repo delung-web); `TURNSTILE_SITE_KEY` i R2
-  `account_id`/`access_key_id` = placeholdery `<...>` (Etapy 5 i 2).
-- **Etap 1A (repo + Pages na pages.dev)** — do zrobienia (klika Mateusz:
-  repo GitHub publiczne `mateuszhadrian/pracownia-eha-web`, ruleset
-  `main-protection`, Cloudflare Pages `pnpm build`/`dist`/NODE_VERSION=22).
-- **Etap 1B (The Camels/DNS)** — czeka na dostępy od klienta (sekcja
-  wymienna w instrukcji; NIE ruszać NS bez checklisty GO/NO-GO).
+  w repo delung-web); `TURNSTILE_SITE_KEY` = placeholder `<...>` (Etap 5).
+- **Etap 1A (repo + Pages) — WYKONANY** (2026-08-22): repo publiczne
+  `mateuszhadrian/pracownia-eha-web`, ruleset `main-protection`
+  (id 21158063; required check `quality`), Cloudflare Pages
+  `pracownia-eha-web.pages.dev` (`pnpm build`/`dist`/NODE_VERSION=22).
+- **Etap 1B (The Camels/DNS) — WYKONANY** (2026-08-22): domena
+  `pracownia-eha.pl` + `www` Active, poczta `eha@` przetestowana
+  (SPF/DKIM/DMARC = PASS), `prod-smoke` zielony.
+- **Etap 2 (CMS + media + logowanie) — W TOKU** (2026-08-22):
+  - chmura WYKONANA: R2 `eha-media` (EU) + `media.pracownia-eha.pl`
+    (Image Transformations „This zone only", CORS prod + localhost:4321),
+    token `eha-media-sveltia` (Object R&W, scope bucket); konto GitHub
+    **`pracownia-eha-cms`** (login `eha-cms` był zajęty; mail `eha@`,
+    collaborator write, 2FA celowo wyłączone do Etapu 7); Worker
+    `sveltia-cms-auth-eha` → `auth.pracownia-eha.pl` (nowsza wersja
+    sveltia-cms-auth: flow postMessage, `/auth` odpowiada 200, nie 302;
+    `ALLOWED_DOMAINS=pracownia-eha.pl,localhost`); OAuth App „Panel
+    treści — pracownia-eha.pl" (callback `auth.pracownia-eha.pl/callback`).
+  - kod WYKONANY: schemat docelowy §6.1 w trzech miejscach (`place`,
+    `paras[]` min 1, `specs` min 1) + testy kontraktu; `config.yml`
+    z `access_key_id` R2.
+  - DO DOMKNIĘCIA: `account_id` R2 w `config.yml` (32 hex — test
+    kontraktu „dane R2 nie są placeholderami" pilnuje); User-bypass
+    Always dla `pracownia-eha-cms` w rulesecie (gh api); logowanie do
+    `/admin`; spike MP4 (~20 MB) → R2 + range requests; 6 wpisów wg
+    `DATA` z `docs/design/export/realizacje.html` przez panel (zdjęcia
+    po `optimize-images.mjs`; filmy klienta presetem HandBrake — jeśli
+    brak, dobić później); po pierwszych wpisach USUNĄĆ `.skipIf`
+    z kontraktu „katalog ma ≥1 wpis" (`tests/unit/cms-contract.test.ts`).
 
 ## Dokumentacja
 
