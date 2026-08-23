@@ -95,10 +95,10 @@ jobs:
         with:
           name: dist
           path: dist/
-      # Progi ratchet w lighthouserc* (baseline zmierzony na runnerze,
-      # run 28884218254). Ponowny pomiar median (przy ratchecie po
-      # optymalizacjach): lhci collect --numberOfRuns=5 + scripts/lhci-median.mjs
-      # — procedura w analizie §III.5.
+      # Progi ratchet w lighthouserc* (baseline szkieletu zmierzony na
+      # runnerze, run 32652597911, Etap 3). Ponowny pomiar median (przy
+      # ratchecie po optymalizacjach): lhci collect --numberOfRuns=5 +
+      # scripts/lhci-median.mjs; zacieśnianie tylko decyzją Mateusza.
       - name: LHCI — mobile
         run: pnpm exec lhci autorun --config=lighthouserc.cjs
       - name: LHCI — desktop
