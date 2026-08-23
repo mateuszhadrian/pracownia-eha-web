@@ -1,0 +1,30 @@
+{
+  "slug": "spike-test",
+  "order": 10,
+  "title": "Spike",
+  "place": "Test",
+  "year": "2026",
+  "paras": [
+    "Piszę testowy akapit, który jest potrzebny do przetestowania wgrywania video jako elementu realizacji na stronie pracownia-eha.pl. NIc z tych rzeczy, które tutaj piszę docelowo nie powinny znaleźć się W stronie klienta. Wszystko co tutaj zaraz piszę jest tylko i wyłącznie w celach zrealizowania uploadu tej konkretnej realizacji, w której znajduje się element jakim jest film MP4 skonwertowany poprzez Handbrake."
+  ],
+  "gallery": [
+    {
+      "type": "photo",
+      "image": "https://media.pracownia-eha.pl/realizacje/cegla-i-kamien.webp"
+    },
+    {
+      "type": "video",
+      "video": "https://media.pracownia-eha.pl/realizacje/20251024_120816_conv.mp4"
+    }
+  ],
+  "specs": [
+    {
+      "label": "MATERIAŁY",
+      "value": "wełna drzewna firmy Panasonic"
+    },
+    {
+      "label": "STELAŻ",
+      "value": "metal firmy heavy metal"
+    }
+  ]
+}
