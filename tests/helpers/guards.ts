@@ -1,25 +1,12 @@
 // Strażniki wspólne dla testów Playwright.
-import { readdirSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 import { test, type Page } from "@playwright/test";
+import { fixtureFiles } from "./realizacje";
 
 /** Ile wpisów ma zamrożony zestaw testów wizualnych
- *  (tests/fixtures/realizacje). Katalog może NIE istnieć — fixture eha
- *  powstaje dopiero w Etapie 3, a git i tak nie przechowuje pustych
- *  katalogów; goły readdirSync wywracałby WSZYSTKIE specy przy ładowaniu
- *  modułu (reguła testing.md: test nie może wywracać się na treści). */
-const FIXTURE_DIR = fileURLToPath(
-  new URL("../fixtures/realizacje", import.meta.url),
-);
-let fixtureEntries = 0;
-try {
-  fixtureEntries = readdirSync(FIXTURE_DIR).filter((f) =>
-    f.endsWith(".json"),
-  ).length;
-} catch {
-  /* brak katalogu = 0 wpisów fixture */
-}
-const FIXTURE_ENTRIES = fixtureEntries;
+ *  (tests/fixtures/realizacje). Przez helper — katalog może nie istnieć
+ *  (git nie przechowuje pustych katalogów), a goły readdirSync wywracałby
+ *  WSZYSTKIE specy przy ładowaniu modułu (reguła testing.md). */
+const FIXTURE_ENTRIES = fixtureFiles().length;
 
 /** Strażnik preview: testy biegają na buildzie produkcyjnym (pnpm preview),
  *  NIGDY na dev serverze. Astro dev wstrzykuje klienta Vite — wykrywamy go

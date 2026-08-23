@@ -44,3 +44,43 @@ export function readRealizacje<T extends { order: number }>(): T[] {
 
 /** Ile realizacji pokazuje zajawka na stronie głównej (kap z HomeRealizacje). */
 export const HOME_MAX = 3;
+
+// ── Fixture testów WIZUALNYCH (tests/fixtures/realizacje) ──
+// Zamrożony zestaw, na którym stoją baseline'y (`pnpm build:visual`).
+// Niezależny od treści produkcyjnej: NIE synchronizować po zmianach klienta
+// (reguła testing.md). Czytany tak samo odpornie jak produkcja — katalog
+// mógłby nie istnieć w kopii repo sprzed Etapu 3.
+export const FIXTURE_DIR = fileURLToPath(
+  new URL("../fixtures/realizacje", import.meta.url),
+);
+
+/** Nazwy plików wpisów fixture'u; pusta tablica, gdy katalogu nie ma. */
+export function fixtureFiles(): string[] {
+  if (!existsSync(FIXTURE_DIR)) return [];
+  return readdirSync(FIXTURE_DIR)
+    .filter((name) => name.endsWith(".json"))
+    .sort();
+}
+
+/** Surowa treść wpisu fixture'u. */
+export function readFixture<T>(name: string): T {
+  return JSON.parse(readFileSync(join(FIXTURE_DIR, name), "utf8")) as T;
+}
+
+/** Wszystkie URL-e mediów R2 z podanych plików (surowe dopasowanie
+ *  tekstowe — schemat nie wnika w typ pozycji). */
+export function collectMediaUrls(
+  files: string[],
+  read: (name: string) => unknown,
+): string[] {
+  const urls = new Set<string>();
+  for (const name of files) {
+    const raw = JSON.stringify(read(name));
+    for (const match of raw.matchAll(
+      /https:\/\/media\.pracownia-eha\.pl\/[^"\s]+/g,
+    )) {
+      urls.add(match[0]);
+    }
+  }
+  return [...urls];
+}

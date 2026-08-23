@@ -1,0 +1,52 @@
+{
+  "slug": "nowa-wiezba-nad-stuletnim-zrebem-olesnica",
+  "order": 50,
+  "title": "Nowa więźba nad stuletnim zrębem",
+  "place": "Oleśnica",
+  "year": "2024",
+  "paras": [
+    "Stara więźba była przebudowywana co najmniej trzy razy i ostatecznie przekazywała obciążenie w miejsca, które nigdy nie były na to liczone. Zrąb pod nią zachował się jednak w bardzo dobrym stanie.",
+    "Nową konstrukcję zaprojektowaliśmy tak, by odciążyć zrąb i sprowadzić siły na ściany nośne. Ciesiołkę wykonaliśmy na złączach czopowych z drewna dębowego i sosnowego, dosuszanego przed montażem.",
+    "Pokrycie i deskowanie ułożyliśmy z zachowaniem szczelin wentylacyjnych, dzięki czemu dach pracuje sucho przez cały rok."
+  ],
+  "gallery": [
+    {
+      "type": "photo",
+      "image": "https://media.pracownia-eha.pl/realizacje/dom-z-bala3.webp"
+    },
+    {
+      "type": "photo",
+      "image": "https://media.pracownia-eha.pl/realizacje/ekipa-budowlana1.webp"
+    }
+  ],
+  "specs": [
+    {
+      "label": "Rodzaj obiektu",
+      "value": "Dom zrębowy"
+    },
+    {
+      "label": "Zakres prac",
+      "value": "Więźba i dach"
+    },
+    {
+      "label": "Powierzchnia dachu",
+      "value": "180 m²"
+    },
+    {
+      "label": "Czas realizacji",
+      "value": "7 miesięcy"
+    },
+    {
+      "label": "Materiał",
+      "value": "Dąb, sosna"
+    },
+    {
+      "label": "Ciesiołka",
+      "value": "Złącza czopowe"
+    },
+    {
+      "label": "Rok zakończenia",
+      "value": "2024"
+    }
+  ]
+}

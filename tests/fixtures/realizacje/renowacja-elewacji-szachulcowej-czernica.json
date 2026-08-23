@@ -1,0 +1,56 @@
+{
+  "slug": "renowacja-elewacji-szachulcowej-czernica",
+  "order": 20,
+  "title": "Renowacja elewacji szachulcowej",
+  "place": "Czernica",
+  "year": "2022",
+  "paras": [
+    "Elewację odsłoniliśmy z kilku warstw wtórnych tynków cementowych, które od dekad zatrzymywały wilgoć w konstrukcji. Dopiero pod nimi ujawnił się pierwotny rysunek szkieletu — słupy, rygle i zastrzały w komplecie.",
+    "Zniszczone końcówki belek wymieniliśmy przez flekowanie i protezowanie, dobierając drewno o zbliżonej gęstości i wieku. Wypełnienia pól odtworzyliśmy w glinie z sieczką, wykończonej tynkiem wapiennym.",
+    "Konstrukcję zabezpieczyliśmy wyłącznie preparatami paroprzepuszczalnymi. Elewacja znów oddaje wilgoć na zewnątrz, a nie do wnętrza murów."
+  ],
+  "gallery": [
+    {
+      "type": "photo",
+      "image": "https://media.pracownia-eha.pl/realizacje/czernica-elewacja-szachulcowa-3.webp"
+    },
+    {
+      "type": "photo",
+      "image": "https://media.pracownia-eha.pl/realizacje/cegla-i-kamien.webp"
+    },
+    {
+      "type": "photo",
+      "image": "https://media.pracownia-eha.pl/realizacje/house-old1.webp"
+    }
+  ],
+  "specs": [
+    {
+      "label": "Rodzaj obiektu",
+      "value": "Dom szachulcowy"
+    },
+    {
+      "label": "Zakres prac",
+      "value": "Renowacja elewacji"
+    },
+    {
+      "label": "Powierzchnia elewacji",
+      "value": "210 m²"
+    },
+    {
+      "label": "Czas realizacji",
+      "value": "5 miesięcy"
+    },
+    {
+      "label": "Materiał",
+      "value": "Glina, wapno"
+    },
+    {
+      "label": "Wypełnienie",
+      "value": "Szachulec"
+    },
+    {
+      "label": "Rok zakończenia",
+      "value": "2022"
+    }
+  ]
+}
