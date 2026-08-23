@@ -167,6 +167,48 @@ zostają, widoki budowane od nowa wg `docs/design/` — patrz
     zmierz LCP hero w CI i rozważ zacieśnienie LCP mobile (5000 to zapas
     z delung); 7 plików fontów (280 KB) to dziś 47 % render delay LCP
     mobile — kandydat na audyt subsetów (latin-ext) w Etapie 6.
+- **Etap 4.1 (chrome globalny) — WYKONANY** (2026-08-23, kod+testy;
+  mini-analiza i decyzje portu: `docs/analiza-chrome.md`):
+  - Navbar FIXED nakładkowy wg designów: desktop — dropdown „O nas"
+    (klik, chevron, panel na papierze, Esc/klik-poza zamyka) + AUTO-HIDE
+    E11 1:1 z eksportów (progi 70/2/60 px, strefa kursora
+    `max(96px,12vh)`, przy otwartym dropdownie rozszerzona do panelu
+    +48 px, schowanie zamyka dropdown; stałe w `nav-config.ts`, importują
+    je testy); stan `data-solid` (papier+cień) od `[data-navref]`-40 px
+    (hero 4.2), fallback 8 px; mobile — bez auto-hide (wzorzec 8/8
+    eksportów), glow czytelności rAF-lerp, burger 2 kreski→X. Skin nav
+    delung (fala liter, halo) wycięty. `--hdr-h` w :root global.css
+    (92/72 px) + pomiar JS; SkeletonPage odsuwa treść pod fixed pasek.
+  - Menu mobilne: sheet przeskórowany na papier (mechanika overlay.ts
+    NIETKNIĘTA), akordeon „O nas" (`max-height`, aria-expanded), kaskada
+    wjazdów, stopka sheeta z DWOMA telefonami przez sloty; rycina
+    `dom-ryc-house1.webp` lazy.
+  - Stopka wg designu (`#211D18`/krem): desktop pasmo brandowe
+    (znaczek+motto+rycina koparki) + 3 kolumny O NAS/OFERTA/KONTAKT,
+    mobile tabela etykieta/wartość (STRONY zamiast OFERTA — tak
+    w eksporcie; kolejność wierszy 1:1, OBSZAR zduplikowany dOnly/mOnly);
+    „NA GÓRĘ ↑" = `<button data-totop>` (smooth, reduce=skok); decyzje
+    Mateusza: kredyt hadrianm zostaje w pasie dolnym, dane = tylko
+    NIP/REGON/godziny (adres wyłącznie w JSON-LD — kontrakt
+    `jsonld.test.ts` zaktualizowany), sociale finalne. Znaczek logo =
+    maska CSS na cache'owanym SVG (NIE inline — 22 KB/szt.).
+  - Nowe assety: `koparka-rycina1.webp` (420 px q45, 135 KB),
+    `dom-ryc-house1.webp` (24 KB); `nav.ts` przepisany na
+    `aboutNavItems`/`mainNavItems` (+`ABOUT_LABEL`); gutter chrome'u
+    desktop = `clamp(60px, 9.72vw, 160px)` (--g eksportów; sekcje 4.2+
+    pewnie przejmą — dziś tylko w chrome).
+  - Testy: navigation.spec — kontrakty auto-hide (w dół chowa / ≥60 px
+    w górę pokazuje / u góry zawsze / kursor przywołuje / otwarty
+    dropdown blokuje przez rozszerzoną strefę), dropdown, akordeon,
+    NA GÓRĘ, sloty stopki, `expectBreakpointFlip(1024)`; chrome.spec —
+    +dropdown otwarty (clip 400 px) i sheet z akordeonem; policy.spec
+    selektor stopki. Bramki 2026-08-23 zielone: format/lint/typecheck/
+    unit(80)/build/e2e(117)/visual `--ignore-snapshots`(60).
+  - UWAGA: baseline'y visual (skeleton-_ + chrome-_) CELOWO rozjechane —
+    komplety linux+darwin generuje Mateusz w PR (workflow → darwin);
+    desktop ładuje 9 plików fontów (doszły italiki Garamonda przez motto
+    stopki i mono-600 przez etykiety) — budżet „fonty ≤ 8" da WARN na
+    desktopie, progów nie ruszano (audyt fontów = Etap 6).
 
 ## Dokumentacja
 
