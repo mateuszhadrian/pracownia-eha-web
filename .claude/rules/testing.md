@@ -1,13 +1,16 @@
 # Testy — kontrakt projektu
 
 Harness odziedziczony z szablonu (konfiguracja Playwright/Vitest/axe/LHCI,
-6 profili, helpery). Baseline'y wizualne i budżety LHCI eha mierzone OD
-NOWA w Etapie 3 instrukcji (`docs/pracownia-eha-web-creation-process.md`)
-— liczby szablonu nie obowiązują. STAN Etapu 0: specy `navigation`, `seo`,
-`a11y`, `policy`, `smoke` zaadaptowane do 8 tras eha; specy sekcji
-i visual powstają z widokami (Etap 4); katalog
-`tests/visual/__screenshots__/` startuje pusty (pierwsze baseline'y =
-Etap 3).
+6 profili, helpery); liczby szablonu NIE obowiązują — baseline'y i budżety
+eha zmierzone od nowa w Etapie 3 (2026-08-23). STAN po Etapie 3: specy e2e
+`navigation`, `seo`, `a11y`, `policy`, `smoke` na 8 trasach; visual:
+`tests/visual/skeleton.spec.ts` (8 tras × 6 profili, viewport + pełna
+strona, wideo pod maską) + `chrome.spec.ts` (pasek desktop, otwarty sheet
+mobile); fixture `tests/fixtures/realizacje` = 5 wpisów (1 z wideo);
+baseline'y darwin+linux w `tests/visual/__screenshots__/`. Etap 4 wymienia
+trasy po jednym PR-ze: widok dostaje WŁASNY spec visual, a jego wpis
+w `skeleton.spec.ts` znika razem z baseline'ami `skeleton-<trasa>-*`
+w tym samym PR (ostatni wpis = skasowanie pliku).
 
 ## Co zmieniasz → co uruchamiasz
 
@@ -71,9 +74,17 @@ Etap 3).
 - a11y (axe): allowlista znanych naruszeń w `tests/e2e/a11y.spec.ts` to
   RATCHET — startujemy od PUSTEJ; wpis wolno usunąć po realnej poprawie;
   nowych nie dopisuj bez decyzji Mateusza.
-- LHCI: budżety wystartują z pomiaru pierwszej działającej strony głównej
-  (Etap 3), Z ZAPASEM na przyrost sekcji; potem działają jako ratchet —
-  progi podnosimy wolno, tylko świadomą decyzją Mateusza (osobny commit).
+- LHCI: RATCHET od Etapu 3. Pomiar bazowy szkieletu „/" na runnerze CI
+  (run 32652597911, mediana z 3): mobile perf 0,95 / LCP 2862 ms / TBT 0 /
+  CLS 0; desktop perf 1,00 / LCP 652 ms; script 4,2 KB, total 332 KB,
+  7 plików fontów (280 KB). Budżety (`lighthouserc*.cjs`, URL-e `/` +
+  `/polityka-prywatnosci/`) Z ZAPASEM na Etap 4: mobile perf ≥ 0,80,
+  LCP ≤ 5000, TBT ≤ 200, CLS ≤ 0,05, script ≤ 40 KB, total ≤ 1,2 MB;
+  desktop perf ≥ 0,90, LCP ≤ 2000, TBT ≤ 200, CLS ≤ 0,05, script ≤ 40 KB,
+  total ≤ 2 MB; fonty ≤ 8 (warn). Progi zacieśniamy wolno, tylko świadomą
+  decyzją Mateusza (osobny commit), po pomiarze w CI (`lhci collect`
+  z `numberOfRuns=5`, potem `node scripts/lhci-median.mjs`). Lokalny
+  `lhci` wypada gorzej niż CI (mnożnik CPU) — nie jest podstawą ratchetu.
 - Test mediów R2 (`CHECK_REMOTE_MEDIA=1`) tylko poza ścieżką PR
   (zewnętrzna sieć = flaky).
 - Wersje `playwright` i `@playwright/test` podnoś PARĄ (jeden zestaw

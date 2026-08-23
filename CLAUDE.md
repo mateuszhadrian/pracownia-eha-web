@@ -3,8 +3,8 @@
 Strona firmowa klienta **Pracownia EH/A** (remonty domów z historią) —
 `pracownia-eha.pl`. Astro 6 **static** (bez SSR), **PL-only** (bez `/en/`).
 Hosting: Cloudflare Pages, deploy automatyczny z gałęzi `main` →
-**main = produkcja** (od Etapu 1A). Main będzie chroniony (required
-checks: `quality`, potem `e2e` + `lighthouse` od Etapu 3) — zmiany idą
+**main = produkcja** (od Etapu 1A). Main chroniony rulesetem (required
+checks: `quality` + `e2e` + `lighthouse` od Etapu 3) — zmiany idą
 przez feature branch → PR → zielone checki → merge; bez pracy wprost
 na main.
 
@@ -145,6 +145,28 @@ zostają, widoki budowane od nowa wg `docs/design/` — patrz
     klient podmieni na prawdziwe presetem HandBrake); `.skipIf`
     z kontraktu „≥1 wpis" usunięty; `CHECK_REMOTE_MEDIA=1` zielony.
   - `e2e` na main CELOWO czerwony do Etapu 3 (brak fixture'u visual).
+- **Etap 3 (testy/CI na szkielecie) — WYKONANY** (2026-08-23):
+  - specy e2e przejrzane (wpisy tylko przez `tests/helpers/realizacje.ts`;
+    `media-r2.test.ts` też na helperze i sprawdza URL-e fixture'u);
+    allowlista axe PUSTA (0 naruszeń na 8 trasach × 2 profile).
+  - fixture wizualny `tests/fixtures/realizacje` (5 wpisów wg `DATA`
+    designu, 1 z wideo — `dom-z-bala…czernica`; media = te same pliki R2
+    co treść testowa) + kontrakt `tests/unit/visual-fixture.test.ts`;
+    helpery `fixtureFiles()`/`readFixture()`/`collectMediaUrls()`.
+  - visual: `tests/visual/skeleton.spec.ts` (8 tras × 6 profili, top +
+    fullPage, wideo pod maską) + `chrome.spec.ts` (pasek / sheet);
+    na szkielecie `usePreviewGuard` — `useVisualFixtureGuard` liczy
+    `<template data-work-detail>` i wchodzi z widokiem 4.3. Baseline'y
+    darwin (`pnpm test:visual:update`) + linux (workflow).
+  - LHCI: budżety z pomiaru CI (run 32652597911) — liczby w
+    `.claude/rules/testing.md`; URL-e `/` + `/polityka-prywatnosci/`.
+  - ruleset `main-protection`: required `quality`+`e2e`+`lighthouse`
+    (`gh api -X PUT … --input`, bypass User 319944435 zachowany).
+    UWAGI dla Etapu 4: każdy widok = własny spec visual + usunięcie trasy
+    z `skeleton.spec.ts` (i jej baseline'ów) w tym samym PR; po 4.2
+    zmierz LCP hero w CI i rozważ zacieśnienie LCP mobile (5000 to zapas
+    z delung); 7 plików fontów (280 KB) to dziś 47 % render delay LCP
+    mobile — kandydat na audyt subsetów (latin-ext) w Etapie 6.
 
 ## Dokumentacja
 
