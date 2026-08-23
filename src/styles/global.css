@@ -62,12 +62,20 @@ html {
      to breakpoint projektu (para ze stałą NAV_DESKTOP_MIN_PX). */
   --pad: clamp(18px, 6.67vw, 26px);
   --col: 560px;
+
+  /* Wysokość paska chrome'u (Etap 4.1) — statyczny fallback; skrypt
+     Navbara doprecyzowuje pomiarem (ResizeObserver). Pasek jest FIXED
+     (nakładkowy jak w designach), więc strony odsuwają pierwszą treść
+     o tę wartość (hero 4.2: 100dvh - pasek). Mobile: 22px pad + 48px
+     logo + 22px = 92px; desktop: 72px z eksportów. */
+  --hdr-h: 92px;
 }
 
 @media (min-width: 1024px) {
   :root {
     --pad: clamp(34px, 3.89vw, 56px);
     --col: 1520px;
+    --hdr-h: 72px;
   }
 }
 

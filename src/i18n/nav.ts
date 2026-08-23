@@ -3,33 +3,26 @@ import {
   EKIPA_PATH,
   KOMPETENCJE_PATH,
   OBSLUGA_PATH,
-  POLICY_PATH,
   TRADYCJA_PATH,
   WORK_INDEX_PATH,
 } from "@/lib/routes";
 
-// Pozycje menu głównego (PL-only). Docelowy wzorzec z designów eha:
-// „O nas" jako dropdown (Ekipa EH/A / Kompetencje i technologie /
-// Tradycja i ekologia) + Realizacje, Obsługa budowy, Kontakt — dropdown
-// i auto-hide wchodzą w Etapie 4.1. Na szkielecie Etapu 0 lista jest
-// PŁASKA (wszystkie trasy klikalne od pierwszego builda).
+// Pozycje menu głównego (PL-only) wg designów eha (Etap 4.1):
+// pozycja zbiorcza „O nas" (dropdown na desktopie / akordeon w sheecie)
+// z trzema podstronami + trzy pozycje płaskie. Stopka składa kolumny
+// z tych samych tablic (O NAS = aboutNavItems + polityka w komponencie;
+// OFERTA/STRONY = mainNavItems).
 export interface NavItem {
   id: string;
   label: string;
   href: string;
 }
 
-export const navItems: NavItem[] = [
-  { id: "ekipa", label: "Ekipa EH/A", href: EKIPA_PATH },
-  { id: "kompetencje", label: "Kompetencje", href: KOMPETENCJE_PATH },
-  { id: "tradycja", label: "Tradycja", href: TRADYCJA_PATH },
-  { id: "realizacje", label: "Realizacje", href: WORK_INDEX_PATH },
-  { id: "obsluga", label: "Obsługa budowy", href: OBSLUGA_PATH },
-  { id: "kontakt", label: "Kontakt", href: CONTACT_PATH },
-];
+/** Etykieta pozycji zbiorczej — wspólna dla dropdownu i akordeonu. */
+export const ABOUT_LABEL = "O nas";
 
-// Nawigacja stopki = pełna mapa strony (7 tras + polityka prywatności).
-export const footerNavItems: NavItem[] = [
+/** Podstrony „O nas" (dropdown desktop / akordeon w menu mobilnym). */
+export const aboutNavItems: NavItem[] = [
   { id: "ekipa", label: "Ekipa EH/A", href: EKIPA_PATH },
   {
     id: "kompetencje",
@@ -37,12 +30,11 @@ export const footerNavItems: NavItem[] = [
     href: KOMPETENCJE_PATH,
   },
   { id: "tradycja", label: "Tradycja i ekologia", href: TRADYCJA_PATH },
+];
+
+/** Pozycje płaskie menu głównego (po „O nas"). */
+export const mainNavItems: NavItem[] = [
   { id: "realizacje", label: "Realizacje", href: WORK_INDEX_PATH },
   { id: "obsluga", label: "Obsługa budowy", href: OBSLUGA_PATH },
   { id: "kontakt", label: "Kontakt", href: CONTACT_PATH },
-  { id: "polityka", label: "Polityka prywatności", href: POLICY_PATH },
 ];
-
-export function navLabel(item: NavItem): string {
-  return item.label;
-}
