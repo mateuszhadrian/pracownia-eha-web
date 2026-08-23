@@ -1,31 +1,35 @@
-// Nawigacja chrome'u: linki paska (desktop), sticky pasek, menu mobilne
-// jako bottom sheet na overlay.ts (otwieranie, Esc, scrim, swipe-down),
-// telefony/mail składane w JS (antyscraping). Na szkielecie Etapu 0 nav
-// jest płaską listą 6 pozycji; dropdown „O nas" + auto-hide wchodzą
-// w Etapie 4.1 i wtedy ten spec dostaje kontrakty auto-hide.
-import { expect, test } from "@playwright/test";
+// Nawigacja chrome'u (Etap 4.1): pasek fixed z dropdownem „O nas"
+// i AUTO-HIDE (E11) na desktopie, menu mobilne jako bottom sheet na
+// overlay.ts (otwieranie, Esc, scrim, swipe-down, akordeon „O nas"),
+// stopka („NA GÓRĘ ↑"), telefony/mail składane w JS (antyscraping),
+// kontrakt breakpointu 1024 (expectBreakpointFlip).
+import { expect, test, type Page } from "@playwright/test";
+import {
+  NAV_DESKTOP_MIN_PX,
+  NAV_UP_REVEAL_PX,
+  NAV_ZONE_PANEL_PAD_PX,
+} from "../../src/components/navbar/nav-config";
 import {
   CONTACT_PATH,
   EKIPA_PATH,
   OBSLUGA_PATH,
+  TRADYCJA_PATH,
   WORK_INDEX_PATH,
 } from "../../src/lib/routes";
+import { expectBreakpointFlip } from "../helpers/breakpoint";
 import { collectPageIssues, usePreviewGuard } from "../helpers/guards";
 import { gotoReady, scrollPageTo, settle } from "../helpers/scroll";
 
 usePreviewGuard();
 
+/** Szkielety bywają krótsze niż potrzeba auto-hide'owi — dosztukuj
+ *  wysokości dokumentu (kontrakt dotyczy chrome'u, nie długości strony). */
+async function ensureScrollRoom(page: Page): Promise<void> {
+  await page.addStyleTag({ content: "main { min-height: 300vh !important }" });
+}
+
 test.describe("nawigacja desktop", () => {
   test.skip(({ isMobile }) => !!isMobile, "tylko układ desktop");
-
-  test("link Ekipa EH/A nawiguje na podstronę", async ({ page }) => {
-    await gotoReady(page);
-    // Asercja treści celowo ogólna (main h1) — ma przetrwać wymianę
-    // szkieletu Etapu 0 na docelowy widok i kolejne zmiany treści.
-    await page.locator(`.nav-link[href="${EKIPA_PATH}"]`).click();
-    await expect(page).toHaveURL(/\/ekipa-eha\/?$/);
-    await expect(page.locator("main h1")).toBeVisible();
-  });
 
   test("link Realizacje nawiguje na podstronę /realizacje/", async ({
     page,
@@ -36,23 +40,153 @@ test.describe("nawigacja desktop", () => {
     await expect(page.locator("main h1")).toBeVisible();
   });
 
-  test("pasek jest widoczny u góry po wejściu i przy scrollu w górę", async ({
+  test("dropdown O nas: klik otwiera i zamyka, klik poza zamyka, Esc zamyka", async ({
     page,
   }) => {
-    // Docelowo navbar eha ma AUTO-HIDE (E11): chowa się przy scrollu w dół,
-    // wraca przy scrollu w górę — pełne kontrakty auto-hide wchodzą razem
-    // z mechanizmem w Etapie 4.1. Na szkielecie pasek jest sticky bez
-    // chowania, więc mierzymy tylko „przyklejony do górnej krawędzi".
+    await gotoReady(page);
+    const toggle = page.locator("[data-dropdown-toggle]");
+    const panel = page.locator("[data-dropdown-panel]");
+
+    await toggle.click();
+    await expect(toggle).toHaveAttribute("aria-expanded", "true");
+    await expect(panel).toBeVisible();
+
+    await toggle.click();
+    await expect(toggle).toHaveAttribute("aria-expanded", "false");
+    await expect(panel).toBeHidden();
+
+    await toggle.click();
+    await expect(panel).toBeVisible();
+    // klik poza panelem (środek strony) zamyka
+    await page.mouse.click(400, 500);
+    await expect(panel).toBeHidden();
+
+    await toggle.click();
+    await expect(panel).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(panel).toBeHidden();
+  });
+
+  test("dropdown O nas nawiguje na 3 podstrony", async ({ page }) => {
+    for (const path of [EKIPA_PATH, "/kompetencje-i-technologie/"] as const) {
+      await gotoReady(page);
+      await page.locator("[data-dropdown-toggle]").click();
+      await page.locator(`.drop-link[href="${path}"]`).click();
+      await expect(page).toHaveURL(
+        new RegExp(`${path.replaceAll("/", "\\/")}?$`),
+      );
+      await expect(page.locator("main h1")).toBeVisible();
+    }
+    await gotoReady(page);
+    await page.locator("[data-dropdown-toggle]").click();
+    await page.locator(`.drop-link[href="${TRADYCJA_PATH}"]`).click();
+    await expect(page).toHaveURL(/\/tradycja-i-ekologia\/?$/);
+  });
+
+  test("auto-hide: scroll w dół chowa pasek, powrót po scrollu w górę", async ({
+    page,
+  }) => {
     await gotoReady(page, WORK_INDEX_PATH);
+    await ensureScrollRoom(page);
     const nav = page.locator("[data-nav]");
-    const maxScroll = await page.evaluate(
-      () => document.documentElement.scrollHeight - window.innerHeight,
+    // kursor POZA strefą górną — inaczej blokuje chowanie (kontrakt niżej)
+    await page.mouse.move(600, 500);
+
+    await expect(nav).not.toHaveAttribute("data-hidden", "");
+    await scrollPageTo(page, 600);
+    await expect(nav).toHaveAttribute("data-hidden", "");
+    // pasek naprawdę wyjechał poza viewport (transform -125%, przejście
+    // .4s — poll doczekuje końca animacji; tolerancja na subpiksele)
+    await expect
+      .poll(async () => {
+        const box = await nav.boundingBox();
+        return box ? box.y + box.height : Number.NaN;
+      })
+      .toBeLessThanOrEqual(1);
+
+    // powrót po > NAV_UP_REVEAL_PX scrolla w górę
+    await scrollPageTo(page, 600 - (NAV_UP_REVEAL_PX + 40));
+    await expect(nav).not.toHaveAttribute("data-hidden", "");
+    await expect
+      .poll(async () => {
+        const box = await nav.boundingBox();
+        return box ? Math.abs(box.y) : Number.NaN;
+      })
+      .toBeLessThan(1);
+  });
+
+  test("auto-hide: u samej góry strony pasek jest zawsze widoczny", async ({
+    page,
+  }) => {
+    await gotoReady(page, WORK_INDEX_PATH);
+    await ensureScrollRoom(page);
+    const nav = page.locator("[data-nav]");
+    await page.mouse.move(600, 500);
+    await scrollPageTo(page, 600);
+    await expect(nav).toHaveAttribute("data-hidden", "");
+    await scrollPageTo(page, 0);
+    await expect(nav).not.toHaveAttribute("data-hidden", "");
+  });
+
+  test("auto-hide: kursor w górnej strefie ekranu przywołuje pasek", async ({
+    page,
+  }) => {
+    await gotoReady(page, WORK_INDEX_PATH);
+    await ensureScrollRoom(page);
+    const nav = page.locator("[data-nav]");
+    await page.mouse.move(600, 500);
+    await scrollPageTo(page, 600);
+    await expect(nav).toHaveAttribute("data-hidden", "");
+    // wjazd kursora w strefę górną (poniżej progu 96px/12vh)
+    await page.mouse.move(600, 40);
+    await expect(nav).not.toHaveAttribute("data-hidden", "");
+    // wyjazd ze strefy przy braku scrolla w górę — pasek chowa się z powrotem
+    await page.mouse.move(600, 500);
+    await expect(nav).toHaveAttribute("data-hidden", "");
+  });
+
+  test("auto-hide: otwarty dropdown blokuje chowanie (rozszerzona strefa kursora)", async ({
+    page,
+  }) => {
+    await gotoReady(page, WORK_INDEX_PATH);
+    await ensureScrollRoom(page);
+    const nav = page.locator("[data-nav]");
+    const toggle = page.locator("[data-dropdown-toggle]");
+    const panel = page.locator("[data-dropdown-panel]");
+
+    await toggle.click();
+    await expect(panel).toBeVisible();
+    // kursor pod dolną krawędzią panelu — poniżej bazowej strefy górnej,
+    // ale wciąż w strefie rozszerzonej o NAV_ZONE_PANEL_PAD_PX (gotcha
+    // z designu: pasek nie może uciec spod otwartego panelu)
+    const pbox = await panel.boundingBox();
+    expect(pbox).not.toBeNull();
+    const yInExtendedZone = pbox!.y + pbox!.height + NAV_ZONE_PANEL_PAD_PX / 2;
+    await page.mouse.move(600, yInExtendedZone);
+
+    await scrollPageTo(page, 600);
+    await expect(nav).not.toHaveAttribute("data-hidden", "");
+    await expect(panel).toBeVisible();
+
+    // zjazd kursora daleko pod panel = koniec ochrony: pasek się chowa,
+    // a schowanie ZAMYKA dropdown (panel nigdy nie zostaje bez paska)
+    await page.mouse.move(600, yInExtendedZone + 400);
+    await expect(nav).toHaveAttribute("data-hidden", "");
+    await expect(panel).toBeHidden();
+    await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  });
+
+  test("kontrakt breakpointu 1024: pasek desktop ↔ burger mobile", async ({
+    page,
+  }) => {
+    await gotoReady(page);
+    await expectBreakpointFlip(
+      page,
+      NAV_DESKTOP_MIN_PX,
+      { nav: ".hdr-nav", burger: ".mbtn" },
+      { nav: "none", burger: "flex" },
+      { nav: "flex", burger: "none" },
     );
-    if (maxScroll > 0) await scrollPageTo(page, maxScroll);
-    await expect(nav).toBeVisible();
-    const box = await nav.boundingBox();
-    expect(box).not.toBeNull();
-    expect(box!.y).toBe(0);
   });
 });
 
@@ -103,7 +237,7 @@ test.describe("nawigacja mobile (bottom sheet)", () => {
     await page.locator("[data-burger]").click();
     const sheet = page.locator("#nav-sheet");
     await expect(sheet).toHaveClass(/is-open/);
-    // Odczekaj wjazd panelu (transform .42s): boundingBox mierzony w trakcie
+    // Odczekaj wjazd panelu (transform .44s): boundingBox mierzony w trakcie
     // animacji celowałby tam, gdzie uchwyt dopiero BĘDZIE — pointerdown
     // trafiałby w nav sheeta i gest w ogóle by się nie zaczynał.
     await page.waitForTimeout(600);
@@ -131,6 +265,32 @@ test.describe("nawigacja mobile (bottom sheet)", () => {
       "aria-expanded",
       "false",
     );
+  });
+
+  test("akordeon O nas w sheecie rozwija podlinki i nawiguje", async ({
+    page,
+  }) => {
+    await gotoReady(page);
+    await page.locator("[data-burger]").click();
+    const accBtn = page.locator("#nav-sheet [data-acc-toggle]");
+    const sub = page.locator(`#nav-sheet .m-sub-link[href="${EKIPA_PATH}"]`);
+
+    await expect(accBtn).toHaveAttribute("aria-expanded", "false");
+    await expect(sub).not.toBeInViewport();
+    await accBtn.click();
+    await expect(accBtn).toHaveAttribute("aria-expanded", "true");
+    await expect(sub).toBeVisible();
+
+    // drugi klik zwija
+    await accBtn.click();
+    await expect(accBtn).toHaveAttribute("aria-expanded", "false");
+    await expect(sub).not.toBeInViewport();
+
+    // rozwiń ponownie i nawiguj
+    await accBtn.click();
+    await sub.click();
+    await expect(page).toHaveURL(/\/ekipa-eha\/?$/);
+    await expect(page.locator("main h1")).toBeVisible();
   });
 
   test("pozycja Obsługa budowy w sheecie nawiguje na podstronę", async ({
@@ -173,6 +333,34 @@ test("logo w pasku prowadzi na stronę główną z podstrony", async ({ page }) 
   await page.locator(".hdr-logo").click();
   await expect(page).toHaveURL(/\/$/);
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
+});
+
+test("stopka: NA GÓRĘ wraca na początek strony", async ({ page }) => {
+  await gotoReady(page, WORK_INDEX_PATH);
+  // szkielet na wysokim viewporcie mieści się bez scrolla — dosztukuj
+  // wysokości (kontrakt dotyczy przycisku stopki, nie długości strony)
+  await ensureScrollRoom(page);
+  const top = page.locator("footer [data-totop]");
+  await top.scrollIntoViewIfNeeded();
+  await settle(page);
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+  await top.click();
+  // scroll jest płynny (behavior: smooth) — doczekaj dojazdu
+  await expect
+    .poll(() => page.evaluate(() => window.scrollY), { timeout: 5000 })
+    .toBe(0);
+});
+
+test("stopka: telefony i mail złożone w JS w slotach antyscrapingowych", async ({
+  page,
+}) => {
+  await gotoReady(page);
+  const maciek = page.locator('footer a[data-tel="maciek"]');
+  const lukasz = page.locator('footer a[data-tel="lukasz"]');
+  const mail = page.locator("footer a[data-mail]");
+  await expect(maciek).toHaveAttribute("href", "tel:+48696513743");
+  await expect(lukasz).toHaveAttribute("href", "tel:+48533328356");
+  await expect(mail).toHaveAttribute("href", "mailto:eha@pracownia-eha.pl");
 });
 
 test("telefony i mail NIE występują w surowym HTML (antyscraping)", async ({
