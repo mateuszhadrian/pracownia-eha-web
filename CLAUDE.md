@@ -107,9 +107,7 @@ zostają, widoki budowane od nowa wg `docs/design/` — patrz
   przemianowane + 4 duble scalone (tabela w `docs/design/README.md`),
   `paper-background.png` 2,2 MB → tileable `paper-tile.webp` 12 KB;
   ekosystem `.claude` przepisany na eha.
-  UWAGI dla kolejnych etapów: kontrakt „katalog ma ≥1 wpis"
-  w `cms-contract.test.ts` ma TYMCZASOWY `.skipIf` (usunąć w Etapie 2
-  razem z pierwszymi wpisami); JSON-LD ma dane eha, ale węzły NIE są
+  UWAGI dla kolejnych etapów: JSON-LD ma dane eha, ale węzły NIE są
   renderowane (podpięcie + geo = Etap 6); specy sekcji szablonu
   skasowane — wracają z widokami w Etapie 4 (mechanizm work bez
   własnych speców do 4.3; przy porcie zajrzyj do speców work
@@ -121,27 +119,32 @@ zostają, widoki budowane od nowa wg `docs/design/` — patrz
 - **Etap 1B (The Camels/DNS) — WYKONANY** (2026-08-22): domena
   `pracownia-eha.pl` + `www` Active, poczta `eha@` przetestowana
   (SPF/DKIM/DMARC = PASS), `prod-smoke` zielony.
-- **Etap 2 (CMS + media + logowanie) — W TOKU** (2026-08-22):
-  - chmura WYKONANA: R2 `eha-media` (EU) + `media.pracownia-eha.pl`
-    (Image Transformations „This zone only", CORS prod + localhost:4321),
-    token `eha-media-sveltia` (Object R&W, scope bucket); konto GitHub
-    **`pracownia-eha-cms`** (login `eha-cms` był zajęty; mail `eha@`,
-    collaborator write, 2FA celowo wyłączone do Etapu 7); Worker
-    `sveltia-cms-auth-eha` → `auth.pracownia-eha.pl` (nowsza wersja
-    sveltia-cms-auth: flow postMessage, `/auth` odpowiada 200, nie 302;
-    `ALLOWED_DOMAINS=pracownia-eha.pl,localhost`); OAuth App „Panel
-    treści — pracownia-eha.pl" (callback `auth.pracownia-eha.pl/callback`).
-  - kod WYKONANY: schemat docelowy §6.1 w trzech miejscach (`place`,
-    `paras[]` min 1, `specs` min 1) + testy kontraktu; `config.yml`
-    z `access_key_id` R2.
-  - DO DOMKNIĘCIA: `account_id` R2 w `config.yml` (32 hex — test
-    kontraktu „dane R2 nie są placeholderami" pilnuje); User-bypass
-    Always dla `pracownia-eha-cms` w rulesecie (gh api); logowanie do
-    `/admin`; spike MP4 (~20 MB) → R2 + range requests; 6 wpisów wg
-    `DATA` z `docs/design/export/realizacje.html` przez panel (zdjęcia
-    po `optimize-images.mjs`; filmy klienta presetem HandBrake — jeśli
-    brak, dobić później); po pierwszych wpisach USUNĄĆ `.skipIf`
-    z kontraktu „katalog ma ≥1 wpis" (`tests/unit/cms-contract.test.ts`).
+- **Etap 2 (CMS + media + logowanie) — WYKONANY** (2026-08-23):
+  - chmura: R2 `eha-media` (EU) + `media.pracownia-eha.pl` (Image
+    Transformations „This zone only", CORS prod + localhost:4321), token
+    `eha-media-sveltia` (Object R&W, scope bucket; `account_id` /
+    `access_key_id` jawne w `config.yml`, Secret w menedżerze haseł);
+    konto GitHub **`pracownia-eha-cms`** (login `eha-cms` był zajęty;
+    mail `eha@`, collaborator write, 2FA celowo wyłączone do Etapu 7;
+    **User-bypass Always w rulesecie** — `actor_type: "User"`, dodany
+    przez `gh api`, jak w delung); Worker `sveltia-cms-auth-eha` →
+    `auth.pracownia-eha.pl` (nowsza sveltia-cms-auth: flow postMessage,
+    `/auth` odpowiada 200; zmienne `GITHUB_CLIENT_ID`,
+    `GITHUB_CLIENT_SECRET`, `ALLOWED_DOMAINS=pracownia-eha.pl,localhost` —
+    ⚠️ zmiana zmiennych w dashboardzie tworzy WERSJĘ, którą trzeba
+    jeszcze WDROŻYĆ: `wrangler versions deploy <id>@100%`; ponowny
+    `wrangler deploy` bez `keep_vars = true` czyści zmienne); OAuth App „Panel
+    treści — pracownia-eha.pl".
+  - kod: schemat docelowy §6.1 w trzech miejscach (`place`, `paras[]`
+    min 1, `specs` min 1) + testy kontraktu (w tym strażnik „R2 bez
+    placeholderów": lokalnie skip z powodem, w CI pada).
+  - weryfikacje: logowanie `/admin` kontem `pracownia-eha-cms` OK;
+    spike MP4 24 MB przez pole edytora → R2, `206` + `Content-Range`
+    (plan A potwierdzony); 6 wpisów testowych wg `DATA` z designu
+    (zdjęcia z eksportu; TEN SAM film testowy w 3 wpisach, `0:31` —
+    klient podmieni na prawdziwe presetem HandBrake); `.skipIf`
+    z kontraktu „≥1 wpis" usunięty; `CHECK_REMOTE_MEDIA=1` zielony.
+  - `e2e` na main CELOWO czerwony do Etapu 3 (brak fixture'u visual).
 
 ## Dokumentacja
 
