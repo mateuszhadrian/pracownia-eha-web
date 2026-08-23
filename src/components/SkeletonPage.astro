@@ -32,7 +32,9 @@ const { title, heading, description } = Astro.props;
     min-height: 60vh;
     max-width: var(--col);
     margin-inline: auto;
-    padding: clamp(48px, 10vw, 96px) var(--pad);
+    /* pasek chrome'u jest FIXED (4.1) — treść startuje pod nim */
+    padding: calc(var(--hdr-h) + clamp(28px, 6vw, 72px)) var(--pad)
+      clamp(48px, 10vw, 96px);
   }
   .skel h1 {
     font-family: var(--font-serif), serif;

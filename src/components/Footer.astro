@@ -1,365 +1,517 @@
 ---
-// Stopka `ft` — STAN SZKIELETU Etapu 0: mechanika odziedziczona z szablonu
-// z brandingiem EH/A. Docelowa stopka eha (2 kolumny linków O NAS/OFERTA,
-// „NA GÓRĘ ↑") wchodzi w Etapie 4.1 wg docs/design/index.html. Ciemna,
-// full-bleed — strony renderują ją bez własnych wrapperów z paddingiem.
-// Tel/mail składane w JS (antyscraping — sloty lib/contact-details,
-// DWA telefony MACIEK/ŁUKASZ). Kolory lokalne, niezależne od tokenów
-// strony (stopka jest ciemna niezależnie od motywu widoku).
-import { footerNavItems } from "@/i18n/nav";
+// Stopka `ft` wg designów eha (Etap 4.1, docs/analiza-chrome.md §1):
+// ciemny atrament #211D18 / krem #F5EFE3, desktop = lewe pasmo brandowe
+// + 3 kolumny (O NAS / OFERTA / KONTAKT), mobile = tabela etykieta/wartość
+// z kreskowanymi separatorami (etykieta drugiej kolumny w mobile: STRONY —
+// tak w eksporcie). Wchodzi na WSZYSTKICH 8 trasach, także /realizacje/
+// (brak w eksporcie = niedoróbka, E14). Tel/mail przez sloty antyscrapingowe
+// (lib/contact-details, D-CH5). „NA GÓRĘ ↑" podpięte (w eksporcie martwy
+// href="#"). Linia „Realizacja: hadrianm" — decyzja Mateusza 2026-08-23:
+// zostaje, dyskretnie w pasie dolnym. Kolory lokalne, niezależne od tokenów
+// strony (stopka jest ciemna niezależnie od motywu widoku, D-CH9).
+import { aboutNavItems, mainNavItems } from "@/i18n/nav";
 import { CONTACT_PATH, HOME_PATH, POLICY_PATH } from "@/lib/routes";
-import logo from "@/assets/logo/eha-logo.svg";
+import logoSign from "@/assets/logo/eha-logo-sign.svg";
+import koparka from "@/assets/koparka-rycina1.webp";
 ---
 
 <footer class="ft">
-  <div class="wrap ft-in">
-    <div>
-      <a class="ft-logo" href={HOME_PATH}>
-        <img
-          src={logo.src}
-          width={logo.width}
-          height={logo.height}
-          alt="Pracownia EH/A"
-        />
-      </a>
-      <p class="ft-desc">
-        Remonty domów z historią — ciesielstwo, murarstwo, sklepienia, fizyka
-        budowli i instalacje.
-      </p>
+  <div class="ft-main">
+    <div class="ft-side">
+      <img
+        class="ft-ryc"
+        src={koparka.src}
+        width={koparka.width}
+        height={koparka.height}
+        alt=""
+        aria-hidden="true"
+        loading="lazy"
+        decoding="async"
+      />
+      <div class="ft-brand">
+        {/* znaczek jako maska CSS na jednym cache'owanym SVG (jak w pasku) */}
+        <a
+          class="ft-logo"
+          href={HOME_PATH}
+          aria-label="Pracownia EH/A — strona główna"
+          style={`--sign:url('${logoSign.src}')`}
+        >
+          <span class="ft-sign" aria-hidden="true"></span>
+        </a>
+        <span class="ft-tag">
+          REMONTY DOMÓW Z HISTORIĄ<br />DOLNY ŚLĄSK · CAŁA POLSKA
+        </span>
+        <p class="ft-motto dOnly">
+          Dom z historią zasługuje na spokojny remont.
+        </p>
+      </div>
     </div>
-    <nav class="ft-nav" aria-label="Stopka — strony">
-      <span class="ft-h dOnly">Strony</span>
-      {
-        footerNavItems.map((item) => (
-          <a href={item.href} class:list={[item.href === POLICY_PATH && "dim"]}>
-            {item.label}
-          </a>
-        ))
-      }
-    </nav>
-    <div class="ft-call">
-      <span class="ft-h">Zadzwoń do nas</span>
-      {
-        /* numery/adres i href składane w JS (antyscraping); placeholder
-           href = poprawny link także bez JS (i tak hidden do czasu
-           złożenia); etykiety imion zostają w SSR */
-      }
-      <a class="ft-tel" data-tel="maciek" href={CONTACT_PATH} hidden>
-        <b>Maciek</b>
-        <span data-slot>Telefon</span>
-      </a>
-      <a class="ft-tel" data-tel="lukasz" href={CONTACT_PATH} hidden>
-        <b>Łukasz</b>
-        <span data-slot>Telefon</span>
-      </a>
-      <a class="ft-mail" data-mail href={CONTACT_PATH} hidden>E-mail</a>
-      <div class="ft-soc">
-        <a
-          href="https://www.instagram.com/pracowniaeha/"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <rect
-              x="2"
-              y="2"
-              width="20"
-              height="20"
-              rx="5"
-              stroke="currentColor"
-              stroke-width="1.5"></rect>
-            <circle
-              cx="12"
-              cy="12"
-              r="4"
-              stroke="currentColor"
-              stroke-width="1.5"></circle>
-            <circle cx="17.5" cy="6.5" r="1" fill="currentColor"></circle>
-          </svg>
-          Instagram
-        </a>
-        <a
-          href="https://www.facebook.com/profile.php?id=61574396106209"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-              d="M15 8h2.5V4.5H15c-2.5 0-4 1.5-4 4V11H8.5v3.5H11v5h3.5v-5h2.6l.4-3.5h-3V8.8c0-.5.3-.8 1-.8z"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linejoin="round"></path>
-          </svg>
-          Facebook
-        </a>
+    <div class="ft-cols">
+      <div class="ft-c">
+        <div class="ft-g">
+          <span class="ft-h">O NAS</span>
+          <div class="ft-gc">
+            {aboutNavItems.map((item) => <a href={item.href}>{item.label}</a>)}
+            <a class="dim" href={POLICY_PATH}>Polityka prywatności</a>
+          </div>
+        </div>
+      </div>
+      <div class="ft-c">
+        <div class="ft-g">
+          <span class="ft-h">
+            <b class="dOnly">OFERTA</b><b class="mOnly">STRONY</b>
+          </span>
+          <div class="ft-gc">
+            {mainNavItems.map((item) => <a href={item.href}>{item.label}</a>)}
+            <span class="ft-area dOnly">
+              Dolny Śląsk, okolice Jeleniej Góry<br />w promieniu ok. godziny
+              drogi
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="ft-c">
+        <span class="ft-h dOnly">KONTAKT</span>
+        <div class="ft-g">
+          <span class="ft-h mOnly">TEL.</span>
+          <div class="ft-gc">
+            {
+              /* numery i href składane w JS (antyscraping); etykiety imion
+                 zostają w SSR, numer idzie do [data-slot] */
+            }
+            <a class="ft-tel" data-tel="maciek" href={CONTACT_PATH} hidden>
+              <span data-slot>Telefon</span>
+              <b>Maciek</b>
+            </a>
+            <a class="ft-tel" data-tel="lukasz" href={CONTACT_PATH} hidden>
+              <span data-slot>Telefon</span>
+              <b>Łukasz</b>
+            </a>
+          </div>
+        </div>
+        <div class="ft-g">
+          <span class="ft-h mOnly">E-MAIL</span>
+          <div class="ft-gc">
+            <a class="ft-mail" data-mail href={CONTACT_PATH} hidden>E-mail</a>
+          </div>
+        </div>
+        <div class="ft-g mOnly-g">
+          <span class="ft-h mOnly">OBSZAR</span>
+          <div class="ft-gc">
+            <span class="ft-area mOnly">
+              Dolny Śląsk, okolice Jeleniej Góry<br />w promieniu ok. godziny
+              drogi
+            </span>
+          </div>
+        </div>
+        <div class="ft-g">
+          <span class="ft-h mOnly">DANE</span>
+          <div class="ft-gc">
+            <span class="ft-dane">
+              Na budowie pn.–pt. 8:00–16:00<br />NIP 527-244-99-69<br />REGON
+              540526327
+            </span>
+          </div>
+        </div>
+        <div class="ft-g">
+          <span class="ft-h mOnly">SOCIAL</span>
+          <div class="ft-gc ft-soc">
+            <a
+              href="https://www.instagram.com/pracowniaeha/"
+              target="_blank"
+              rel="noopener noreferrer">Instagram</a
+            >
+            <a
+              href="https://www.facebook.com/profile.php?id=61574396106209"
+              target="_blank"
+              rel="noopener noreferrer">Facebook</a
+            >
+          </div>
+        </div>
       </div>
     </div>
   </div>
-  <div class="wrap ft-bot">
-    <p>© 2026 PRACOWNIA EH/A. Wszystkie prawa zastrzeżone.</p>
-    <p class="ft-legal">
-      Pracownia Łukasz Jarosz-Jarszewski · Strzyżowiec 30, 59-610 Wleń · NIP
-      527-244-99-69 · REGON 540526327
-    </p>
-    <p class="ft-cred">
-      Realizacja: <a href="https://hadrianm.pl" target="_blank" rel="noopener"
-        >hadrianm</a
-      > — pracownia stron i aplikacji
-    </p>
+  <div class="ft-bot">
+    <div class="ft-bot-in">
+      <span class="ft-copy">
+        © 2026 PRACOWNIA EH/A
+        <a href={POLICY_PATH}>POLITYKA PRYWATNOŚCI</a>
+      </span>
+      <span class="ft-cred">
+        REALIZACJA: <a href="https://hadrianm.pl" target="_blank" rel="noopener"
+          >HADRIANM</a
+        >
+      </span>
+      <button class="ft-top" type="button" data-totop>NA GÓRĘ ↑</button>
+    </div>
   </div>
 </footer>
 
 <style>
   .ft {
-    /* kolory stopki NIEZALEŻNE od tokenów strony (D-CH9) */
-    --ft-bg: #161616;
-    /* alphy drobnych tekstów podbite względem eksportu (.28–.45 → AA) */
-    --ft-dim: rgba(255, 255, 255, 0.64);
-    --ft-soft: rgba(255, 255, 255, 0.75);
-    --ft-hair: rgba(255, 255, 255, 0.14);
+    /* kolory stopki NIEZALEŻNE od tokenów strony (D-CH9); paleta designu.
+       Alphy drobnych tekstów podbite względem eksportu (.5 → AA na ciemnym,
+       ratchet axe jest pusty i taki ma zostać). */
+    --ft-bg: #211d18;
+    --ft-cream: #f5efe3;
+    --ft-dim: rgba(245, 239, 227, 0.64);
+    --ft-soft: rgba(245, 239, 227, 0.75);
+    --ft-hair: rgba(245, 239, 227, 0.2);
+    --ft-dash: rgba(245, 239, 227, 0.22);
+    position: relative;
     background: var(--ft-bg);
-    color: #fff;
-    padding-top: 46px;
-    padding-bottom: 26px;
+    color: var(--ft-cream);
+    overflow: hidden;
   }
   .ft a {
     color: inherit;
     text-decoration: none;
   }
   .ft a:focus-visible {
-    outline: 2px solid #fff;
+    outline: 2px solid var(--ft-cream);
     outline-offset: 3px;
-  }
-  .wrap {
-    width: 100%;
-    max-width: var(--col);
-    margin-inline: auto;
-    padding-inline: var(--pad);
-  }
-
-  .ft-in {
-    display: flex;
-    flex-direction: column;
-  }
-  .ft-logo {
-    display: block;
-    /* logo EH/A ~kwadratowe — mniejsza szerokość niż poziome logo szablonu */
-    width: clamp(96px, 28vw, 120px);
-  }
-  .ft-logo:hover {
-    opacity: 0.7;
-  }
-  .ft-logo img {
-    display: block;
-    width: 100%;
-    height: auto;
-    /* SVG rysuje atramentem (currentColor→czarny w <img>); stopka jest
-       ciemna — odwracamy do bieli. Docelowy wariant koloru: Etap 4.1. */
-    filter: invert(1);
-  }
-  .ft-desc {
-    display: none;
-  }
-
-  .ft-nav {
-    display: flex;
-    flex-direction: column;
-    margin-top: 28px;
-    border-top: 1px solid var(--ft-hair);
-  }
-  .ft-nav a {
-    padding: 15px 0;
-    border-bottom: 1px solid var(--ft-hair);
-    font-family: var(--font-body), sans-serif;
-    font-weight: 300;
-    font-size: 15px;
-    line-height: 1;
-  }
-  .ft-nav a:hover {
-    opacity: 0.6;
   }
 
   .ft-h {
-    font-family: var(--font-display), sans-serif;
-    font-weight: 500;
-    font-size: 10.5px;
-    line-height: 1;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--ft-dim);
-  }
-  .ft-call {
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-    margin-top: 28px;
-  }
-  .ft-tel {
-    display: flex;
-    align-items: baseline;
-    gap: 12px;
-    font-family: var(--font-body), sans-serif;
-    font-weight: 300;
-    font-size: clamp(19px, 5.38vw, 24px);
-    line-height: 1.2;
-  }
-  .ft-tel b {
     font-family: var(--font-mono), monospace;
-    font-weight: 500;
-    font-size: 11px;
+    font-weight: 600;
+    font-size: 10px;
+    line-height: 1.4;
     letter-spacing: 0.16em;
     text-transform: uppercase;
     color: var(--ft-dim);
   }
-  .ft-tel[hidden],
-  .ft-mail[hidden] {
-    display: none;
-  }
-  .ft-tel:hover,
-  .ft-mail:hover {
-    opacity: 0.6;
-  }
-  .ft-mail {
-    font-family: var(--font-body), sans-serif;
-    font-weight: 300;
-    font-size: 14.5px;
-    line-height: 1.4;
-    color: var(--ft-soft);
-    overflow-wrap: anywhere;
-  }
-  .ft-soc {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 24px;
-  }
-  .ft-soc a {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 999px;
-    padding: 10px 17px;
-    font-family: var(--font-display), sans-serif;
-    font-weight: 300;
-    font-size: 13.5px;
-    white-space: nowrap;
-  }
-  .ft-soc a:hover {
-    background: rgba(255, 255, 255, 0.08);
-  }
-  .ft-soc svg {
-    width: 15px;
-    height: 15px;
-    flex: none;
-  }
 
-  .ft-bot {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    margin-top: 30px;
-    padding-top: 18px;
-    border-top: 1px solid var(--ft-hair);
+  /* ── pasmo brandowe ── */
+  .ft-ryc {
+    position: absolute;
+    pointer-events: none;
+    opacity: 0.24;
+    filter: invert(1) sepia(0.25);
   }
-  .ft-bot p {
-    margin: 0;
-    font-family: var(--font-body), sans-serif;
-    font-weight: 300;
+  .ft-logo {
+    display: block;
+    width: 50px;
+    color: var(--ft-cream);
+  }
+  .ft-logo:hover {
+    opacity: 0.75;
+  }
+  .ft-sign {
+    display: block;
+    width: 100%;
+    /* proporcje viewBoxu eha-logo-sign.svg (2836×2832) */
+    aspect-ratio: 2836 / 2832;
+    background: currentColor;
+    -webkit-mask: var(--sign) no-repeat center / contain;
+    mask: var(--sign) no-repeat center / contain;
+  }
+  .ft-tag {
+    font-family: var(--font-mono), monospace;
+    font-weight: 400;
+    font-size: 10px;
+    line-height: 1.7;
+    letter-spacing: 0.2em;
     color: var(--ft-dim);
   }
-  .ft-bot p:first-child {
-    font-size: 11.5px;
-    line-height: 1.7;
+  .ft-motto {
+    margin: 0;
+    font-family: var(--font-serif), serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: clamp(15px, 1.25vw, 20px);
+    line-height: 1.4;
+    color: rgba(245, 239, 227, 0.9);
+    text-wrap: pretty;
   }
-  .ft-legal {
-    font-size: 11px;
-    line-height: 1.7;
+
+  /* ── linki grup ── */
+  .ft-gc a {
+    font-family: var(--font-body), sans-serif;
+    font-weight: 400;
+    font-size: 14.5px;
+    line-height: 1.4;
   }
-  .ft-cred {
-    font-size: 10.5px;
-    line-height: 1.7;
+  .ft-gc a:hover {
+    color: #d8cfb8;
   }
-  .ft-bot a {
+  .ft-gc a.dim {
     color: var(--ft-soft);
-    text-decoration: underline;
-    text-underline-offset: 2px;
   }
-  .ft-bot a:hover {
-    color: #fff;
+  .ft-area {
+    font-family: var(--font-body), sans-serif;
+    font-weight: 400;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: rgba(245, 239, 227, 0.9);
+  }
+  .ft-dane {
+    font-family: var(--font-mono), monospace;
+    font-weight: 400;
+    font-size: 12.5px;
+    line-height: 1.75;
+    color: var(--ft-soft);
+  }
+  .ft-tel {
+    display: flex;
+    align-items: baseline;
+    gap: 9px;
+  }
+  .ft-tel[hidden],
+  .ft-mail[hidden] {
+    display: none !important;
+  }
+  .ft-tel [data-slot] {
+    font-family: var(--font-mono), monospace;
+    font-size: 15px;
+  }
+  .ft-tel b {
+    font-family: var(--font-mono), monospace;
+    font-weight: 400;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ft-dim);
+  }
+  .ft-gc a.ft-mail {
+    font-family: var(--font-mono), monospace;
+    font-size: 14px;
+    overflow-wrap: anywhere;
+  }
+  .ft-gc.ft-soc {
+    flex-direction: row;
+    gap: 18px;
+  }
+  .ft-gc.ft-soc a {
+    font-family: var(--font-mono), monospace;
+    font-size: 13px;
+    border-bottom: 1px dashed rgba(245, 239, 227, 0.35);
+    padding-bottom: 2px;
+  }
+
+  /* ── pas dolny ── */
+  .ft-bot {
+    position: relative;
+    border-top: 1px solid var(--ft-hair);
+    background: rgba(0, 0, 0, 0.16);
+  }
+  .ft-bot-in {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }
+  .ft-copy,
+  .ft-cred,
+  .ft-top {
+    font-family: var(--font-mono), monospace;
+    font-weight: 400;
+    font-size: 10.5px;
+    line-height: 1.6;
+    letter-spacing: 0.06em;
+    color: var(--ft-dim);
+  }
+  .ft-copy a,
+  .ft-cred a {
+    color: var(--ft-soft);
+    border-bottom: 1px dashed rgba(245, 239, 227, 0.3);
+  }
+  .ft-copy a:hover,
+  .ft-cred a:hover,
+  .ft-top:hover {
+    color: #d8cfb8;
+  }
+  .ft-top {
+    flex: none;
+    padding: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--ft-soft);
+  }
+  .ft-top:focus-visible {
+    outline: 2px solid var(--ft-cream);
+    outline-offset: 3px;
+  }
+
+  /* ════ MOBILE <1024 ════ */
+  @media (max-width: 1023.98px) {
+    .dOnly {
+      display: none !important;
+    }
+
+    .ft-main {
+      position: relative;
+      max-width: 700px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 30px var(--pad) 0;
+    }
+    .ft-ryc {
+      right: -40px;
+      bottom: 54px;
+      width: 200px;
+      height: auto;
+      opacity: 0.26;
+    }
+    .ft-brand {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--ft-hair);
+    }
+    .ft-tag {
+      text-align: right;
+    }
+
+    /* tabela etykieta/wartość: kolumna 74px + treść, kreskowane separatory */
+    .ft-cols,
+    .ft-c {
+      display: contents;
+    }
+    .ft-g {
+      position: relative;
+      display: grid;
+      grid-template-columns: 74px 1fr;
+      gap: 0 10px;
+      padding: 14px 0;
+      border-bottom: 1px dashed var(--ft-dash);
+    }
+    .ft-c:last-child .ft-g:last-child {
+      border-bottom: none;
+    }
+    .ft-gc {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .ft-bot-in {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 16px var(--pad) 22px;
+      flex-wrap: wrap;
+    }
+    .ft-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      align-items: flex-start;
+    }
+    .ft-cred {
+      order: 3;
+      width: 100%;
+    }
   }
 
   /* ════ DESKTOP ≥1024 (para: NAV_DESKTOP_MIN_PX) ════ */
   @media (min-width: 1024px) {
-    .ft {
-      padding-top: clamp(52px, 4.86vw, 70px);
-      padding-bottom: 30px;
+    .mOnly,
+    .mOnly-g {
+      display: none !important;
     }
-    .ft-in {
+
+    /* gutter chrome'u z designów (--g eksportów), spójnie z paskiem */
+    .ft {
+      --ft-g: clamp(60px, 9.72vw, 160px);
+    }
+    .ft-main {
       display: grid;
-      grid-template-columns: 1.4fr 1fr 1fr;
-      gap: clamp(34px, 4.17vw, 60px);
-      padding-bottom: clamp(38px, 3.61vw, 52px);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      grid-template-columns: minmax(0, 27.8fr) minmax(0, 72.2fr);
+    }
+    .ft-side {
+      position: relative;
+      background: rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+    }
+    .ft-ryc {
+      left: -2vw;
+      bottom: -1.8vw;
+      width: clamp(190px, 18.1vw, 289px);
+      height: auto;
+      opacity: 0.22;
+    }
+    .ft-brand {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(13px, 1.25vw, 20px);
+      padding: clamp(34px, 3.2vw, 52px) clamp(30px, 4.2vw, 67px)
+        clamp(30px, 2.8vw, 44px) var(--ft-g);
     }
     .ft-logo {
-      width: clamp(96px, 8.4vw, 120px);
+      width: clamp(54px, 5.14vw, 82px);
     }
-    .ft-desc {
-      display: block;
-      margin: 24px 0 0;
-      font-family: var(--font-body), sans-serif;
-      font-weight: 300;
-      font-size: clamp(13px, 1.01vw, 14.5px);
-      line-height: 1.7;
-      color: var(--ft-dim);
-      max-width: 38ch;
+    .ft-tag {
+      font-size: clamp(9.5px, 0.7vw, 11px);
+      line-height: 1.9;
     }
-    .ft-nav {
-      margin-top: 0;
-      border: none;
-      gap: 14px;
+
+    .ft-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: clamp(28px, 3.6vw, 58px);
+      padding: clamp(34px, 3.2vw, 52px) var(--ft-g) clamp(30px, 2.8vw, 44px)
+        clamp(34px, 4.86vw, 78px);
     }
-    .ft-nav a {
-      padding: 0;
-      border: none;
-      font-size: clamp(14px, 1.04vw, 15px);
+    .ft-c {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(10px, 0.9vw, 14px);
     }
-    .ft-nav a.dim {
-      color: var(--ft-dim);
+    .ft-g,
+    .ft-gc {
+      display: contents;
+    }
+    /* social zostaje poziomym rzędem (display:contents wcisnąłby linki
+       w pion kolumny) */
+    .ft-gc.ft-soc {
+      display: flex;
     }
     .ft-h {
-      letter-spacing: 0.2em;
+      font-size: clamp(9px, 0.63vw, 10px);
+      padding-bottom: 10px;
+      border-bottom: 1px dashed rgba(245, 239, 227, 0.25);
     }
-    .ft-call {
-      margin-top: 0;
-      gap: 10px;
+    .ft-gc a {
+      font-size: clamp(13px, 1.04vw, 15px);
     }
-    .ft-tel {
-      font-size: clamp(21px, 1.81vw, 26px);
+    .ft-area {
+      margin-top: 8px;
+      font-size: clamp(12px, 0.94vw, 15px);
     }
-    .ft-mail {
-      font-size: clamp(14px, 1.04vw, 15px);
-      line-height: 1.5;
+    .ft-tel [data-slot] {
+      font-size: clamp(13px, 1.04vw, 16.5px);
     }
-    .ft-soc {
-      margin-top: 16px;
+    .ft-gc a.ft-mail {
+      font-size: clamp(12.5px, 0.97vw, 15.5px);
     }
-    .ft-bot {
-      flex-direction: row;
-      align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-      margin-top: 0;
-      padding-top: 22px;
-      border: none;
+    .ft-dane {
+      margin-top: 4px;
+      font-size: clamp(11px, 0.87vw, 14px);
     }
-  }
+    .ft-gc.ft-soc {
+      margin-top: 4px;
+    }
+    .ft-gc.ft-soc a {
+      font-size: clamp(12px, 0.94vw, 15px);
+    }
 
-  /* mobile: nagłówek „Strony" tylko desktop (jak dOnly z eksportu) */
-  @media (max-width: 1023.98px) {
-    .dOnly {
-      display: none;
+    .ft-bot-in {
+      padding: clamp(13px, 1.1vw, 18px) var(--ft-g);
+    }
+    .ft-copy {
+      display: flex;
+      align-items: center;
+      gap: clamp(14px, 1.53vw, 24px);
+    }
+    .ft-copy,
+    .ft-cred,
+    .ft-top {
+      font-size: clamp(10px, 0.73vw, 11.5px);
     }
   }
 </style>
@@ -367,7 +519,16 @@ import logo from "@/assets/logo/eha-logo.svg";
 <script>
   import { fillContactSlots } from "@/lib/contact-details";
 
-  // Telefon/mail stopki (antyscraping — D-CH5). Idempotentne względem
+  // Telefony/mail stopki (antyscraping — D-CH5). Idempotentne względem
   // wypełnienia z Navbara (te same wartości do tych samych slotów).
   fillContactSlots();
+
+  // „NA GÓRĘ ↑" — w eksporcie martwy href="#"; tu przycisk z powrotem na
+  // górę (akcja, nie nawigacja — semantyka buttona, reguła anchor-is-valid).
+  document.querySelectorAll<HTMLButtonElement>("[data-totop]").forEach((b) => {
+    b.addEventListener("click", () => {
+      const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+    });
+  });
 </script>

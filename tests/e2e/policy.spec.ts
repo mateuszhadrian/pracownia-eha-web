@@ -50,8 +50,13 @@ test(`${POLICY_PATH}: komplet 9 sekcji RODO (od Etapu 4.6)`, async ({
 });
 
 test("link polityki w stopce jest na każdym szkielecie", async ({ page }) => {
+  // Stopka 4.1 linkuje politykę dwa razy: kolumna O NAS + pas dolny.
   await gotoReady(page, "/");
-  await expect(page.locator(`.ft-nav a[href="${POLICY_PATH}"]`)).toBeAttached();
+  await expect(
+    page.locator(`footer a[href="${POLICY_PATH}"]`).first(),
+  ).toBeAttached();
   await gotoReady(page, CONTACT_PATH);
-  await expect(page.locator(`.ft-nav a[href="${POLICY_PATH}"]`)).toBeAttached();
+  await expect(
+    page.locator(`footer a[href="${POLICY_PATH}"]`).first(),
+  ).toBeAttached();
 });

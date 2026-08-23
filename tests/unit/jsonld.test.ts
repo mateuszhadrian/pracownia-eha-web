@@ -144,10 +144,11 @@ describe("spójność z resztą strony", () => {
     expect(footer).toContain(FACEBOOK_URL);
   });
 
-  it("adres z JSON-LD zgadza się z tym drukowanym w stopce", () => {
+  it("NIP z JSON-LD zgadza się z tym drukowanym w stopce", () => {
+    // Stopka 4.1 wg designu drukuje TYLKO NIP/REGON + godziny (decyzja
+    // Mateusza 2026-08-23, docs/analiza-chrome.md §5) — adres i nazwa
+    // prawna zostają wyłącznie w JSON-LD (węzły wchodzą w Etapie 6).
     const footer = readFileSync("src/components/Footer.astro", "utf8");
-    expect(footer).toContain(BUSINESS.street);
-    expect(footer).toContain(BUSINESS.locality);
     // NIP w stopce drukowany z myślnikami (527-244-99-69), w JSON-LD jako
     // vatID PL5272449969 — porównujemy po samych cyfrach.
     const digits = BUSINESS.vatID.replace(/\D/g, "");
