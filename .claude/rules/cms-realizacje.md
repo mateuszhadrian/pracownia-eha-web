@@ -32,8 +32,7 @@ paths:
   `src/content/realizacje` (git nie przechowuje pustych katalogów) — testy
   muszą to przeżyć, patrz `.claude/rules/testing.md`. Czerwony jest wtedy
   dokładnie jeden test: kontrakt „katalog zawiera co najmniej jeden wpis"
-  (⚠️ do Etapu 2 kontrakt ma tymczasowy `.skipIf` — kolekcja startuje
-  pusta, treść wchodzi dopiero panelem; w Etapie 2 `.skipIf` USUŃ).
+  (od Etapu 2 bez `.skipIf` — treść weszła panelem).
 
 ## Schemat danych — zmiana w TRZECH miejscach naraz
 

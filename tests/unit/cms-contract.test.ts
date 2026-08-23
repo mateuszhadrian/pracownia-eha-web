@@ -14,22 +14,18 @@ import { readRealizacja, realizacjeFiles } from "../helpers/realizacje";
 const files = realizacjeFiles();
 
 describe("kontrakt CMS: src/content/realizacje/*.json", () => {
-  // ⚠️ TYMCZASOWY skipIf (Etap 0): kolekcja jest pusta, bo treść wchodzi
-  // WYŁĄCZNIE przez panel w Etapie 2 (E13 — zero hardkodu realizacji).
-  // W Etapie 2, razem z pierwszymi wpisami, USUŃ `.skipIf(...)` — od tego
-  // momentu pusty katalog ma świecić dokładnie tym jednym testem
-  // (reguła cms-realizacje.md).
-  it.skipIf(files.length === 0)(
-    "katalog zawiera co najmniej jeden wpis",
-    () => {
-      expect(
-        files.length,
-        "Brak realizacji w src/content/realizacje. Strona zbuduje się i wdroży " +
-          "bez nich, ale lista będzie pusta, a scena na stronie głównej — pustym " +
-          "blokiem. Dodaj co najmniej jedną realizację w panelu /admin.",
-      ).toBeGreaterThan(0);
-    },
-  );
+  // Pusty katalog ma świecić DOKŁADNIE tym jednym testem (reguła
+  // cms-realizacje.md): usunięcie ostatniego wpisu w panelu kasuje cały
+  // katalog, strona dalej się buduje i deployuje — to jest sygnał dla
+  // człowieka, nie wybuch modułu.
+  it("katalog zawiera co najmniej jeden wpis", () => {
+    expect(
+      files.length,
+      "Brak realizacji w src/content/realizacje. Strona zbuduje się i wdroży " +
+        "bez nich, ale lista będzie pusta, a scena na stronie głównej — pustym " +
+        "blokiem. Dodaj co najmniej jedną realizację w panelu /admin.",
+    ).toBeGreaterThan(0);
+  });
 
   it.each(files)("%s: poprawny JSON zgodny ze schemą", (name) => {
     const data: unknown = readRealizacja(name);

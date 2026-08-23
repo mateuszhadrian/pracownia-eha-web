@@ -51,9 +51,7 @@ Etap 3).
   lista jest stanem dopuszczalnym (strona buduje się i deployuje).
   JEDYNYM sygnałem o braku treści jest kontrakt „katalog zawiera co
   najmniej jeden wpis" w `tests/unit/cms-contract.test.ts` — to on ma
-  świecić na czerwono, z komunikatem napisanym dla człowieka
-  (⚠️ do Etapu 2 ma tymczasowy `.skipIf` — kolekcja startuje pusta;
-  w Etapie 2 `.skipIf` USUŃ).
+  świecić na czerwono, z komunikatem napisanym dla człowieka.
 - Baseline'y (`tests/visual/__screenshots__/`, commitowane): DWA komplety
   per plik — `*-darwin.png` (lokalnie: `pnpm test:visual:update`) i
   `*-linux.png` (ręcznie wyzwalany workflow `update-visual-baselines.yml`,
