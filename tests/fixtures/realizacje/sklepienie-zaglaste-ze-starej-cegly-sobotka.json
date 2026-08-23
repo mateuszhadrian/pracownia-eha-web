@@ -1,0 +1,56 @@
+{
+  "slug": "sklepienie-zaglaste-ze-starej-cegly-sobotka",
+  "order": 30,
+  "title": "Sklepienie żaglaste ze starej cegły",
+  "place": "Sobótka",
+  "year": "2024",
+  "paras": [
+    "Pierwotne sklepienie runęło jeszcze w latach dziewięćdziesiątych, a strop zastąpiono płytą żelbetową opartą na murach, które nie były na to przygotowane. Zaczęliśmy od zdjęcia płyty i przywrócenia murom właściwej pracy statycznej.",
+    "Sklepienie odtworzyliśmy na krążynach, w cegle rozbiórkowej dobranej pod wymiar historyczny, na zaprawie wapiennej. Każdy pas murowaliśmy z osobnym pomiarem strzałki wysklepka.",
+    "Po rozdeskowaniu sklepienie przejęło obciążenie bez najmniejszego pęknięcia. Wnętrze wróciło do pierwotnej proporcji i skali."
+  ],
+  "gallery": [
+    {
+      "type": "photo",
+      "image": "https://media.pracownia-eha.pl/realizacje/sklepienie-zagliste-web.webp"
+    },
+    {
+      "type": "photo",
+      "image": "https://media.pracownia-eha.pl/realizacje/cegla-i-kamien.webp"
+    },
+    {
+      "type": "photo",
+      "image": "https://media.pracownia-eha.pl/realizacje/technical-ryc.webp"
+    }
+  ],
+  "specs": [
+    {
+      "label": "Rodzaj obiektu",
+      "value": "Oficyna murowana"
+    },
+    {
+      "label": "Zakres prac",
+      "value": "Odtworzenie sklepień"
+    },
+    {
+      "label": "Rozpiętość",
+      "value": "4,2 m"
+    },
+    {
+      "label": "Czas realizacji",
+      "value": "4 miesiące"
+    },
+    {
+      "label": "Materiał",
+      "value": "Cegła rozbiórkowa"
+    },
+    {
+      "label": "Zaprawa",
+      "value": "Wapienna"
+    },
+    {
+      "label": "Rok zakończenia",
+      "value": "2024"
+    }
+  ]
+}

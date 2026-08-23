@@ -1,8 +1,8 @@
 # Codzienny proces pracy (od Etapu 1A)
 
-> **Status:** AKTUALNE (2026-08-21). Obowiązuje od założenia repo i rulesetu
-> `main-protection`. Konwencja jak daily-workflow delung-web, dostosowana do
-> stanu eha (do Etapu 3 required check to tylko `quality`).
+> **Status:** AKTUALNE (2026-08-23, po Etapie 3). Obowiązuje od założenia
+> repo i rulesetu `main-protection`. Konwencja jak daily-workflow
+> delung-web; od Etapu 3 required checks = `quality` + `e2e` + `lighthouse`.
 >
 > **Zasada nadrzędna: `main` = produkcja.** Każdy merge do main uruchamia
 > automatyczny deploy Cloudflare Pages (`pracownia-eha-web.pages.dev`;
@@ -71,17 +71,20 @@ stronę (+ `/admin` od Etapu 2).
 
 ## Checki na PR — co jest wymagane, a co świeci na czerwono celowo
 
-| Check        | Status dziś (przed Etapem 3)                    | Required? |
-| ------------ | ------------------------------------------------ | --------- |
-| `quality`    | musi być ✅ (format → lint → typecheck → unit → build) | **TAK** |
-| `e2e`        | ❌ CELOWO: `test:visual` nie ma speców/fixture'a (wchodzą w Etapie 3); same testy e2e przechodzą | nie |
-| `lighthouse` | ✅ (progi tymczasowe, luźne — realne budżety w Etapie 3) | nie |
-| `prod-smoke` | ❌ CELOWO: czeka na `https://pracownia-eha.pl` (Etap 1B) | n/d (po merge'u) |
+| Check        | Co sprawdza (od Etapu 3)                                   | Required? |
+| ------------ | ---------------------------------------------------------- | --------- |
+| `quality`    | format → lint → typecheck → unit (w tym kontrakt fixture'u) → build | **TAK** |
+| `e2e`        | `test:e2e` na treści produkcyjnej + `build:visual` + `test:visual` vs baseline'y `*-linux.png` | **TAK** |
+| `lighthouse` | budżety ratchet `lighthouserc*.cjs` (mobile + desktop, `/` i `/polityka-prywatnosci/`) | **TAK** |
+| `prod-smoke` | po merge'u: czeka na świeży deploy i sonduje `https://pracownia-eha.pl` | n/d |
 
-**Czerwony `e2e`/`prod-smoke` przed Etapami 3/1B NIE blokuje merge'a
-i nie jest powodem do „naprawiania".** W Etapie 3 required checks
-rozszerzają się do kompletu `quality`+`e2e`+`lighthouse` (klik w rulesecie)
-i od tego momentu wszystko ma być zielone.
+**Od Etapu 3 wszystko ma być zielone.** Czerwony `e2e` z pixel-diffem
+oglądasz w artefakcie `playwright-report` (before/after/diff) — zmiana
+wyglądu zamierzona = nowe baseline'y (oba komplety) w tym samym PR,
+nigdy „odświeżenie" dla zielonego. Czerwony `lighthouse` = regres
+budżetu; progów NIE ruszamy w PR-ze feature'a (osobny commit, Twoja
+decyzja, po pomiarze w CI). Czerwony `prod-smoke` bywa wyścigiem
+z deployem Cloudflare — `workflow_dispatch` i sprawdź ponownie.
 
 ## Przypadki specjalne
 
