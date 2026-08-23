@@ -1,0 +1,57 @@
+{
+  "slug": "dom-z-bala-przeniesiony-i-zrekonstruowany-czernica",
+  "order": 10,
+  "title": "Dom z bala przeniesiony i zrekonstruowany",
+  "place": "Czernica",
+  "year": "2023",
+  "paras": [
+    "Dom rozebraliśmy w całości w Dolinie Baryczy, oznaczając każdą belkę zrębu, a następnie postawiliśmy go ponownie na nowym fundamencie w Czernicy. Wymiana dotyczyła wyłącznie elementów, których stan techniczny to wymuszał.",
+    "Ubytki w drewnie uzupełniliśmy metodą flekowania, zachowując oryginalne ślady obróbki ciesielskiej. Połączenia odtworzyliśmy w technologii historycznej — bez wkrętów i płytek kolczastych.",
+    "Przestrzenie między belkami wypełniliśmy gliną z sieczką, a całość zabezpieczyliśmy pokostem lnianym. Dom oddycha tak, jak sto lat temu, ale spełnia dzisiejsze wymagania cieplne."
+  ],
+  "gallery": [
+    {
+      "type": "photo",
+      "image": "https://media.pracownia-eha.pl/realizacje/dom-z-bala2.webp"
+    },
+    {
+      "type": "photo",
+      "image": "https://media.pracownia-eha.pl/realizacje/dom-z-bala3.webp"
+    },
+    {
+      "type": "video",
+      "video": "https://media.pracownia-eha.pl/realizacje/20251024_120816_conv.mp4",
+      "duration": "0:31"
+    }
+  ],
+  "specs": [
+    {
+      "label": "Rodzaj obiektu",
+      "value": "Dom zrębowy"
+    },
+    {
+      "label": "Zakres prac",
+      "value": "Translokacja"
+    },
+    {
+      "label": "Powierzchnia",
+      "value": "148 m²"
+    },
+    {
+      "label": "Czas realizacji",
+      "value": "11 miesięcy"
+    },
+    {
+      "label": "Materiał",
+      "value": "Sosna, glina"
+    },
+    {
+      "label": "Ciesiołka",
+      "value": "Jaskółczy ogon"
+    },
+    {
+      "label": "Rok zakończenia",
+      "value": "2023"
+    }
+  ]
+}
