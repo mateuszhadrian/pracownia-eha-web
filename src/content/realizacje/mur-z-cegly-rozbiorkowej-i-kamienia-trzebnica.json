@@ -1,0 +1,57 @@
+{
+  "slug": "mur-z-cegly-rozbiorkowej-i-kamienia-trzebnica",
+  "order": 40,
+  "title": "Mur z cegły rozbiórkowej i kamienia",
+  "place": "Trzebnica",
+  "year": "2023",
+  "paras": [
+    "Budynek gospodarczy stał na kamiennym fundamencie z rozmytą zaprawą, z pęknięciem biegnącym przez całą wysokość ściany szczytowej. Mur rozebraliśmy odcinkami, każdorazowo podpierając partie wyżej położone.",
+    "Kamień odzyskaliśmy w całości i przemurowaliśmy na zaprawie wapienno-trasowej, uzupełniając brakujące partie cegłą rozbiórkową z tego samego regionu. Spoiny wykonaliśmy licem cofniętym, jak w oryginale.",
+    "Ścianę szczytową spięliśmy dodatkowo ukrytym ściągiem stalowym — jedynym współczesnym elementem w całej konstrukcji."
+  ],
+  "gallery": [
+    {
+      "type": "photo",
+      "image": "https://media.pracownia-eha.pl/realizacje/cegla-i-kamien.webp"
+    },
+    {
+      "type": "video",
+      "video": "https://media.pracownia-eha.pl/realizacje/20251024_120816_conv.mp4",
+      "duration": "0:31"
+    },
+    {
+      "type": "photo",
+      "image": "https://media.pracownia-eha.pl/realizacje/sklepienie-zagliste-web.webp"
+    }
+  ],
+  "specs": [
+    {
+      "label": "Rodzaj obiektu",
+      "value": "Budynek gospodarczy"
+    },
+    {
+      "label": "Zakres prac",
+      "value": "Przemurowania"
+    },
+    {
+      "label": "Powierzchnia",
+      "value": "96 m²"
+    },
+    {
+      "label": "Czas realizacji",
+      "value": "6 miesięcy"
+    },
+    {
+      "label": "Materiał",
+      "value": "Cegła, granit"
+    },
+    {
+      "label": "Zaprawa",
+      "value": "Wapienno-trasowa"
+    },
+    {
+      "label": "Rok zakończenia",
+      "value": "2023"
+    }
+  ]
+}
