@@ -90,7 +90,11 @@ function paintShot() {
   if (next) next.disabled = shot === n - 1;
 }
 
-/** Licznik nadąża za ręcznym przewijaniem karuzeli (mobile). */
+/** Licznik i kreski-wskaźniki nadążają za ręcznym przewijaniem
+ *  karuzeli (mobile). Kreski TAKŻE tu, nie tylko w paintShot (skin 4.3
+ *  pokazuje je na mobile — w delung były schowane i scroll ich nie
+ *  malował); paintShot nie może być wołany ze scrolla, bo sam
+ *  scrolluje tor (walczyłby z palcem). */
 function onTrackScroll(e: Event) {
   if (desktopMQ.matches) return;
   const track = e.currentTarget as HTMLElement;
@@ -103,6 +107,9 @@ function onTrackScroll(e: Event) {
   const count = q<HTMLElement>("[data-shotcount]");
   if (count)
     count.textContent = `${pad(shot + 1)} / ${pad(track.children.length)}`;
+  overlayEl()
+    ?.querySelectorAll<HTMLElement>("[data-dashes] [data-shot]")
+    .forEach((d, i) => d.classList.toggle("on", i === shot));
 }
 
 /* ── montaż treści projektu w hoście ── */
@@ -525,6 +532,35 @@ if (document.readyState === "loading") {
 } else {
   bindChrome();
 }
+
+// Klawiatura ←/→ (E7b — adaptacja eha, jedyna zmiana mechanizmu):
+// w podglądzie pełnoekranowym przełącza kadry podglądu, poza nim —
+// kadry galerii detalu na DESKTOPIE (mobile karuzelą rządzi dotyk).
+// Bez zapętlenia (mechanika delung: krańce jak `disabled` przyciski);
+// Esc-hierarchia bez zmian (capture niżej).
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+  const el = overlayEl();
+  if (!el || el.hidden) return;
+  const dir = e.key === "ArrowRight" ? 1 : -1;
+  if (lbOpen) {
+    const n = lbTrackEl()?.children.length ?? 0;
+    const next = lbIndex + dir;
+    if (next < 0 || next >= n) return;
+    e.preventDefault();
+    lbIndex = next;
+    pauseLbVideos();
+    paintLb();
+    return;
+  }
+  if (!desktopMQ.matches) return;
+  const n = q<HTMLElement>("[data-track]")?.children.length ?? 0;
+  const next = shot + dir;
+  if (next < 0 || next >= n) return;
+  e.preventDefault();
+  shot = next;
+  paintShot();
+});
 
 // Esc w podglądzie pełnoekranowym zamyka TYLKO podgląd (capture — musi
 // ubiec bąbelkowy keydown overlay.ts, który zamknąłby cały detal).

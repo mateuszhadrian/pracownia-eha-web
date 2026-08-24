@@ -7,7 +7,7 @@
 // strona jest w pełni statyczna i kompletna (sections.md).
 import Footer from "@/components/Footer.astro";
 import Navbar from "@/components/navbar/Navbar.astro";
-import HomeBackdrop from "@/components/sections/home/HomeBackdrop.astro";
+import PaperBackdrop from "@/components/PaperBackdrop.astro";
 import HomeEkipa from "@/components/sections/home/HomeEkipa.astro";
 import HomeHero from "@/components/sections/home/HomeHero.astro";
 import HomeKompetencje from "@/components/sections/home/HomeKompetencje.astro";
@@ -36,7 +36,7 @@ const DESCRIPTION =
   <Navbar />
 
   <main class="home">
-    <HomeBackdrop />
+    <PaperBackdrop />
     <HomeHero />
     <HomeEkipa />
     <HomeRealizacje />
@@ -85,7 +85,8 @@ const DESCRIPTION =
     /* ryciny wystają za krawędzie — clip bez tworzenia scrollera */
     overflow-x: clip;
     /* kalibracja tła per widok (README designów): baza kremowa jak
-       w eksporcie + duży skan papieru (HomeBackdrop, z-index -1 —
+       w eksporcie + duży skan papieru (PaperBackdrop — od 4.3 wspólny
+       z /realizacje/, z-index -1 —
        stąd isolation); kafelek body zostaje pod chrome'em innych tras */
     position: relative;
     isolation: isolate;

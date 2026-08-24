@@ -1,18 +1,25 @@
 ---
-// JEDEN overlay detalu realizacji (część 4.4, D-R3) — port elementu `dt`
-// z docs/design/realizacje.html: <1024 bottom sheet 96svh (grab-handle,
-// swipe-down z overlay.ts), ≥1024 modal 1200×740 wyśrodkowany. Wybór
-// wariantu to czysty CSS przy WORK_DESKTOP_MIN_PX (koniec sheetMQ/760 —
-// domknięcie D-SG6); zmiana progu przy otwartym detalu ZAMYKA go
-// (open-detail.ts, reguła sections.md).
+// JEDEN overlay detalu realizacji (Etap 4.3) — skin wg eksportu
+// docs/design/export/realizacje.html (analiza-realizacje §1–2):
+// <1024 bottom sheet 90 % na papierze (grabber, X, swipe-down
+// z overlay.ts), ≥1024 modal min(1260px, max(720px, 100vw−180px))
+// × 86 vh wyśrodkowany (57 % kadr / 43 % treść). Wybór wariantu to
+// czysty CSS przy WORK_DESKTOP_MIN_PX; zmiana progu przy otwartym
+// detalu ZAMYKA go (open-detail.ts, reguła sections.md).
 //
-// Treść (dt-head/txt/gal/about/specs/foot) klonuje open-detail.ts
-// z <template data-work-detail={slug}> do hosta [data-work-host];
-// projnav (strzałki poprzednia/następna realizacja, desktop) to chrome —
-// siedzi POZA panelem (fixed w rodzicu .dt-ov; wewnątrz panelu psułby go
-// transform modala), open-detail.ts stopuje propagację kliknięć, żeby
-// delegacja overlay.ts nie wzięła ich za klik w tło.
-// Konsumenci: WorkIndexPage (/realizacje/) i HomeRealizacje (zajawka).
+// Treść klonuje open-detail.ts z <template data-work-detail={slug}>
+// do hosta [data-work-host]; projnav (strzałki poprzednia/następna
+// realizacja, desktop) to chrome — siedzi POZA panelem (fixed
+// w rodzicu .dt-ov; wewnątrz panelu psułby go transform modala),
+// open-detail.ts stopuje propagację kliknięć, żeby delegacja
+// overlay.ts nie wzięła ich za klik w tło. Kolejność `.dt` przed
+// `.lb` w DOM = twarde założenie portu.
+//
+// Podgląd pełnoekranowy (E7): kadr = CAŁE zdjęcie/wideo
+// `object-fit: contain` na czarnym pełnym ekranie (bez ramy 330/412
+// delung); licznik mobilny na stałym dolnym pasie. Klawiatura ←/→
+// w podglądzie i w galerii detalu — open-detail.ts.
+// Konsument: realizacje.astro (strona główna linkuje płasko — E5).
 ---
 
 <div
@@ -29,7 +36,7 @@
       <span aria-hidden="true"></span>
     </div>
     {
-      /* X sheeta (mobile) — dokładnie jak karta kategorii 4.3; desktop
+      /* X sheeta (mobile) — kwadrat na papierze (design); desktop
         zamyka X w dt-head klonowanym z treścią. */
     }
     <button class="dt-xm" type="button" data-overlay-close aria-label="Zamknij">
@@ -39,11 +46,11 @@
   </div>
 
   {
-    /* ── Podgląd pełnoekranowy galerii (korekta Mateusza po testach 4.4):
-      tap/klik w kadr otwiera pełny ekran; slajdy wypełnia open-detail.ts
-      klonami kadrów bieżącego projektu. data-overlay-panel TAKŻE tutaj —
-      dla delegacji overlay.ts klik w podgląd nie jest „klikiem w tło"
-      (inaczej zamykałby cały detal). ── */
+    /* ── Podgląd pełnoekranowy galerii: tap/klik w kadr otwiera pełny
+      ekran; slajdy wypełnia open-detail.ts klonami kadrów bieżącego
+      projektu. data-overlay-panel TAKŻE tutaj — dla delegacji
+      overlay.ts klik w podgląd nie jest „klikiem w tło" (inaczej
+      zamykałby cały detal). ── */
   }
   <div
     class="lb"
@@ -83,23 +90,21 @@
     <div class="lb-bar">
       <span class="lb-nav">
         <button type="button" data-lb-prev aria-label="Poprzednie zdjęcie">
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <svg viewBox="0 0 11 18" fill="none" aria-hidden="true">
             <path
-              d="M15 5l-7 7 7 7"
-              stroke="#fff"
+              d="M9.5 1L1.5 9l8 8"
+              stroke="currentColor"
               stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"></path>
+              stroke-linecap="round"></path>
           </svg>
         </button>
         <button type="button" data-lb-next aria-label="Następne zdjęcie">
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <svg viewBox="0 0 11 18" fill="none" aria-hidden="true">
             <path
-              d="M9 5l7 7-7 7"
-              stroke="#fff"
+              d="M1.5 1l8 8-8 8"
+              stroke="currentColor"
               stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"></path>
+              stroke-linecap="round"></path>
           </svg>
         </button>
       </span>
@@ -116,13 +121,12 @@
       data-prevproj
       aria-label="Poprzednia realizacja"
     >
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <svg viewBox="0 0 11 18" fill="none" aria-hidden="true">
         <path
-          d="M15 5l-7 7 7 7"
-          stroke="#fff"
+          d="M9.5 1L1.5 9l8 8"
+          stroke="currentColor"
           stroke-width="1.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"></path>
+          stroke-linecap="round"></path>
       </svg>
     </button>
     <button
@@ -131,13 +135,12 @@
       data-nextproj
       aria-label="Następna realizacja"
     >
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <svg viewBox="0 0 11 18" fill="none" aria-hidden="true">
         <path
-          d="M9 5l7 7-7 7"
-          stroke="#fff"
+          d="M1.5 1l8 8-8 8"
+          stroke="currentColor"
           stroke-width="1.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"></path>
+          stroke-linecap="round"></path>
       </svg>
     </button>
   </div>
@@ -151,9 +154,12 @@
     z-index: 100;
     display: flex;
     align-items: flex-end;
-    background: rgba(0, 0, 0, 0.45);
+    /* scrim sheeta (design): przyciemnienie + delikatny blur */
+    background: rgba(24, 19, 14, 0.55);
+    -webkit-backdrop-filter: blur(1.5px);
+    backdrop-filter: blur(1.5px);
     opacity: 0;
-    transition: opacity 0.32s ease;
+    transition: opacity 0.34s ease;
   }
   .dt-ov[hidden] {
     display: none;
@@ -162,14 +168,21 @@
     opacity: 1;
   }
 
-  /* ── Panel: mobile = bottom sheet 96svh ── */
+  /* ── Panel: mobile = bottom sheet 90 % na papierze (design) ──
+     Papier także na SAMYM panelu (korekta Mateusza): pas z grabberem
+     leży nad scrollerem dt-body, więc bez własnej tekstury świecił
+     gołym kremem nad papierową treścią. Te same warstwy co dt-body
+     (statyczne — panel nie scrolluje). */
   .dt {
     position: relative;
     width: 100%;
-    height: 96svh;
-    background: #fff;
-    border-radius: 22px 22px 0 0;
-    box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.18);
+    height: 90%;
+    background:
+      linear-gradient(rgba(250, 247, 241, 0.8), rgba(250, 247, 241, 0.8)),
+      url("../../../assets/paper-background.webp") top center / 100% auto
+        repeat-y #faf7f1;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -10px 40px rgba(24, 19, 14, 0.32);
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -191,48 +204,49 @@
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    padding-top: 12px;
+    padding-top: 9px;
     cursor: grab;
     touch-action: none;
   }
   .dt-grab span {
     width: 40px;
     height: 4px;
-    border-radius: 99px;
-    background: rgba(0, 0, 0, 0.14);
+    border-radius: 2px;
+    background: rgba(33, 29, 24, 0.22);
   }
 
-  /* X sheeta — 1:1 ze stylem karty kategorii (4.3) */
+  /* X sheeta — kwadrat na papierze (design: 38 px, obrys) */
   .dt-xm {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 44px;
-    height: 44px;
+    top: 16px;
+    right: 14px;
+    width: 38px;
+    height: 38px;
+    box-sizing: border-box;
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 3;
-    background: none;
-    border: none;
+    background: rgba(236, 232, 221, 0.94);
+    border: 1px solid rgba(33, 29, 24, 0.12);
     padding: 0;
     cursor: pointer;
   }
   .dt-xm:hover {
-    opacity: 0.55;
+    background: #e3decf;
   }
   .dt-xm i {
     position: relative;
-    width: 20px;
-    height: 20px;
+    width: 13px;
+    height: 13px;
     display: block;
   }
   .dt-xm i b {
     position: absolute;
-    top: 9px;
+    top: 6px;
     left: 0;
-    width: 20px;
-    height: 1.5px;
+    width: 13px;
+    height: 1.6px;
     background: var(--ink);
   }
   .dt-xm i b:first-child {
@@ -250,6 +264,18 @@
     -webkit-overflow-scrolling: touch;
     display: flex;
     flex-direction: column;
+    /* Papier pod CAŁĄ scrollowaną treścią (korekta Mateusza): duży skan
+       jak na podstronie, zapętlony repeat-y. Eksport kładł warstwę
+       absolute inset:0 w scrollerze — kryła tylko pierwszy ekran, niżej
+       świeciła biel (wada makiety). background-attachment: local
+       przypina tło do TREŚCI scrollera, więc maluje się na całej
+       wysokości przewijania; „opacity .2" tekstury robi półprzezroczysta
+       warstwa kremu nad nią (background nie ma własnego opacity). */
+    background:
+      linear-gradient(rgba(250, 247, 241, 0.8), rgba(250, 247, 241, 0.8)),
+      url("../../../assets/paper-background.webp") top center / 100% auto
+        repeat-y #faf7f1;
+    background-attachment: local, local;
   }
   .dt-body::-webkit-scrollbar {
     display: none;
@@ -336,12 +362,10 @@
     transform: rotate(-45deg);
   }
 
-  /* licznik mobile: pionowo — pod dolną krawędzią kadru, przy lewej
-     krawędzi ekranu (kadr 330/412 w pionie ogranicza szerokość, więc
-     połowa wysokości kadru = min(50svh, 100vw·412/660)); poziomo —
-     lewy dolny róg ekranu */
+  /* licznik mobile: stały dolny pas ekranu (E7a — kadr `contain` nie ma
+     stałej krawędzi, do której dałoby się go przywiązać) */
   .lb-count {
-    font-family: var(--font-display), sans-serif;
+    font-family: var(--font-mono), monospace;
     font-weight: 500;
     font-size: 11px;
     line-height: 1;
@@ -350,15 +374,12 @@
   }
   .lb-count--m {
     position: absolute;
-    left: var(--pad);
-    top: calc(50% + min(50svh, 100vw * 412 / 660) + 14px);
+    left: 0;
+    right: 0;
+    bottom: max(16px, env(safe-area-inset-bottom));
+    text-align: center;
     z-index: 2;
-  }
-  @media (orientation: landscape) {
-    .lb-count--m {
-      top: auto;
-      bottom: 14px;
-    }
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
   }
 
   .lb-bar {
@@ -376,17 +397,18 @@
   .lb-nav {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 8px;
   }
   .lb-nav button {
     appearance: none;
     padding: 0;
     cursor: pointer;
-    width: 46px;
-    height: 46px;
-    border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.7);
-    background: rgba(255, 255, 255, 0.14);
+    width: 52px;
+    height: 52px;
+    box-sizing: border-box;
+    border: 1px solid rgba(245, 239, 227, 0.5);
+    background: none;
+    color: #f5efe3;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -395,14 +417,14 @@
       background 0.3s ease;
   }
   .lb-nav button:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(245, 239, 227, 0.16);
   }
   .lb-nav button[disabled] {
     opacity: 0.35;
     cursor: default;
   }
   .lb-nav svg {
-    width: 17px;
+    width: 10px;
     height: 17px;
   }
   .lb-side {
@@ -415,27 +437,32 @@
     gap: 6px;
   }
 
-  /* ════ Desktop (≥1024): modal wyśrodkowany, galeria | treść ════ */
+  /* ════ Desktop (≥1024): modal wyśrodkowany, kadr 57 % | treść ════ */
   @media (min-width: 1024px) {
     .dt-ov {
       display: block;
-      background: rgba(12, 11, 10, 0.55);
-      backdrop-filter: blur(3px);
+      /* tło pod modalem (eksport: papier .36 + atrament .216 + blur) —
+         spłaszczone do jednej ciepłoszarej warstwy */
+      background: rgba(155, 150, 141, 0.5);
+      -webkit-backdrop-filter: blur(1.5px);
+      backdrop-filter: blur(1.5px);
     }
     .dt {
       position: absolute;
       left: 50%;
       top: 50%;
-      width: min(1200px, 92vw);
-      height: min(740px, 84vh);
+      /* ≤ 92 vw ZAWSZE (założenie projnav): 100vw−180 < 92 vw poniżej
+         2250 px szerokości, wyżej tnie cap 1260 px */
+      width: min(1260px, max(720px, 100vw - 180px));
+      height: 86vh;
       border-radius: 0;
       flex-direction: row;
-      box-shadow: 0 30px 90px rgba(0, 0, 0, 0.35);
+      box-shadow: 0 24px 70px rgba(16, 12, 8, 0.45);
       opacity: 0;
-      transform: translate(-50%, -46%) scale(0.98);
+      transform: translate(-50%, calc(-50% + 8px)) scale(1);
       transition:
-        opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-        transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        opacity 0.28s ease,
+        transform 0.28s cubic-bezier(0.22, 0.7, 0.15, 1);
     }
     .dt-ov.is-open .dt {
       transform: translate(-50%, -50%) scale(1);
@@ -452,8 +479,8 @@
       order: 1;
     }
 
-    /* podgląd pełnoekranowy: desktop = chevron znika, X + pasek jak
-       galbar modala (strzałki / dashes / licznik na kadrze) */
+    /* podgląd pełnoekranowy: desktop = chevron znika, X + pasek
+       (strzałki / dashes / licznik) na dole */
     .lb-back,
     .lb-count--m {
       display: none;
@@ -475,29 +502,33 @@
       position: fixed;
       top: 50%;
       z-index: 2;
-      width: 54px;
-      height: 54px;
-      margin-top: -27px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.5);
-      background: rgba(255, 255, 255, 0.12);
+      width: 52px;
+      height: 52px;
+      margin-top: -26px;
+      box-sizing: border-box;
+      border: 1px solid rgba(245, 239, 227, 0.5);
+      background: rgba(245, 239, 227, 0.16);
+      color: #f5efe3;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.3s ease;
+      transition:
+        background 0.2s ease,
+        color 0.2s ease;
     }
     .dt-pn:hover {
-      background: rgba(255, 255, 255, 0.28);
+      background: #e3decf;
+      color: var(--ink);
     }
     .dt-pn--prev {
-      left: 24px;
+      left: 19px;
     }
     .dt-pn--next {
-      right: 24px;
+      right: 19px;
     }
     .dt-pn svg {
-      width: 20px;
-      height: 20px;
+      width: 11px;
+      height: 18px;
     }
   }
 
@@ -513,9 +544,9 @@
 <style is:global>
   /* Slajdy podglądu pełnoekranowego tworzy open-detail.ts w runtime
      (klony kadrów galerii BEZ atrybutu scope Astro) — stąd is:global,
-     zawężone do #work-detail. Kadr trzyma format galerii (330/412),
-     wyśrodkowany na czarnym tle: pion → pasy góra/dół, poziom → pasy
-     po bokach (media realizacji mają zawsze ten sam format). */
+     zawężone do #work-detail. E7a: kadr = CAŁE zdjęcie/wideo
+     `object-fit: contain` na czarnym pełnym ekranie — pion dostaje pasy
+     po bokach, poziom góra/dół (filmy klienta bywają pion i poziom). */
   #work-detail .lb-track {
     display: flex;
     height: 100%;
@@ -524,19 +555,13 @@
     flex: none;
     width: 100%;
     height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: relative;
     scroll-snap-align: start;
     scroll-snap-stop: always;
   }
   #work-detail .lb-media {
-    position: relative;
-    aspect-ratio: 330 / 412;
-    width: min(100vw, calc(100svh * 330 / 412));
-    max-height: 100svh;
-    overflow: hidden;
-    background: #111;
+    position: absolute;
+    inset: 0;
   }
   #work-detail .lb-media img,
   #work-detail .lb-media video {
@@ -544,7 +569,14 @@
     inset: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
+    /* pełny podgląd pokazuje zdjęcie bez filtra galerii */
+    filter: none;
+  }
+  /* badge czasu z klonu kadru nie ma sensu w podglądzie (pion różnych
+     formatów) — chowamy, informacja żyje w galerii */
+  #work-detail .lb-media .dt-time {
+    display: none;
   }
   @media (max-width: 1023px) {
     #work-detail .lb-track {
@@ -579,9 +611,9 @@
   #work-detail .lb-dashes button.on {
     background: #fff;
   }
-  /* grający film chowa ikonkę kamery i podpowiedź „…, aby obejrzeć"
+  /* grający film chowa ikonkę kamery i badge „…, aby obejrzeć"
      (open-detail.ts toggluje klasę) — oba znaki mówią o tym samym
-     geście, więc gasną i wracają RAZEM (zgłoszenie rundy 4) */
+     geście, więc gasną i wracają RAZEM */
   #work-detail .lb-slide.is-playing [data-cam],
   #work-detail .lb-slide.is-playing [data-cam-hint] {
     display: none;

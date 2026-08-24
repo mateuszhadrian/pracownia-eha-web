@@ -74,48 +74,6 @@ export function useVisualFixtureGuard(): void {
   });
 }
 
-/** Strażnik zamrożonej treści dla STRONY GŁÓWNEJ (Etap 4.2): zajawka 02
- *  renderuje karty z kolekcji, a `assertVisualFixture` liczy
- *  `<template data-work-detail>`, które wejdą dopiero z widokiem
- *  /realizacje/ (4.3). Do tego czasu liczymy to, co strona główna
- *  faktycznie renderuje: desktopowe polaroidy (min(3, wpisy)) i licznik
- *  mobile „JESZCZE N" (N = wpisy − 3, karta tylko przy N > 0). Build
- *  z treścią panelu (inna liczba wpisów) dostaje jedno czytelne zdanie
- *  zamiast pixel-diffa; przy RÓWNEJ liczbie wpisów różnice treści łapie
- *  już sam pixel-diff. */
-export async function assertHomeVisualFixture(page: Page): Promise<void> {
-  const res = await page.request.get("/");
-  if (!res.ok()) return; // brak strony diagnozuje assertPreview
-  const html = await res.text();
-  const cards = (html.match(/class="[^"]*\bre-pol\b/g) ?? []).length;
-  const counter = /JESZCZE (\d+)/.exec(html)?.[1] ?? null;
-  const expectedCards = Math.min(3, FIXTURE_ENTRIES);
-  const expectedCounter =
-    FIXTURE_ENTRIES > 3 ? String(FIXTURE_ENTRIES - 3) : null;
-  if (cards !== expectedCards || counter !== expectedCounter) {
-    throw new Error(
-      `Testy wizualne wymagają buildu na zamrożonej treści: zajawka ` +
-        `realizacji na "/" ma ${cards} kart i licznik ` +
-        `${counter === null ? "brak" : `„JESZCZE ${counter}"`}, a fixture ` +
-        `(${FIXTURE_ENTRIES} wpisów) daje ${expectedCards} kart i ` +
-        `${expectedCounter === null ? "brak licznika" : `„JESZCZE ${expectedCounter}"`}. ` +
-        `Odpal: pnpm build:visual && pnpm test:visual (zwykły pnpm build ` +
-        `wciąga treść z panelu i rozjeżdża baseline'y).`,
-    );
-  }
-}
-
-/** `beforeAll` strażników strony głównej (preview + zamrożona treść
- *  liczona po zajawce realizacji — patrz assertHomeVisualFixture). */
-export function useHomeVisualFixtureGuard(): void {
-  test.beforeAll(async ({ browser }) => {
-    const page = await browser.newPage();
-    await assertPreview(page);
-    await assertHomeVisualFixture(page);
-    await page.close();
-  });
-}
-
 /** Rejestruje `beforeEach` pomijający testy poza projektem chromium-1920 —
  *  dla speców niezależnych od profilu (meta/treść), które wystarczy
  *  przebiec raz. `reason` pojawia się w raporcie jako powód skipa. */

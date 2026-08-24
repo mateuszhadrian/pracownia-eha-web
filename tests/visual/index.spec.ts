@@ -1,11 +1,11 @@
 // Strona główna (Etap 4.2) — regres wizualny: widok startowy (hero +
 // przezroczysty pasek) i pełna strona na 6 profilach.
 //
-// Strażnik useHomeVisualFixtureGuard: zajawka 02 czyta kolekcję
-// realizacji (analiza H1), więc build pod testem MUSI pochodzić
-// z `pnpm build:visual` (zamrożony fixture: 5 wpisów → „JESZCZE 2");
-// wariant liczący <template data-work-detail> wejdzie z widokiem 4.3,
-// do tego czasu strażnik liczy karty samej zajawki. Okładki kart na
+// Strażnik useVisualFixtureGuard (od 4.3 — wspólny): zajawka 02 czyta
+// kolekcję realizacji (analiza H1), więc build pod testem MUSI
+// pochodzić z `pnpm build:visual` (zamrożony fixture: 5 wpisów →
+// „JESZCZE 2"); strażnik liczy <template data-work-detail> na
+// /realizacje/, które widok 4.3 wreszcie renderuje. Okładki kart na
 // preview to znany 404 transformacji Cloudflare — kafle renderują się
 // jako ciemne karty z tekstem (deterministyczne; wzorzec delung).
 //
@@ -19,11 +19,11 @@
 // stała lista kroków ⇒ ten sam stan końcowy w każdym przebiegu.
 // NIE emulujemy prefers-reduced-motion (bramka js-motion = martwa strona).
 import { expect, test, type Page } from "@playwright/test";
-import { useHomeVisualFixtureGuard } from "../helpers/guards";
+import { useVisualFixtureGuard } from "../helpers/guards";
 import { scrollPageTo, settle } from "../helpers/scroll";
 import { prepareSweep } from "../helpers/visual";
 
-useHomeVisualFixtureGuard();
+useVisualFixtureGuard();
 
 const PATH = "/";
 

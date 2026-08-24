@@ -26,7 +26,6 @@ import {
   OBSLUGA_PATH,
   POLICY_PATH,
   TRADYCJA_PATH,
-  WORK_INDEX_PATH,
 } from "../../src/lib/routes";
 import { usePreviewGuard } from "../helpers/guards";
 import { scrollPageTo, settle } from "../helpers/scroll";
@@ -35,12 +34,12 @@ import { prepareSweep } from "../helpers/visual";
 usePreviewGuard();
 
 // Nazwa pliku baseline'u = slug trasy. Trasa `/` wypadła w Etapie 4.2
-// (własny spec: tests/visual/index.spec.ts).
+// (własny spec: tests/visual/index.spec.ts), `/realizacje/` w 4.3
+// (tests/visual/work-index.spec.ts).
 const ROUTES: { path: string; name: string }[] = [
   { path: EKIPA_PATH, name: "ekipa-eha" },
   { path: KOMPETENCJE_PATH, name: "kompetencje-i-technologie" },
   { path: TRADYCJA_PATH, name: "tradycja-i-ekologia" },
-  { path: WORK_INDEX_PATH, name: "realizacje" },
   { path: OBSLUGA_PATH, name: "obsluga-budowy" },
   { path: CONTACT_PATH, name: "kontakt" },
   { path: POLICY_PATH, name: "polityka-prywatnosci" },

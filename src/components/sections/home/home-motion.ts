@@ -112,7 +112,7 @@ function armReveals(): void {
 function armParallax(): void {
   const rycs = [...document.querySelectorAll<HTMLElement>("[data-plxr]")];
   const photos = [...document.querySelectorAll<HTMLElement>("[data-plx]")];
-  // dryf tła (desktop) — HomeBackdrop; tekstura FIXED przesuwana
+  // dryf tła (desktop) — PaperBackdrop; tekstura FIXED przesuwana
   // transformem modulo okres (kompozytor, bez przemalowań — D-Q1)
   const paperTex = document.querySelector<HTMLElement>("[data-paper-tex]");
   const paperRatio = paperTex ? Number(paperTex.dataset.ratio) : 0;
