@@ -1,7 +1,8 @@
 ---
-// Chrome globalny eha (Etap 4.1, docs/analiza-chrome.md): pasek FIXED
-// nakładkowy wg designów — desktop z dropdownem „O nas" i AUTO-HIDE (E11),
-// mobile z glow czytelności (bez auto-hide — wzorzec 8/8 eksportów) oraz
+// Chrome globalny eha (Etap 4.1, docs/analiza-chrome.md; korekta 4.2 —
+// decyzja Mateusza: glow mobile wycięty, oba progi używają stanu „solid"):
+// pasek FIXED nakładkowy wg designów — desktop z dropdownem „O nas"
+// i AUTO-HIDE (E11), mobile bez auto-hide (wzorzec 8/8 eksportów), z
 // menu mobilnym jako bottom sheet na szkielecie scripts/overlay.ts
 // (focus-trap, Esc, scrim, swipe-down `touch*` — mechanika z kopii delung,
 // NIE ruszać). Skin „papier/atrament" wg eksportów; stany paska:
@@ -29,9 +30,7 @@ const t = {
 ---
 
 <header class="hdr" data-nav>
-  {/* glow czytelności (mobile) — opacity steruje pętla rAF w skrypcie */}
-  <span class="hdr-glow" aria-hidden="true"></span>
-  {/* papierowe tło stanu solid (desktop) */}
+  {/* papierowe tło stanu solid (oba progi — korekta 4.2) */}
   <span class="hdr-bg" aria-hidden="true"></span>
 
   {
@@ -228,28 +227,29 @@ const t = {
     pointer-events: none;
   }
 
-  /* glow czytelności (mobile): gradient papieru + blur, maskowany w dół.
-     Opacity ustawia pętla rAF (0 na górze strony → 0.85 po ~130 px). */
-  .hdr-glow {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    height: 160px;
-    pointer-events: none;
-    opacity: 0;
-    background: linear-gradient(
-      rgba(250, 247, 241, 0.92) 0%,
-      rgba(250, 247, 241, 0.86) 55%,
-      rgba(250, 247, 241, 0) 100%
-    );
-    -webkit-backdrop-filter: blur(9px);
-    backdrop-filter: blur(9px);
-    -webkit-mask-image: linear-gradient(#000 15%, rgba(0, 0, 0, 0) 100%);
-    mask-image: linear-gradient(#000 15%, rgba(0, 0, 0, 0) 100%);
-  }
+  /* papierowe tło stanu solid — wjeżdża opacity po zjechaniu z góry
+     (na `/` próg = [data-navref] − 40 px, bez hero fallback 8 px).
+     Wspólne dla OBU progów (korekta 4.2 — glow mobile zastąpiony tym
+     samym tłem z twardą dolną krawędzią, co na desktopie). */
   .hdr-bg {
-    display: none;
+    position: absolute;
+    inset: 0;
+    /* papier + kafelek przygaszony do ~.2 (poziom tekstury z designu) */
+    background:
+      linear-gradient(rgba(250, 247, 241, 0.8), rgba(250, 247, 241, 0.8)),
+      url("../../assets/paper-tile.webp") repeat var(--hdr-paper);
+    opacity: 0;
+    box-shadow: none;
+    transition:
+      opacity 0.3s ease,
+      box-shadow 0.3s ease;
+  }
+  .hdr[data-solid] .hdr-bg {
+    opacity: 1;
+    /* linia 1 px u dołu (twarda krawędź) + miękki cień pod paskiem */
+    box-shadow:
+      0 1px 0 rgba(33, 29, 24, 0.09),
+      0 10px 30px rgba(33, 29, 24, 0.06);
   }
 
   .hdr-logo {
@@ -570,34 +570,9 @@ const t = {
   /* ════ DESKTOP ≥1024 (para: NAV_DESKTOP_MIN_PX w nav-config.ts) ════ */
   @media (min-width: 1024px) {
     .hdr {
-      /* gutter chrome'u z designów (--g eksportów: 60→160 px) */
-      padding-inline: clamp(60px, 9.72vw, 160px);
+      /* gutter chrome'u z designów — wspólny token --g (global.css, 4.2) */
+      padding-inline: var(--g);
     }
-    .hdr-glow {
-      display: none;
-    }
-    /* papierowe tło stanu solid — wjeżdża opacity po zjechaniu z góry */
-    .hdr-bg {
-      display: block;
-      position: absolute;
-      inset: 0;
-      /* papier + kafelek przygaszony do ~.2 (poziom tekstury z designu) */
-      background:
-        linear-gradient(rgba(250, 247, 241, 0.8), rgba(250, 247, 241, 0.8)),
-        url("../../assets/paper-tile.webp") repeat var(--hdr-paper);
-      opacity: 0;
-      box-shadow: none;
-      transition:
-        opacity 0.3s ease,
-        box-shadow 0.3s ease;
-    }
-    .hdr[data-solid] .hdr-bg {
-      opacity: 1;
-      box-shadow:
-        0 1px 0 rgba(33, 29, 24, 0.09),
-        0 10px 30px rgba(33, 29, 24, 0.06);
-    }
-
     .hdr-logo {
       width: clamp(44px, 4.03vw, 64px);
     }
@@ -741,8 +716,6 @@ const t = {
   import {
     NAV_DESKTOP_MIN_PX,
     NAV_DOWN_DELTA_PX,
-    NAV_GLOW_MAX,
-    NAV_GLOW_RANGE_PX,
     NAV_SOLID_FALLBACK_PX,
     NAV_SOLID_HERO_PAD_PX,
     NAV_TOP_ALWAYS_PX,
@@ -847,35 +820,14 @@ const t = {
         setHidden(true);
     }
 
-    // ── glow mobile: dekoracja zależna od scrolla wygładzana WŁASNĄ pętlą
-    // rAF (scroll.md/D-Q1 — Safari dostarcza `scroll` rzadziej, niż
-    // przewija); scroll strony zostaje natywny. ──
-    const glow = hdr.querySelector<HTMLElement>(".hdr-glow")!;
-    const glowTarget = () =>
-      Math.min(1, window.scrollY / NAV_GLOW_RANGE_PX) * NAV_GLOW_MAX;
-    let glowCur: number | null = null;
-    let glowRaf = 0;
-    const paintGlow = () => {
-      glowRaf = 0;
-      const t = glowTarget();
-      glowCur = glowCur === null ? t : glowCur + (t - glowCur) * 0.18;
-      if (Math.abs(t - glowCur) < 0.002) glowCur = t;
-      glow.style.opacity = glowCur.toFixed(3);
-      if (glowCur !== t) glowRaf = requestAnimationFrame(paintGlow);
-    };
-    const scheduleGlow = () => {
-      if (!glowRaf) glowRaf = requestAnimationFrame(paintGlow);
-    };
-
     function onScroll() {
       const y = window.scrollY;
       const d = y - lastY;
       lastY = y;
+      // stan solid działa na OBU progach (korekta 4.2 — mobile dostaje
+      // to samo papierowe tło zamiast dawnego glow)
       setSolid(y > solidAt());
-      if (!desktopMQ.matches) {
-        scheduleGlow();
-        return;
-      }
+      if (!desktopMQ.matches) return;
       if (y <= NAV_TOP_ALWAYS_PX) {
         upAcc = 0;
         setHidden(false);
@@ -896,7 +848,6 @@ const t = {
     document.addEventListener("mousemove", onMove, { passive: true });
     document.documentElement.addEventListener("mouseleave", onLeave);
     onScroll();
-    if (!desktopMQ.matches) paintGlow();
 
     // ── menu mobilne: bottom sheet przez overlay.ts ──
     let isOpen = false;

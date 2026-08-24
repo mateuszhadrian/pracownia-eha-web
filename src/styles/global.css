@@ -76,6 +76,9 @@ html {
     --pad: clamp(34px, 3.89vw, 56px);
     --col: 1520px;
     --hdr-h: 72px;
+    /* Gutter chrome'u i sekcji desktop (--g eksportów designów, Etap 4.2):
+       wspólny margines boczny Navbara, Footera i sekcji strony głównej. */
+    --g: clamp(60px, 9.72vw, 160px);
   }
 }
 

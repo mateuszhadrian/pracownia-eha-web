@@ -5,10 +5,11 @@
 // z kreskowanymi separatorami (etykieta drugiej kolumny w mobile: STRONY —
 // tak w eksporcie). Wchodzi na WSZYSTKICH 8 trasach, także /realizacje/
 // (brak w eksporcie = niedoróbka, E14). Tel/mail przez sloty antyscrapingowe
-// (lib/contact-details, D-CH5). „NA GÓRĘ ↑" podpięte (w eksporcie martwy
-// href="#"). Linia „Realizacja: hadrianm" — decyzja Mateusza 2026-08-23:
-// zostaje, dyskretnie w pasie dolnym. Kolory lokalne, niezależne od tokenów
-// strony (stopka jest ciemna niezależnie od motywu widoku, D-CH9).
+// (lib/contact-details, D-CH5). Korekta Mateusza 4.2: przycisk „NA GÓRĘ ↑"
+// WYCIĘTY, a linia „Realizacja: hadrianm" przeszła na jego miejsce
+// (prawa strona pasa dolnego, równo z linią POLITYKI PRYWATNOŚCI).
+// Kolory lokalne, niezależne od tokenów strony (stopka jest ciemna
+// niezależnie od motywu widoku, D-CH9).
 import { aboutNavItems, mainNavItems } from "@/i18n/nav";
 import { CONTACT_PATH, HOME_PATH, POLICY_PATH } from "@/lib/routes";
 import logoSign from "@/assets/logo/eha-logo-sign.svg";
@@ -38,9 +39,11 @@ import koparka from "@/assets/koparka-rycina1.webp";
         >
           <span class="ft-sign" aria-hidden="true"></span>
         </a>
-        <span class="ft-tag">
-          REMONTY DOMÓW Z HISTORIĄ<br />DOLNY ŚLĄSK · CAŁA POLSKA
-        </span>
+        {
+          /* bez „CAŁA POLSKA" (korekta Mateusza 4.2 — klient obsługuje
+             okolice Jeleniej Góry, ok. godzina drogi) */
+        }
+        <span class="ft-tag"> REMONTY DOMÓW Z HISTORIĄ<br />DOLNY ŚLĄSK </span>
         <p class="ft-motto dOnly">
           Dom z historią zasługuje na spokojny remont.
         </p>
@@ -137,12 +140,15 @@ import koparka from "@/assets/koparka-rycina1.webp";
         © 2026 PRACOWNIA EH/A
         <a href={POLICY_PATH}>POLITYKA PRYWATNOŚCI</a>
       </span>
+      {
+        /* kredyt po prawej, w linii POLITYKI PRYWATNOŚCI (korekta Mateusza
+           4.2 — przycisk „NA GÓRĘ ↑" wycięty) */
+      }
       <span class="ft-cred">
         REALIZACJA: <a href="https://hadrianm.pl" target="_blank" rel="noopener"
           >HADRIANM</a
         >
       </span>
-      <button class="ft-top" type="button" data-totop>NA GÓRĘ ↑</button>
     </div>
   </div>
 </footer>
@@ -297,13 +303,14 @@ import koparka from "@/assets/koparka-rycina1.webp";
   }
   .ft-bot-in {
     display: flex;
-    align-items: center;
+    /* kredyt hadrianm równo z LINIĄ polityki prywatności (ostatnią
+       linią bloku copy) — stąd wyrównanie do dołu */
+    align-items: flex-end;
     justify-content: space-between;
     gap: 14px;
   }
   .ft-copy,
-  .ft-cred,
-  .ft-top {
+  .ft-cred {
     font-family: var(--font-mono), monospace;
     font-weight: 400;
     font-size: 10.5px;
@@ -311,27 +318,17 @@ import koparka from "@/assets/koparka-rycina1.webp";
     letter-spacing: 0.06em;
     color: var(--ft-dim);
   }
+  .ft-cred {
+    flex: none;
+  }
   .ft-copy a,
   .ft-cred a {
     color: var(--ft-soft);
     border-bottom: 1px dashed rgba(245, 239, 227, 0.3);
   }
   .ft-copy a:hover,
-  .ft-cred a:hover,
-  .ft-top:hover {
+  .ft-cred a:hover {
     color: #d8cfb8;
-  }
-  .ft-top {
-    flex: none;
-    padding: 0;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--ft-soft);
-  }
-  .ft-top:focus-visible {
-    outline: 2px solid var(--ft-cream);
-    outline-offset: 3px;
   }
 
   /* ════ MOBILE <1024 ════ */
@@ -393,17 +390,12 @@ import koparka from "@/assets/koparka-rycina1.webp";
       max-width: 700px;
       margin: 0 auto;
       padding: 16px var(--pad) 22px;
-      flex-wrap: wrap;
     }
     .ft-copy {
       display: flex;
       flex-direction: column;
       gap: 2px;
       align-items: flex-start;
-    }
-    .ft-cred {
-      order: 3;
-      width: 100%;
     }
   }
 
@@ -414,9 +406,9 @@ import koparka from "@/assets/koparka-rycina1.webp";
       display: none !important;
     }
 
-    /* gutter chrome'u z designów (--g eksportów), spójnie z paskiem */
+    /* gutter chrome'u z designów — wspólny token --g (global.css, 4.2) */
     .ft {
-      --ft-g: clamp(60px, 9.72vw, 160px);
+      --ft-g: var(--g);
     }
     .ft-main {
       display: grid;
@@ -509,8 +501,7 @@ import koparka from "@/assets/koparka-rycina1.webp";
       gap: clamp(14px, 1.53vw, 24px);
     }
     .ft-copy,
-    .ft-cred,
-    .ft-top {
+    .ft-cred {
       font-size: clamp(10px, 0.73vw, 11.5px);
     }
   }
@@ -522,13 +513,4 @@ import koparka from "@/assets/koparka-rycina1.webp";
   // Telefony/mail stopki (antyscraping — D-CH5). Idempotentne względem
   // wypełnienia z Navbara (te same wartości do tych samych slotów).
   fillContactSlots();
-
-  // „NA GÓRĘ ↑" — w eksporcie martwy href="#"; tu przycisk z powrotem na
-  // górę (akcja, nie nawigacja — semantyka buttona, reguła anchor-is-valid).
-  document.querySelectorAll<HTMLButtonElement>("[data-totop]").forEach((b) => {
-    b.addEventListener("click", () => {
-      const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-      window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
-    });
-  });
 </script>

@@ -27,8 +27,5 @@ export const NAV_SOLID_HERO_PAD_PX = 40;
 /** Bez hero (szkielety/strony treściowe): solid zaraz po ruszeniu scrolla. */
 export const NAV_SOLID_FALLBACK_PX = 8;
 
-// ── Glow mobile (pas czytelności u góry; pasek mobilny nie ma tła).
-/** Po tylu px scrolla glow osiąga pełną nieprzezroczystość… */
-export const NAV_GLOW_RANGE_PX = 130;
-/** …czyli tę wartość (odczyt z eksportów: 0.85). */
-export const NAV_GLOW_MAX = 0.85;
+// (Glow mobile z 4.1 wycięty w korekcie 4.2 — decyzja Mateusza: mobile
+// używa tego samego stanu „solid" co desktop; stałe NAV_GLOW_* usunięte.)
