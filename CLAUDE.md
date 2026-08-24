@@ -451,10 +451,22 @@ zostają, widoki budowane od nowa wg `docs/design/` — patrz
     index-full webkit; wymaga decyzji, bo dotyka baseline'ów `/`).
     Do tego `expect.poll` na kolory paska (transition 0.3 s) i budżet
     20 s na fullPage (najcięższe blendy + software raster runnera);
-    zrzuty fullPage ekipy mają per-shot `maxDiffPixelRatio: 0.001`
-    (decyzja Mateusza — WebKit dpr=2 pod równoległym obciążeniem sypie
-    1-px szumem resamplingu na zdjęciach: pomiar 765 px vs budżet
-    640 px; globalny próg 0.0005 nietknięty).
+    zrzuty fullPage ekipy mają per-shot `maxDiffPixelRatio: 0.001`,
+    a work-index-full 0.0015 (decyzje Mateusza — WebKit dpr=2 sypie
+    1-px szumem resamplingu na zdjęciach, a maszyny runnerów różnią
+    się glifem 404-obrazka kafla preview; globalny próg 0.0005
+    nietknięty). Kolejne dwie lekcje z domknięcia: (4) WebKit robi
+    fullPage przez CHWILOWY resize viewportu → pętle parallaxu
+    repaintują na resize wyłącznie przy zmianie SZEROKOŚCI
+    (content-motion + work-motion; duch D-Q2 — nie szarpie też przy
+    pasku URL); (5) pudełko `overflow: hidden` da się przewinąć
+    PROGRAMOWO (scrollIntoView/fokus/szukajka) — zwinięty
+    CollapsibleText używa `overflow: clip` (hidden jako fallback),
+    a pętla dociskająca sweepa scrolluje wyłącznie dokument.
+    Workflow baseline'ów uparcie renderuje ekipa-top SE ze schowaną
+    ryciną (kontekstowa zagadka) — baseline trzyma bajty ACTUALI CI
+    (stabilne między maszynami); po bot-commitach przywracać
+    ekipa-top-linux SE i index-full-linux SE, gdy je nadpisze.
   - UWAGI dla 4.4 cz. 2 (kompetencje): konsumować `CollapsibleText`
     (collapsedMax 132/128 px z eksportu; przycisk bywa w osobnym
     kontenerze — stylować z poziomu strony) + `content-motion.ts` +
