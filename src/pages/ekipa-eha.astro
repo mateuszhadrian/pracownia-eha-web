@@ -1,9 +1,1939 @@
 ---
-import SkeletonPage from "@/components/SkeletonPage.astro";
+// Podstrona /ekipa-eha/ (Etap 4.4, część 1) — port docs/design/export/
+// ekipa-eha.html; decyzje: docs/analiza-ekipa.md. Hero z ciemnym
+// zdjęciem pod przezroczystym paskiem (Navbar tone="dark" — krem do
+// stanu solid), biogramy Łukasz/Maciek, płyty tytułowe sekcji, ZWIJANE
+// AKAPITY (mobile) wspólnym modułem CollapsibleText + collapsible.ts
+// (progressive enhancement jak paginacja E5 — SSR z pełnym tekstem),
+// CTA i stopka 4.1. Ruch za bramką js-motion wspólnym modułem
+// content-motion.ts (reveale/rysowanie/parallaxy/dryf tła — wzorce
+// 4.2/4.3); bez JS / przy reduce strona statyczna i kompletna.
+import budowlana1 from "@/assets/ekipa-budowlana1.webp";
+import budowlana2 from "@/assets/ekipa-budowlana2.webp";
+import house1 from "@/assets/dom-ryc-house1.webp";
+import house2 from "@/assets/dom-ryc-house2.webp";
+import house3 from "@/assets/dom-ryc-house3.webp";
+import house4 from "@/assets/dom-ryc-house4.webp";
+import house6 from "@/assets/dom-ryc-house6.webp";
+import house8 from "@/assets/dom-ryc-house8.webp";
+import houseOld from "@/assets/house-old1.webp";
+import kolekD from "@/assets/eha-kolek-ryc.webp";
+import kolekM from "@/assets/eha-kolek-ryc-m.webp";
+import lukasz from "@/assets/lukasz-portrait.webp";
+import maciek from "@/assets/maciek2.webp";
+import onas2 from "@/assets/eha-o-nas2.webp";
+import planRyc from "@/assets/plan-ryc1.webp";
+import sufitem from "@/assets/maciek-pod-sufitem.webp";
+import technicalRyc from "@/assets/technical-ryc.webp";
+import techElems from "@/assets/technical-elements-ryc.webp";
+import warsztat from "@/assets/warsztat-ryc1.webp";
+import Footer from "@/components/Footer.astro";
+import Navbar from "@/components/navbar/Navbar.astro";
+import PaperBackdrop from "@/components/PaperBackdrop.astro";
+import CollapsibleText from "@/components/sections/CollapsibleText.astro";
+import { ui } from "@/i18n/ui";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { CONTACT_PATH } from "@/lib/routes";
 ---
 
-<SkeletonPage
-  title="Ekipa EH/A — Pracownia EH/A"
-  heading="Ekipa EH/A"
-  description="Poznaj ekipę Pracowni EH/A — Łukasza i Maćka. Remonty domów z historią: ciesielstwo, murarstwo i fizyka budowli."
-/>
+<BaseLayout
+  title={ui.pl["ekipaPage.title"]}
+  description={ui.pl["ekipaPage.description"]}
+>
+  <script is:inline slot="head">
+    // PRZED paintem: motion OK → html.js-motion (uzbraja stany startowe
+    // revealów/rysowania — reszta w content-motion.ts, ładowanym niżej).
+    if (window.matchMedia("(prefers-reduced-motion: no-preference)").matches) {
+      document.documentElement.classList.add("js-motion");
+    }
+  </script>
+
+  <Navbar tone="dark" />
+
+  <main class="eka">
+    <PaperBackdrop />
+
+    {/* ── hero: ciemne zdjęcie wygasające w papier, h1 na dole ── */}
+    <header class="eka-hero" data-navref>
+      <div class="eka-hero-ph">
+        <img
+          data-plx
+          src={onas2.src}
+          width={onas2.width}
+          height={onas2.height}
+          alt="Ekipa EH/A na budowie"
+          loading="eager"
+          fetchpriority="high"
+          decoding="async"
+        />
+        {/* gradient czytelności kremowego paska (tone="dark") */}
+        <span class="eka-hero-top" aria-hidden="true"></span>
+      </div>
+      <h1>Ekipa EH/A.</h1>
+    </header>
+
+    {/* ── intro: motto + akapit wprowadzenia ── */}
+    <section class="eka-intro">
+      <img
+        class="eka-int-rycm mOnly"
+        data-ryc="r"
+        data-plxr
+        src={house3.src}
+        width={house3.width}
+        height={house3.height}
+        alt=""
+        loading="lazy"
+        decoding="async"
+      />
+      <img
+        class="eka-int-ryc1 dOnly"
+        data-rycsb="l"
+        src={house3.src}
+        width={house3.width}
+        height={house3.height}
+        alt=""
+        loading="lazy"
+        decoding="async"
+      />
+      <img
+        class="eka-int-ryc2 dOnly"
+        data-rycsb="r"
+        src={warsztat.src}
+        width={warsztat.width}
+        height={warsztat.height}
+        alt=""
+        loading="lazy"
+        decoding="async"
+      />
+      <div class="eka-int-in">
+        <p class="eka-motto">Dwa umysły, jedna rzemieślnicza pasja.</p>
+        <p class="eka-int-p">
+          Nie jesteśmy typową firmą budowlaną. Pracownia EH/A zrodziła się z
+          ucieczki przed miejskim zgiełkiem, z głębokiego szacunku do
+          historycznej tkanki architektonicznej i z fascynacji technologiami,
+          które przetrwały próbę czasu. Za naszymi realizacjami stoją dwa
+          zupełnie różne umysły – analityczny i badawczy – które połączyły siły,
+          by przywracać do życia to, co inni uznali za niemożliwe do uratowania.
+        </p>
+      </div>
+    </section>
+
+    {/* ── pas zdjęcia przejściowego ── */}
+    <div class="eka-band">
+      <img
+        data-plx
+        src={sufitem.src}
+        width={sufitem.width}
+        height={sufitem.height}
+        alt="Maciek przy pracy pod sufitem"
+        loading="lazy"
+        decoding="async"
+      />
+    </div>
+
+    {/* ── biogramy ── */}
+    <section class="eka-bios">
+      <img
+        class="eka-bios-ryc dOnly"
+        data-rycsb="l"
+        src={planRyc.src}
+        width={planRyc.width}
+        height={planRyc.height}
+        alt=""
+        loading="lazy"
+        decoding="async"
+      />
+
+      <article class="bio bio-l">
+        <img
+          class="bio-ryc mOnly"
+          data-ryc="r"
+          data-plxr
+          src={house1.src}
+          width={house1.width}
+          height={house1.height}
+          alt=""
+          loading="lazy"
+          decoding="async"
+        />
+        <h2>Od sieci korporacyjnych do sieci słupowo-ryglowych</h2>
+        <figure class="bio-port">
+          <span class="bio-port-ph">
+            <img
+              src={lukasz.src}
+              width={lukasz.width}
+              height={lukasz.height}
+              alt="Łukasz"
+              loading="lazy"
+              decoding="async"
+            />
+            <span aria-hidden="true"></span>
+          </span>
+          <figcaption>ŁUKASZ</figcaption>
+        </figure>
+        <CollapsibleText id="bio-lukasz" collapsedMax="98px" class="bio-txt">
+          <p>
+            Łukasz przez lata funkcjonował w świecie zaawansowanych technologii.
+            Jako specjalista i menedżer w dużych korporacjach zarządzał
+            zespołami i projektował skomplikowane sieci komputerowe. Ten ścisły,
+            analityczny umysł, przyzwyczajony do rozwiązywania problemów i
+            optymalizacji procesów, znalazł jednak swoje prawdziwe powołanie z
+            dala od przeszklonych biurowców. Decyzja o przeprowadzce na Dolny
+            Śląsk i zakup starego domu do remontu okazała się punktem zwrotnym.
+            Prace, które miały być tylko prywatnym projektem, przerodziły się w
+            absolutną fascynację rzemiosłem. Zrozumiał, że kierowanie budową i
+            zgłębianie technologii wznoszenia historycznych budynków wymaga
+            równie dużej precyzji, co architektura IT. Przebranżowił się, zaczął
+            zarządzać ekipami na specjalistycznych budowach i na jednej z nich
+            poznał Maćka.
+          </p>
+        </CollapsibleText>
+      </article>
+
+      <article class="bio bio-m">
+        <img
+          class="bio-ryc mOnly"
+          data-ryc="l"
+          data-plxr
+          src={house8.src}
+          width={house8.width}
+          height={house8.height}
+          alt=""
+          loading="lazy"
+          decoding="async"
+        />
+        <h2>Geologiczna precyzja i zrozumienie materii</h2>
+        <figure class="bio-port">
+          <span class="bio-port-ph">
+            <img
+              src={maciek.src}
+              width={maciek.width}
+              height={maciek.height}
+              alt="Maciek"
+              loading="lazy"
+              decoding="async"
+            />
+            <span aria-hidden="true"></span>
+          </span>
+          <figcaption>MACIEK</figcaption>
+        </figure>
+        <CollapsibleText id="bio-maciek" collapsedMax="98px" class="bio-txt">
+          <p>
+            Maciek to człowiek, który materię budowlaną rozumie od samych jej
+            fundamentów – dosłownie. Jako magister geologii (związany z tą
+            dziedziną nauki od 2015 roku), posiada unikalną wiedzę o kamieniu,
+            surowcach i procesach zachodzących w naturze. Jego wędrówki po
+            Dolnym Śląsku szybko przerodziły się w fascynację lokalną,
+            historyczną architekturą. Wiedza o strukturze ziemi i skał płynnie
+            przeniosła się na zrozumienie starych zapraw, zachowania murów i
+            oddziaływania wilgoci na budynek. Pracując przy renowacjach, spotkał
+            Łukasza. Szybko okazało się, że choć wywodzą się z zupełnie innych
+            światów, dzielą tę samą bezkompromisowość i pasję do starego
+            budownictwa. Połączenie sił i stworzenie Pracowni EH/A było
+            naturalnym krokiem.
+          </p>
+        </CollapsibleText>
+      </article>
+    </section>
+
+    <div class="eka-sep mOnly" aria-hidden="true"></div>
+
+    {/* ── płyta + treść: NASZE KORZENIE ── */}
+    <section class="eka-plate eka-plate-dzie">
+      <div class="eka-plate-bg" aria-hidden="true">
+        <img
+          data-plx
+          src={houseOld.src}
+          width={houseOld.width}
+          height={houseOld.height}
+          alt=""
+          loading="lazy"
+          decoding="async"
+        />
+        <span class="eka-plate-fog"></span>
+      </div>
+      <div class="eka-plate-in">
+        <p class="eka-kick" data-rev>NASZE KORZENIE</p>
+        <h2 data-rev data-rev-d="1">
+          Dolnośląskie dziedzictwo, zachodnia szkoła rzemiosła
+        </h2>
+      </div>
+    </section>
+
+    <section class="eka-s1">
+      <CollapsibleText id="sec-korzenie" collapsedMax="112px" class="s-clp">
+        <p class="s1-lead">
+          Pracujemy na Dolnym Śląsku, ale technologicznie i ideowo patrzymy za
+          naszą zachodnią granicę. To właśnie tam, w Niemczech, znajduje się
+          prawdziwa kolebka technologii, z których czerpiemy najwięcej.
+          Architektura domów przysłupowych (<em>Umgebindehäuser</em>), klasyczny <em
+            >Fachwerk</em
+          > (mury pruskie i szachulcowe) czy potężne stodoły oparte na dębowych ramach,
+          to dla nas niedoścignione wzorce sztuki budowlanej.
+        </p>
+        <div class="s1-cards">
+          <div class="eka-card">
+            <p class="eka-card-k">UMGEBINDEHAUS · DOM PRZYSŁUPOWY</p>
+            <p class="eka-card-t">
+              Izba zrębowa objęta niezależną ramą słupową, która niesie piętro i
+              dach — ściany izby nie dźwigają konstrukcji.
+            </p>
+          </div>
+          <div class="eka-card">
+            <p class="eka-card-k">FACHWERK · MUR PRUSKI I SZACHULEC</p>
+            <p class="eka-card-t">
+              Szkielet z dębowych słupów i rygli, wypełniany cegłą lub gliną ze
+              słomą — konstrukcja widoczna na elewacji.
+            </p>
+          </div>
+        </div>
+        <div class="s1-close">
+          <img
+            class="s1-kolek-m mOnly"
+            data-ryc="l"
+            src={kolekM.src}
+            width={kolekM.width}
+            height={kolekM.height}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+          <img
+            class="s1-kolek-d dOnly"
+            data-rycsb="r"
+            src={kolekD.src}
+            width={kolekD.width}
+            height={kolekD.height}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+          <p>
+            Naszym celem jest wskrzeszanie tych zachodnich tradycji i
+            przeszczepianie ich precyzji na grunt dolnośląskich renowacji.
+            Świadomie wzorujemy się na starych mistrzach ciesielstwa i
+            murarstwa. Rozumiemy, jak pracują połączenia na drewniane kołki, jak
+            zachowuje się konstrukcja przysłupowa i dlaczego historyczny ustrój
+            nośny wymaga najwyższej kultury technicznej, a nie współczesnych
+            dróg na skróty. Odnawiając domy w regionie, nie tylko prowadzimy
+            prace budowlane – my ratujemy kulturowy i architektoniczny krajobraz
+            tych ziem, mocno wiążąc go z jego historycznymi korzeniami.
+          </p>
+        </div>
+      </CollapsibleText>
+    </section>
+
+    {/* ── płyta + treść: INŻYNIERIA TRADYCJI ── */}
+    <section class="eka-trud">
+      <div class="trud-row">
+        <div class="eka-plate trud-panel">
+          <div class="eka-plate-bg" aria-hidden="true">
+            <img
+              data-plx
+              src={technicalRyc.src}
+              width={technicalRyc.width}
+              height={technicalRyc.height}
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
+            <span class="eka-plate-fog"></span>
+          </div>
+          <div class="eka-plate-in">
+            <p class="eka-kick" data-rev>INŻYNIERIA TRADYCJI</p>
+            <h2 data-rev data-rev-d="1">Im trudniej, tym lepiej</h2>
+          </div>
+        </div>
+        {/* desktop: akapit obok panelu (mobile ma go w zwijanej treści) */}
+        <p class="trud-p1 dOnly">
+          Tam, gdzie inni wykonawcy rozkładają ręce, my widzimy przestrzeń do
+          działania. Z największą pasją podejmujemy się wyzwań, które wymagają
+          inżynieryjnego myślenia i doskonałej znajomości starych technologii.
+          Naszą wizytówką są skomplikowane prace murarskie i odtwarzanie
+          historycznych sklepień. Niezależnie od tego, czy jest to sklepienie
+          kolebkowe, żagliste, krzyżowo-żebrowe czy skomplikowane łuki okienne –
+          traktujemy to jak architektoniczną łamigłówkę. Pracujemy w starej
+          cegle rozbiórkowej, kamieniu i tradycyjnych zaprawach, przywracając
+          budynkom ich dawną statykę i duszę.
+        </p>
+      </div>
+      <CollapsibleText
+        id="sec-trudniej"
+        collapsedMax="112px"
+        class="s-clp trud-clp"
+      >
+        <div class="trud-b1 mOnly">
+          <img
+            class="trud-ryc1"
+            data-ryc="r"
+            src={house6.src}
+            width={house6.width}
+            height={house6.height}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+          <p>
+            Tam, gdzie inni wykonawcy rozkładają ręce, my widzimy przestrzeń do
+            działania. Z największą pasją podejmujemy się wyzwań, które wymagają
+            inżynieryjnego myślenia i doskonałej znajomości starych technologii.
+            Naszą wizytówką są skomplikowane prace murarskie i odtwarzanie
+            historycznych sklepień. Niezależnie od tego, czy jest to sklepienie
+            kolebkowe, żagliste, krzyżowo-żebrowe czy skomplikowane łuki okienne
+            – traktujemy to jak architektoniczną łamigłówkę. Pracujemy w starej
+            cegle rozbiórkowej, kamieniu i tradycyjnych zaprawach, przywracając
+            budynkom ich dawną statykę i duszę.
+          </p>
+        </div>
+        <div class="trud-b2">
+          <img
+            class="trud-ryc2 mOnly"
+            data-ryc="l"
+            data-plxr
+            src={house8.src}
+            width={house8.width}
+            height={house8.height}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+          <p>
+            Z równym zaangażowaniem podchodzimy do ciesielstwa. Ustrój
+            słupowo-ryglowy, potężne więźby dachowe i misterne detale
+            konstrukcyjne to nasza codzienność. Nie boimy się łączyć wiekowego,
+            historycznego drewna z nowym, starannie wyselekcjonowanym i
+            wysuszonym materiałem. Znamy i stosujemy tradycyjne złącza
+            ciesielskie, ponieważ wiemy, że to one gwarantują trwałość liczoną w
+            setkach lat.
+          </p>
+        </div>
+        <div class="trud-tail">
+          <div class="trud-domki" aria-hidden="true">
+            <img
+              data-ryc="l"
+              src={house8.src}
+              width={house8.width}
+              height={house8.height}
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
+            <img
+              data-ryc="l"
+              src={house6.src}
+              width={house6.width}
+              height={house6.height}
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
+            <img
+              data-ryc="l"
+              src={house4.src}
+              width={house4.width}
+              height={house4.height}
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+          <p class="trud-quote">
+            „Nie jesteśmy odtwórcami – jesteśmy świadomymi technologami, dla
+            których tradycja to nauka, a nie tylko estetyka.”
+          </p>
+        </div>
+      </CollapsibleText>
+    </section>
+
+    {/* ── płyta + treść: SIEĆ MISTRZÓW ── */}
+    <section class="eka-plate eka-plate-siec">
+      <div class="eka-plate-bg" aria-hidden="true">
+        <img
+          data-plx
+          src={budowlana1.src}
+          width={budowlana1.width}
+          height={budowlana1.height}
+          alt=""
+          loading="lazy"
+          decoding="async"
+        />
+        <span class="eka-plate-fog"></span>
+      </div>
+      <div class="eka-plate-in">
+        <div class="eka-plate-t">
+          <p class="eka-kick" data-rev>SIEĆ MISTRZÓW</p>
+          <h2 data-rev data-rev-d="1">
+            Sprawdzona sieć mistrzów i absolutny spokój inwestora
+          </h2>
+        </div>
+        <img
+          class="siec-ryc dOnly"
+          src={techElems.src}
+          width={techElems.width}
+          height={techElems.height}
+          alt=""
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
+    </section>
+
+    <section class="eka-s3">
+      <CollapsibleText id="sec-siec" collapsedMax="112px" class="s-clp">
+        <div class="s3-grid">
+          <p class="s3-p1">
+            EH/A to my: Łukasz i Maciek. Jesteśmy trzonem i mózgiem każdej
+            operacji. Wiemy jednak, że kompleksowa renowacja starego domu to
+            skomplikowany organizm. Dlatego nie zatrudniamy przypadkowych
+            podwykonawców z ogłoszenia. Przez lata obecności na rynku
+            zbudowaliśmy wokół siebie starannie wyselekcjonowaną sieć zaufanych,
+            lokalnych rzemieślników i specjalistów. To ludzie, z którymi
+            pracowaliśmy jeszcze na długo przed założeniem naszej firmy, i za
+            których jakość ręczymy osobiście.
+          </p>
+          <div class="s3-motto">
+            <img
+              class="s3-ryc-m mOnly"
+              data-ryc="l"
+              src={techElems.src}
+              width={techElems.width}
+              height={techElems.height}
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
+            <p class="s3-kick">NASZ MODEL DZIAŁANIA JEST PROSTY</p>
+            <p class="s3-quote">
+              Ty przyjeżdżasz na budowę tylko po to, by cieszyć się postępami i
+              zatwierdzać detale estetyczne.
+            </p>
+          </div>
+          <div class="s3-p2w">
+            <img
+              class="s3-ryc2 mOnly"
+              data-ryc="l"
+              data-plxr
+              src={house2.src}
+              width={house2.width}
+              height={house2.height}
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
+            <p>
+              Cały ciężar inwestycji – od logistyki, przez koordynację prac
+              naszej zaufanej sieci rzemieślników, aż po rozwiązywanie
+              skomplikowanych problemów konstrukcyjnych – bierzemy na siebie.
+            </p>
+          </div>
+          <div class="s3-cards">
+            <div class="eka-card">
+              <p class="eka-card-k">ŁUKASZ · ŻELAZNE HARMONOGRAMY</p>
+              <p class="eka-card-t">
+                Menedżerskie doświadczenie spina logistykę i harmonogramy prac w
+                żelazne ramy.
+              </p>
+            </div>
+            <div class="eka-card">
+              <p class="eka-card-k">MACIEK · TECHNOLOGIE I MATERIAŁY</p>
+              <p class="eka-card-t">
+                Czuwa nad właściwym doborem technologii i materiałów do wieku i
+                konstrukcji domu.
+              </p>
+            </div>
+          </div>
+          <p class="s3-p3">
+            Dzięki temu, mimo skali i trudności, z jaką wiąże się odbudowa
+            wiekowego domu, nasz klient otrzymuje to, co w dzisiejszych czasach
+            najcenniejsze – całkowity spokój umysłu i poczucie pełnego
+            zaopiekowania.
+          </p>
+        </div>
+      </CollapsibleText>
+    </section>
+
+    {/* ── CTA nad stopką ── */}
+    <section class="eka-cta">
+      <div class="eka-cta-ph" aria-hidden="true">
+        <img
+          data-plx
+          src={budowlana2.src}
+          width={budowlana2.width}
+          height={budowlana2.height}
+          alt=""
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
+      <span class="eka-cta-grad" aria-hidden="true"></span>
+      <div class="eka-cta-in">
+        <p>Zaopiekujemy się także Twoim domem.</p>
+        <a href={CONTACT_PATH}>Porozmawiajmy o Twoim domu →</a>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</BaseLayout>
+
+<style is:global>
+  /* ── Tokeny widoku (odczyty z eksportu — analiza §1). Mobile w bazie,
+     desktop w @media 1024 (para: CONTENT_DESKTOP_MIN_PX). ── */
+  .eka {
+    /* kontener mobile eksportu: 700/30 */
+    --wmax: 700px;
+    /* rycina/zdjęcia wystają za krawędź — clip bez tworzenia scrollera */
+    overflow-x: clip;
+    /* tło jak `/` i /realizacje/: baza kremowa + skan papieru
+       (PaperBackdrop, z-index -1 — stąd isolation) */
+    position: relative;
+    isolation: isolate;
+    background: var(--bg-cream);
+  }
+  @media (min-width: 1024px) {
+    .eka {
+      --wmax: 1600px;
+      --body: clamp(13.5px, 1.08vw, 17px);
+      --lhb: 1.72;
+      --lead: clamp(17px, 1.46vw, 23px);
+      --mono: clamp(10px, 0.76vw, 12px);
+      --monos: clamp(9px, 0.66vw, 10.5px);
+      --h2: clamp(31px, 2.78vw, 44px);
+    }
+  }
+
+  /* warianty per breakpoint (wzorzec dOnly/mOnly z 4.1–4.3) */
+  @media (max-width: 1023.98px) {
+    .eka .dOnly {
+      display: none !important;
+    }
+  }
+  @media (min-width: 1024px) {
+    .eka .mOnly {
+      display: none !important;
+    }
+  }
+
+  /* ── hero ── */
+  .eka-hero {
+    position: relative;
+    height: 420px;
+    overflow: hidden;
+  }
+  .eka-hero-ph {
+    position: absolute;
+    inset: 0;
+    background: #362b20;
+    -webkit-mask-image: linear-gradient(#000 60%, rgba(0, 0, 0, 0) 100%);
+    mask-image: linear-gradient(#000 60%, rgba(0, 0, 0, 0) 100%);
+  }
+  /* zapas kadru = ruch parallaxu [data-plx] (D-U1; PLX_AMT 0.18) */
+  .eka-hero-ph > img {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -9%;
+    width: 100%;
+    height: 118%;
+    max-width: none;
+    object-fit: cover;
+    object-position: 52% 30%;
+    filter: grayscale(1) contrast(1.04);
+    mix-blend-mode: luminosity;
+    opacity: 0.9;
+  }
+  .eka-hero-top {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 110px;
+    background: linear-gradient(rgba(24, 19, 14, 0.55), rgba(24, 19, 14, 0));
+  }
+  .eka-hero h1 {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 22px;
+    margin: 0 auto;
+    max-width: var(--wmax);
+    box-sizing: border-box;
+    padding: 0 30px;
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: 42px;
+    line-height: 1.1;
+    color: var(--ink);
+  }
+
+  /* ── intro ── */
+  .eka-intro {
+    position: relative;
+  }
+  .eka-int-rycm {
+    position: absolute;
+    right: -40px;
+    top: 22px;
+    width: 130px;
+    max-width: none;
+    height: auto;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+  .eka-int-in {
+    position: relative;
+    max-width: var(--wmax);
+    margin-inline: auto;
+    box-sizing: border-box;
+    padding: 4px 30px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .eka-motto {
+    margin: 0;
+    font-family: var(--font-serif), serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 19px;
+    line-height: 1.35;
+    color: var(--sepia);
+    white-space: nowrap;
+  }
+  .eka-int-p {
+    margin: 6px 0 0;
+    font-family: var(--font-body), sans-serif;
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+
+  /* ── pas zdjęcia ── */
+  .eka-band {
+    position: relative;
+    margin-top: 22px;
+    height: 196px;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(
+      rgba(0, 0, 0, 0) 0,
+      #000 18%,
+      #000 82%,
+      rgba(0, 0, 0, 0) 100%
+    );
+    mask-image: linear-gradient(
+      rgba(0, 0, 0, 0) 0,
+      #000 18%,
+      #000 82%,
+      rgba(0, 0, 0, 0) 100%
+    );
+  }
+  .eka-band > img {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -9%;
+    width: 100%;
+    height: 118%;
+    max-width: none;
+    object-fit: cover;
+    object-position: 50% 38%;
+    filter: sepia(0.26) saturate(0.86);
+  }
+
+  /* ── biogramy ── */
+  .eka-bios {
+    position: relative;
+    max-width: var(--wmax);
+    margin-inline: auto;
+    box-sizing: border-box;
+    padding: 24px 30px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+  }
+  .bio {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      "port head"
+      "txt txt";
+    column-gap: 16px;
+    row-gap: 14px;
+    align-items: end;
+  }
+  .bio-m {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "head port"
+      "txt txt";
+  }
+  .bio h2 {
+    grid-area: head;
+    margin: 0 0 20px;
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: 21px;
+    line-height: 1.3;
+    color: var(--ink);
+  }
+  .bio-m h2 {
+    text-align: right;
+  }
+  .bio-port {
+    grid-area: port;
+    margin: 0;
+    background: var(--bg-card);
+    border: 1px solid rgba(33, 29, 24, 0.18);
+    box-shadow: 0 1px 3px rgba(33, 29, 24, 0.08);
+    padding: 7px 7px 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .bio-m .bio-port {
+    align-items: flex-end;
+  }
+  .bio-port-ph {
+    position: relative;
+    display: block;
+    width: 104px;
+    height: 128px;
+  }
+  .bio-port-ph > img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 12%;
+    border: 1px solid rgba(33, 29, 24, 0.25);
+    filter: sepia(0.22) saturate(0.88);
+  }
+  .bio-m .bio-port-ph > img {
+    object-position: center 10%;
+  }
+  /* mgiełka „starego druku" na portrecie (degraduje się niewidocznie
+     przy utracie blendu — stary WebKit + body:fixed, lekcja 4.2 §2a) */
+  .bio-port-ph > span {
+    position: absolute;
+    inset: 1px;
+    pointer-events: none;
+    background: #ece8dd;
+    mix-blend-mode: soft-light;
+    opacity: 0.65;
+  }
+  .bio-port figcaption {
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    /* eksportowe .55 nie domyka AA na karcie — allowlista axe jest
+       ratchetem od pustej (testing.md), stąd .65 */
+    color: rgba(33, 29, 24, 0.65);
+  }
+  .bio-txt {
+    grid-area: txt;
+  }
+  .bio-txt p {
+    margin: 0;
+    font-family: var(--font-body), sans-serif;
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+  .bio-ryc {
+    position: absolute;
+    max-width: none;
+    height: auto;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+  .bio-l .bio-ryc {
+    right: -150px;
+    top: 4px;
+    width: 174px;
+    opacity: 0.5;
+  }
+  .bio-m .bio-ryc {
+    left: -56px;
+    top: 36px;
+    width: 118px;
+    opacity: 0.35;
+  }
+
+  /* ── separator przed płytą (mobile) ── */
+  .eka-sep {
+    margin: 26px auto 0;
+    max-width: 648px;
+    width: calc(100% - 52px);
+    border-top: 1px dashed rgba(33, 29, 24, 0.3);
+  }
+
+  /* ── płyty tytułowe ── */
+  .eka-plate {
+    position: relative;
+    overflow: hidden;
+  }
+  .eka-plate-dzie {
+    margin-top: 18px;
+  }
+  .eka-plate-bg {
+    position: absolute;
+    inset: 0;
+    -webkit-mask-image: linear-gradient(#000 40%, rgba(0, 0, 0, 0) 100%);
+    mask-image: linear-gradient(#000 40%, rgba(0, 0, 0, 0) 100%);
+  }
+  /* zapas kadru = ruch parallaxu [data-plx] (D-U1) */
+  .eka-plate-bg > img {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -9%;
+    width: 100%;
+    height: 118%;
+    max-width: none;
+    object-fit: cover;
+  }
+  .eka-plate-fog {
+    position: absolute;
+    inset: 0;
+    background: rgba(250, 247, 241, 0.68);
+  }
+  .eka-plate-dzie .eka-plate-bg > img {
+    object-position: 50% 42%;
+    filter: sepia(0.32) saturate(0.72);
+  }
+  .eka-plate-in {
+    position: relative;
+    max-width: var(--wmax);
+    margin-inline: auto;
+    box-sizing: border-box;
+    padding: 40px 30px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .eka-kick {
+    margin: 0;
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: rgba(87, 101, 74, 0.95);
+  }
+  .eka-plate h2 {
+    margin: 0;
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: 28px;
+    line-height: 1.2;
+    color: var(--ink);
+    text-wrap: pretty;
+  }
+
+  /* ── wspólne: zwijane bloki i karty pojęć ── */
+  .eka .s-clp,
+  .eka .bio-txt {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .eka .s-clp {
+    max-width: var(--wmax);
+    margin-inline: auto;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 6px 30px 0;
+  }
+  .eka .clp-body {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .eka-card {
+    border: 1px solid rgba(33, 29, 24, 0.18);
+    background: var(--bg-card);
+    box-shadow: 0 1px 3px rgba(33, 29, 24, 0.08);
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .eka-card-k {
+    margin: 0;
+    font-family: var(--font-mono), monospace;
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+  }
+  .eka-card-t {
+    margin: 0;
+    font-family: var(--font-body), sans-serif;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--faint);
+  }
+
+  /* ── s1: NASZE KORZENIE ── */
+  .eka-s1 .clp-body p,
+  .trud-clp p,
+  .s3-grid p {
+    margin: 0;
+    font-family: var(--font-body), sans-serif;
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+  .s1-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .s1-close {
+    position: relative;
+  }
+  .s1-close > p {
+    position: relative;
+  }
+  .s1-kolek-m {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 430px;
+    max-width: none;
+    height: auto;
+    mix-blend-mode: multiply;
+    opacity: 0.12;
+    pointer-events: none;
+  }
+
+  /* ── s2: IM TRUDNIEJ ── */
+  .eka-trud {
+    position: relative;
+  }
+  .trud-panel {
+    margin-top: 30px;
+    height: 190px;
+  }
+  .trud-panel .eka-plate-bg {
+    -webkit-mask-image: linear-gradient(#000 55%, rgba(0, 0, 0, 0) 100%);
+    mask-image: linear-gradient(#000 55%, rgba(0, 0, 0, 0) 100%);
+  }
+  .trud-panel .eka-plate-bg > img {
+    object-position: 50% 22%;
+    mix-blend-mode: multiply;
+  }
+  .trud-panel .eka-plate-fog {
+    background: linear-gradient(
+      rgba(250, 247, 241, 0) 18%,
+      rgba(250, 247, 241, 0.75) 72%
+    );
+  }
+  .trud-panel .eka-plate-in {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 10px;
+    padding: 0 30px;
+  }
+  .trud-clp {
+    padding-top: 14px;
+  }
+  .trud-b1,
+  .trud-b2,
+  .s3-p2w {
+    position: relative;
+  }
+  .trud-b1 > p,
+  .trud-b2 > p,
+  .s3-p2w > p {
+    position: relative;
+  }
+  .trud-ryc1 {
+    position: absolute;
+    right: -104px;
+    top: -20px;
+    width: 150px;
+    max-width: none;
+    height: auto;
+    opacity: 0.28;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+  .trud-ryc2 {
+    position: absolute;
+    left: -94px;
+    top: 18px;
+    width: 132px;
+    max-width: none;
+    height: auto;
+    opacity: 0.25;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+  .trud-b2 {
+    margin-top: 4px;
+  }
+  .trud-domki {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 22px;
+    margin: 28px 0 0;
+  }
+  .trud-domki img {
+    width: auto;
+    mix-blend-mode: multiply;
+    opacity: 0.45;
+  }
+  .trud-domki img:nth-child(1) {
+    height: 54px;
+  }
+  .trud-domki img:nth-child(2) {
+    height: 64px;
+  }
+  .trud-domki img:nth-child(3) {
+    height: 54px;
+  }
+  .trud-quote {
+    margin: 30px 4px 0;
+    text-align: center;
+    font-family: var(--font-serif), serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 19px;
+    line-height: 1.5;
+    color: var(--sepia);
+  }
+  .eka .trud-quote {
+    /* nadpisuje wspólny styl akapitów zwijanych bloków */
+    font-family: var(--font-serif), serif;
+    font-size: 19px;
+    line-height: 1.5;
+    color: var(--sepia);
+  }
+
+  /* ── s3: SIEĆ MISTRZÓW ── */
+  .eka-plate-siec {
+    margin-top: 34px;
+  }
+  .eka-plate-siec .eka-plate-bg > img {
+    object-position: 50% 28%;
+    filter: sepia(0.3) saturate(0.75);
+  }
+  .eka-plate-siec .eka-plate-in {
+    padding-top: 64px;
+  }
+  .eka-plate-t {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .s3-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .s3-motto {
+    margin-top: 10px;
+    border-top: 1px dashed rgba(33, 29, 24, 0.3);
+    border-bottom: 1px dashed rgba(33, 29, 24, 0.3);
+    padding: 20px 4px 24px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+  }
+  .s3-ryc-m {
+    height: 42px;
+    width: auto;
+    mix-blend-mode: multiply;
+    opacity: 0.5;
+  }
+  .s3-kick {
+    margin: 0;
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: rgba(87, 101, 74, 0.95);
+  }
+  .eka .s3-quote {
+    font-family: var(--font-serif), serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 19px;
+    line-height: 1.5;
+    color: var(--sepia);
+  }
+  .s3-p2w {
+    margin-top: 10px;
+  }
+  .s3-ryc2 {
+    position: absolute;
+    left: -82px;
+    top: 300px;
+    width: 126px;
+    max-width: none;
+    height: auto;
+    opacity: 0.2;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+  .s3-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .siec-ryc {
+    mix-blend-mode: multiply;
+  }
+
+  /* ── CTA ── */
+  .eka-cta {
+    position: relative;
+    margin-top: 28px;
+    height: 320px;
+    overflow: hidden;
+  }
+  .eka-cta-ph {
+    position: absolute;
+    inset: 0;
+    -webkit-mask-image: linear-gradient(
+      rgba(0, 0, 0, 0) 0,
+      rgba(0, 0, 0, 0.4) 18%,
+      #000 42%
+    );
+    mask-image: linear-gradient(
+      rgba(0, 0, 0, 0) 0,
+      rgba(0, 0, 0, 0.4) 18%,
+      #000 42%
+    );
+  }
+  .eka-cta-ph > img {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -9%;
+    width: 100%;
+    height: 118%;
+    max-width: none;
+    object-fit: cover;
+    object-position: 50% 30%;
+    filter: sepia(0.18) saturate(0.9);
+  }
+  .eka-cta-grad {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      rgba(24, 19, 14, 0) 45%,
+      rgba(24, 19, 14, 0.62) 100%
+    );
+  }
+  .eka-cta-in {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-width: var(--wmax);
+    margin-inline: auto;
+    box-sizing: border-box;
+    padding: 0 30px 44px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .eka-cta-in p {
+    margin: 0;
+    font-family: var(--font-serif), serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 20px;
+    line-height: 1.4;
+    color: #f5efe3;
+  }
+  .eka-cta-in a {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: #ece8dd;
+    color: #26221b;
+    text-decoration: none;
+    font-family: var(--font-body), sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    padding: 15px 28px;
+    border-radius: 2px;
+    transition: background 0.2s ease;
+  }
+  .eka-cta-in a:hover {
+    background: #f5efe3;
+  }
+
+  /* ════ Desktop ≥1024 (para: CONTENT_DESKTOP_MIN_PX) ════ */
+  @media (min-width: 1024px) {
+    /* hero: 70vh, statyczny kadr */
+    .eka-hero {
+      height: 70vh;
+    }
+    .eka-hero-ph {
+      -webkit-mask-image: linear-gradient(#000 62%, rgba(0, 0, 0, 0) 100%);
+      mask-image: linear-gradient(#000 62%, rgba(0, 0, 0, 0) 100%);
+    }
+    .eka-hero-ph > img {
+      top: 0;
+      height: 100%;
+      object-position: 52% 32%;
+    }
+    .eka-hero-top {
+      height: clamp(130px, 13.2vw, 210px);
+      background: linear-gradient(rgba(24, 19, 14, 0.6), rgba(24, 19, 14, 0));
+    }
+    .eka-hero h1 {
+      left: var(--g);
+      right: auto;
+      bottom: clamp(30px, 3.3vw, 52px);
+      margin: 0;
+      max-width: none;
+      padding: 0;
+      font-size: clamp(40px, 3.75vw, 60px);
+      line-height: 1.05;
+    }
+
+    /* intro: motto | akapit + rysowane ryciny */
+    .eka-int-ryc1 {
+      position: absolute;
+      left: -3.4vw;
+      top: clamp(90px, 9vw, 144px);
+      width: clamp(200px, 19.4vw, 310px);
+      max-width: none;
+      height: auto;
+      opacity: 0.3;
+      mix-blend-mode: multiply;
+      pointer-events: none;
+    }
+    .eka-int-ryc2 {
+      position: absolute;
+      right: -2vw;
+      top: calc(-1 * clamp(30px, 2.8vw, 44px));
+      width: clamp(300px, 29.9vw, 478px);
+      max-width: none;
+      height: auto;
+      opacity: 0.16;
+      mix-blend-mode: multiply;
+      pointer-events: none;
+    }
+    .eka-int-in {
+      max-width: var(--wmax);
+      padding: clamp(46px, 4.5vw, 72px) var(--g) clamp(60px, 5.8vw, 94px);
+      flex-direction: row;
+      align-items: flex-start;
+      gap: clamp(40px, 5.56vw, 89px);
+    }
+    .eka-motto {
+      flex: none;
+      width: clamp(300px, 27.8vw, 444px);
+      font-size: clamp(21px, 1.83vw, 29px);
+      line-height: 1.28;
+      white-space: normal;
+      text-wrap: pretty;
+    }
+    .eka-int-p {
+      margin: 0;
+      flex: 1;
+      max-width: clamp(430px, 41.7vw, 666px);
+      font-size: var(--body);
+      line-height: var(--lhb);
+      text-wrap: pretty;
+    }
+
+    /* pas zdjęcia: wyższy, fade tylko dołem, statyczny */
+    .eka-band {
+      margin-top: 0;
+      height: clamp(400px, 57vh, 520px);
+      -webkit-mask-image: linear-gradient(#000 72%, rgba(0, 0, 0, 0) 100%);
+      mask-image: linear-gradient(#000 72%, rgba(0, 0, 0, 0) 100%);
+    }
+    .eka-band > img {
+      top: 0;
+      height: 100%;
+      object-position: 50% 34%;
+    }
+
+    /* biogramy: nagłówek nad wierszem portret|tekst 2-kolumnowy */
+    .eka-bios {
+      max-width: var(--wmax);
+      padding: clamp(30px, 3vw, 48px) var(--g) clamp(60px, 5.8vw, 94px);
+      gap: clamp(36px, 3.6vw, 58px);
+    }
+    .eka-bios-ryc {
+      position: absolute;
+      left: 50%;
+      top: 52%;
+      transform: translate(-50%, -50%);
+      width: clamp(340px, 34.7vw, 556px);
+      max-width: none;
+      height: auto;
+      opacity: 0.12;
+      mix-blend-mode: multiply;
+      pointer-events: none;
+    }
+    .bio {
+      grid-template-columns: auto 1fr;
+      grid-template-areas:
+        "head head"
+        "port txt";
+      column-gap: clamp(34px, 3.6vw, 58px);
+      row-gap: clamp(20px, 2vw, 32px);
+      align-items: start;
+    }
+    .bio-m {
+      grid-template-columns: 1fr auto;
+      grid-template-areas:
+        "head head"
+        "txt port";
+    }
+    .bio h2 {
+      margin: 0;
+      padding-bottom: clamp(16px, 1.6vw, 26px);
+      border-bottom: 1px dashed rgba(33, 29, 24, 0.3);
+      font-size: calc(var(--h2) * 0.92);
+      line-height: 1.14;
+      text-wrap: pretty;
+    }
+    /* desktop bez ramki-karty portretu (eksport) */
+    .bio-port {
+      background: none;
+      border: none;
+      box-shadow: none;
+      padding: 0;
+      gap: 8px;
+    }
+    .bio-port-ph {
+      width: clamp(150px, 14vw, 202px);
+      height: clamp(186px, 17.4vw, 250px);
+    }
+    .bio-port figcaption {
+      font-size: var(--monos);
+    }
+    .bio-txt p {
+      column-count: 2;
+      column-gap: clamp(30px, 3.2vw, 52px);
+      font-size: var(--body);
+      line-height: var(--lhb);
+      text-align: justify;
+      hyphens: auto;
+    }
+
+    /* płyty tytułowe: stała wysokość, treść przy dole */
+    .eka-plate-dzie {
+      margin-top: 0;
+      height: clamp(360px, 53vh, 460px);
+    }
+    .eka-plate-dzie .eka-plate-bg {
+      -webkit-mask-image: linear-gradient(#000 58%, rgba(0, 0, 0, 0) 100%);
+      mask-image: linear-gradient(#000 58%, rgba(0, 0, 0, 0) 100%);
+    }
+    .eka-plate-bg > img {
+      top: 0;
+      height: 100%;
+    }
+    .eka-plate-dzie .eka-plate-in,
+    .eka-plate-siec .eka-plate-in {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: clamp(30px, 3vw, 48px);
+      padding: 0 var(--g);
+      gap: clamp(12px, 1.1vw, 18px);
+    }
+    .eka-kick {
+      font-size: var(--mono);
+    }
+    .eka-plate h2 {
+      font-size: var(--h2);
+      line-height: 1.12;
+      max-width: clamp(560px, 58vw, 880px);
+    }
+
+    /* zwijane bloki: desktop = pełny tekst, układy sekcji */
+    .eka .s-clp {
+      max-width: var(--wmax);
+      padding: clamp(38px, 3.8vw, 60px) var(--g) clamp(60px, 5.8vw, 94px);
+    }
+    .eka .clp-body {
+      gap: clamp(34px, 3.4vw, 54px);
+    }
+    .eka-card {
+      padding: clamp(20px, 2vw, 32px) clamp(22px, 2.2vw, 36px);
+      gap: 10px;
+    }
+    .eka-card-k {
+      font-size: var(--mono);
+    }
+    .eka-card-t {
+      font-size: calc(var(--body) * 0.96);
+      line-height: 1.6;
+    }
+
+    /* s1 */
+    .eka-s1 .clp-body p {
+      font-size: var(--body);
+      line-height: var(--lhb);
+    }
+    .s1-lead {
+      max-width: clamp(700px, 68vw, 1000px);
+      font-size: var(--lead) !important;
+      line-height: 1.6 !important;
+      text-wrap: pretty;
+    }
+    .s1-cards {
+      flex-direction: row;
+      gap: clamp(24px, 2.4vw, 38px);
+    }
+    .s1-cards .eka-card {
+      flex: 1;
+    }
+    .s1-close > p {
+      column-count: 2;
+      column-gap: clamp(40px, 4.2vw, 68px);
+      text-align: justify;
+      hyphens: auto;
+    }
+    .s1-kolek-d {
+      position: absolute;
+      right: -2vw;
+      top: 50%;
+      transform: translateY(-50%);
+      width: clamp(340px, 32.5vw, 520px);
+      max-width: none;
+      height: auto;
+      mix-blend-mode: multiply;
+      opacity: 0.14;
+      pointer-events: none;
+    }
+
+    /* s2: panel z lewej + akapit obok, reszta niżej */
+    .trud-row {
+      display: flex;
+      align-items: stretch;
+      gap: clamp(44px, 4.6vw, 74px);
+      padding: 0 var(--g) 0 0;
+      max-width: var(--wmax);
+      margin-inline: auto;
+      box-sizing: border-box;
+    }
+    .trud-panel {
+      margin-top: 0;
+      flex: none;
+      width: clamp(560px, 56vw, 880px);
+      height: clamp(400px, 57vh, 520px);
+    }
+    .trud-panel .eka-plate-bg {
+      -webkit-mask-image: linear-gradient(
+        90deg,
+        #000 74%,
+        rgba(0, 0, 0, 0) 100%
+      );
+      mask-image: linear-gradient(90deg, #000 74%, rgba(0, 0, 0, 0) 100%);
+    }
+    .trud-panel .eka-plate-bg > img {
+      object-position: 38% 30%;
+    }
+    .trud-panel .eka-plate-fog {
+      background: linear-gradient(
+        rgba(250, 247, 241, 0.12) 10%,
+        rgba(250, 247, 241, 0.72) 80%
+      );
+    }
+    .trud-panel .eka-plate-in {
+      left: var(--g);
+      right: clamp(40px, 4vw, 64px);
+      bottom: clamp(34px, 3.4vw, 54px);
+      padding: 0;
+      gap: clamp(12px, 1.1vw, 18px);
+    }
+    .trud-p1 {
+      margin: 0;
+      flex: 1;
+      align-self: flex-end;
+      padding-bottom: clamp(34px, 3.4vw, 54px);
+      font-family: var(--font-body), sans-serif;
+      font-size: var(--body);
+      line-height: var(--lhb);
+      color: var(--muted);
+      text-align: justify;
+      hyphens: auto;
+    }
+    .trud-clp {
+      padding-top: clamp(40px, 4vw, 64px);
+    }
+    .trud-clp p {
+      font-size: var(--body);
+      line-height: var(--lhb);
+    }
+    .trud-b2 {
+      margin-top: 0;
+      border-top: 1px dashed rgba(33, 29, 24, 0.3);
+      padding-top: clamp(34px, 3.4vw, 54px);
+    }
+    .trud-b2 > p {
+      column-count: 2;
+      column-gap: clamp(40px, 4.2vw, 68px);
+      text-align: justify;
+      hyphens: auto;
+    }
+    .trud-tail {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: clamp(40px, 4vw, 64px);
+    }
+    .trud-domki {
+      margin: 0;
+      justify-content: flex-start;
+      gap: clamp(30px, 3vw, 48px);
+    }
+    .trud-domki img:nth-child(1),
+    .trud-domki img:nth-child(3) {
+      height: clamp(84px, 8.6vw, 138px);
+    }
+    .trud-domki img:nth-child(2) {
+      height: clamp(100px, 10.2vw, 164px);
+    }
+    .eka .trud-quote {
+      margin: 0;
+      flex: none;
+      width: clamp(420px, 44vw, 700px);
+      font-size: calc(var(--lead) * 1.06);
+      line-height: 1.35;
+      text-align: right;
+      text-wrap: pretty;
+    }
+
+    /* s3 */
+    .eka-plate-siec {
+      margin-top: 0;
+      height: clamp(400px, 55vh, 500px);
+    }
+    .eka-plate-siec .eka-plate-bg {
+      -webkit-mask-image: linear-gradient(#000 44%, rgba(0, 0, 0, 0) 100%);
+      mask-image: linear-gradient(#000 44%, rgba(0, 0, 0, 0) 100%);
+    }
+    .eka-plate-siec .eka-plate-bg > img {
+      object-position: 50% 32%;
+      filter: sepia(0.3) saturate(0.83);
+    }
+    .eka-plate-siec .eka-plate-in {
+      bottom: clamp(26px, 2.6vw, 42px);
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: clamp(48px, 5vw, 80px);
+      align-items: end;
+    }
+    .eka-plate-t {
+      gap: clamp(12px, 1.1vw, 18px);
+    }
+    .siec-ryc {
+      justify-self: end;
+      height: clamp(56px, 5.8vw, 92px);
+      width: auto;
+    }
+    .s3-grid {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      column-gap: clamp(44px, 4.6vw, 74px);
+      row-gap: clamp(34px, 3.4vw, 54px);
+    }
+    .s3-grid p {
+      font-size: var(--body);
+      line-height: var(--lhb);
+    }
+    .s3-p1 {
+      grid-column: 1;
+      grid-row: 1;
+      text-align: justify;
+      hyphens: auto;
+    }
+    .s3-p2w {
+      grid-column: 2;
+      grid-row: 1;
+      margin-top: 0;
+    }
+    .s3-p2w > p {
+      text-align: justify;
+      hyphens: auto;
+    }
+    .s3-motto {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      margin-top: 0;
+      padding: clamp(26px, 2.6vw, 42px) 0;
+      text-align: left;
+      align-items: flex-start;
+      gap: clamp(10px, 1vw, 16px);
+    }
+    .s3-kick {
+      font-size: var(--monos);
+    }
+    .eka .s3-quote {
+      max-width: clamp(760px, 74vw, 1120px);
+      font-size: calc(var(--lead) * 1.12) !important;
+      line-height: 1.35 !important;
+      text-wrap: pretty;
+    }
+    .s3-cards {
+      grid-column: 1 / -1;
+      grid-row: 3;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(20px, 2vw, 32px);
+    }
+    .s3-cards .eka-card {
+      padding: clamp(18px, 1.8vw, 28px) clamp(20px, 2vw, 32px);
+      gap: clamp(7px, 0.7vw, 11px);
+    }
+    .s3-cards .eka-card-k {
+      font-size: var(--monos);
+    }
+    .s3-cards .eka-card-t {
+      font-size: calc(var(--body) * 0.92);
+      line-height: 1.55;
+    }
+    .s3-p3 {
+      grid-column: 1 / -1;
+      grid-row: 4;
+      max-width: clamp(760px, 74vw, 1120px);
+      text-align: justify;
+      hyphens: auto;
+    }
+
+    /* CTA */
+    .eka-cta {
+      margin-top: 0;
+      height: clamp(420px, 60vh, 540px);
+    }
+    .eka-cta-ph {
+      -webkit-mask-image: linear-gradient(
+        rgba(0, 0, 0, 0) 0,
+        rgba(0, 0, 0, 0.45) 16%,
+        #000 40%
+      );
+      mask-image: linear-gradient(
+        rgba(0, 0, 0, 0) 0,
+        rgba(0, 0, 0, 0.45) 16%,
+        #000 40%
+      );
+    }
+    .eka-cta-ph > img {
+      top: 0;
+      height: 100%;
+      object-position: 50% 36%;
+      filter: sepia(0.3) saturate(0.83);
+    }
+    .eka-cta-grad {
+      background: linear-gradient(
+        rgba(24, 19, 14, 0) 42%,
+        rgba(24, 19, 14, 0.68) 100%
+      );
+    }
+    .eka-cta-in {
+      bottom: clamp(40px, 4vw, 64px);
+      max-width: var(--wmax);
+      padding: 0 var(--g);
+      gap: clamp(18px, 1.8vw, 28px);
+    }
+    .eka-cta-in p {
+      max-width: clamp(520px, 52vw, 820px);
+      font-size: calc(var(--lead) * 1.34);
+      line-height: 1.35;
+      text-wrap: pretty;
+    }
+    .eka-cta-in a {
+      font-size: var(--body);
+      padding: clamp(14px, 1.4vw, 22px) clamp(26px, 2.6vw, 42px);
+    }
+  }
+
+  /* ═══ RUCH (bramka js-motion; bez JS / przy reduce brak stanów
+     startowych = strona statyczna). Mobile: reveale + rysowanie rycin
+     maską + parallaxy; desktop: rysowanie [data-rycsb] + dryf tła.
+     Maska schodzi z elementu po animacji (content-motion.ts — lekcja
+     D-Q1). Wzorce i wartości 1:1 z 4.2/4.3. ═══ */
+  @media (max-width: 1023.98px) {
+    html.js-motion .eka [data-rev] {
+      opacity: 0;
+      transform: translateY(22px);
+      transition:
+        opacity 0.7s ease,
+        transform 0.8s cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+    html.js-motion .eka [data-rev].in {
+      opacity: 1;
+      transform: none;
+    }
+    html.js-motion .eka [data-rev][data-rev-d="1"] {
+      transition-delay: 0.09s;
+    }
+    html.js-motion .eka [data-ryc] {
+      -webkit-mask-repeat: no-repeat, no-repeat;
+      mask-repeat: no-repeat, no-repeat;
+      -webkit-mask-size:
+        280% 100%,
+        240% 100%;
+      mask-size:
+        280% 100%,
+        240% 100%;
+    }
+    html.js-motion .eka [data-ryc="l"] {
+      -webkit-mask-image: var(--ryc-wedge-l), var(--ryc-lines-l);
+      mask-image: var(--ryc-wedge-l), var(--ryc-lines-l);
+      -webkit-mask-position:
+        100% 0,
+        100% 0;
+      mask-position:
+        100% 0,
+        100% 0;
+    }
+    html.js-motion .eka [data-ryc="r"] {
+      -webkit-mask-image: var(--ryc-wedge-r), var(--ryc-lines-r);
+      mask-image: var(--ryc-wedge-r), var(--ryc-lines-r);
+      -webkit-mask-position:
+        0 0,
+        0 0;
+      mask-position:
+        0 0,
+        0 0;
+    }
+    html.js-motion .eka [data-ryc="l"].in {
+      animation: ekaRycL 2.8s cubic-bezier(0.3, 0.05, 0.25, 1) both;
+    }
+    html.js-motion .eka [data-ryc="r"].in {
+      animation: ekaRycR 2.8s cubic-bezier(0.3, 0.05, 0.25, 1) both;
+    }
+    /* kaskada rzędu domków (eksport: delaye 0/.35/.7 s) */
+    html.js-motion .eka .trud-domki img:nth-child(2)[data-ryc].in {
+      animation-delay: 0.35s;
+    }
+    html.js-motion .eka .trud-domki img:nth-child(3)[data-ryc].in {
+      animation-delay: 0.7s;
+    }
+  }
+  @media (min-width: 1024px) {
+    html.js-motion .eka [data-rycsb] {
+      -webkit-mask-repeat: no-repeat, no-repeat;
+      mask-repeat: no-repeat, no-repeat;
+      -webkit-mask-size:
+        280% 100%,
+        240% 100%;
+      mask-size:
+        280% 100%,
+        240% 100%;
+    }
+    html.js-motion .eka [data-rycsb="l"] {
+      -webkit-mask-image: var(--ryc-wedge-l), var(--ryc-lines-l);
+      mask-image: var(--ryc-wedge-l), var(--ryc-lines-l);
+      -webkit-mask-position:
+        100% 0,
+        100% 0;
+      mask-position:
+        100% 0,
+        100% 0;
+    }
+    html.js-motion .eka [data-rycsb="r"] {
+      -webkit-mask-image: var(--ryc-wedge-r), var(--ryc-lines-r);
+      mask-image: var(--ryc-wedge-r), var(--ryc-lines-r);
+      -webkit-mask-position:
+        0 0,
+        0 0;
+      mask-position:
+        0 0,
+        0 0;
+    }
+    html.js-motion .eka [data-rycsb="l"].in {
+      animation: ekaRycL 2s cubic-bezier(0.3, 0.05, 0.25, 1) both;
+    }
+    html.js-motion .eka [data-rycsb="r"].in {
+      animation: ekaRycR 2s cubic-bezier(0.3, 0.05, 0.25, 1) both;
+    }
+  }
+
+  /* gradienty masek „rysowania" (eksport: klin 105°/255° + smugi) */
+  .eka {
+    --ryc-wedge-l: linear-gradient(105deg, #000 40%, rgba(0, 0, 0, 0) 52%);
+    --ryc-wedge-r: linear-gradient(255deg, #000 40%, rgba(0, 0, 0, 0) 52%);
+    --ryc-lines-l: linear-gradient(
+      105deg,
+      rgba(0, 0, 0, 0) 0 34%,
+      rgba(0, 0, 0, 0.85) 34% 36.5%,
+      rgba(0, 0, 0, 0) 36.5% 40%,
+      rgba(0, 0, 0, 0.85) 40% 42.5%,
+      rgba(0, 0, 0, 0) 42.5% 46.5%,
+      rgba(0, 0, 0, 0.85) 46.5% 49%,
+      rgba(0, 0, 0, 0) 49% 100%
+    );
+    --ryc-lines-r: linear-gradient(
+      255deg,
+      rgba(0, 0, 0, 0) 0 34%,
+      rgba(0, 0, 0, 0.85) 34% 36.5%,
+      rgba(0, 0, 0, 0) 36.5% 40%,
+      rgba(0, 0, 0, 0.85) 40% 42.5%,
+      rgba(0, 0, 0, 0) 42.5% 46.5%,
+      rgba(0, 0, 0, 0.85) 46.5% 49%,
+      rgba(0, 0, 0, 0) 49% 100%
+    );
+  }
+  @keyframes ekaRycL {
+    0% {
+      filter: opacity(0.55);
+    }
+    75% {
+      filter: opacity(0.85);
+    }
+    100% {
+      -webkit-mask-position:
+        0 0,
+        0 0;
+      mask-position:
+        0 0,
+        0 0;
+      filter: opacity(1);
+    }
+  }
+  @keyframes ekaRycR {
+    0% {
+      filter: opacity(0.55);
+    }
+    75% {
+      filter: opacity(0.85);
+    }
+    100% {
+      -webkit-mask-position:
+        100% 0,
+        100% 0;
+      mask-position:
+        100% 0,
+        100% 0;
+      filter: opacity(1);
+    }
+  }
+</style>
+
+<script>
+  // Zwijane akapity — funkcja, nie dekoracja: ładowane ZAWSZE (działa
+  // też przy prefers-reduced-motion). SSR ma pełny tekst, initCollapsibles
+  // uzbraja przyciski i zwija (progressive enhancement jak paginacja E5).
+  import { initCollapsibles } from "@/components/sections/collapsible";
+
+  initCollapsibles();
+
+  // Ruch — dynamicznie, tylko przy motion OK (sections.md).
+  if (matchMedia("(prefers-reduced-motion: no-preference)").matches) {
+    import("@/components/sections/content-motion");
+  }
+</script>

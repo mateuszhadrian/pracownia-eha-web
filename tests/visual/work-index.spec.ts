@@ -18,25 +18,11 @@
 import { expect, test, type Page } from "@playwright/test";
 import { useVisualFixtureGuard } from "../helpers/guards";
 import { scrollPageTo, settle } from "../helpers/scroll";
-import { prepareSweep } from "../helpers/visual";
+import { prepareSweep, revealSweep } from "../helpers/visual";
 
 const PATH = "/realizacje/";
 
 useVisualFixtureGuard();
-
-/** Przejazd przez całą stronę (odpala IO revealów), powrót na górę. */
-async function revealSweep(page: Page): Promise<void> {
-  const total = await page.evaluate(
-    () => document.body.scrollHeight - window.innerHeight,
-  );
-  const step = await page.evaluate(() => Math.round(window.innerHeight * 0.7));
-  for (let y = step; y < total + step; y += step) {
-    await page.evaluate((top) => window.scrollTo(0, top), Math.min(y, total));
-    await page.waitForTimeout(140);
-  }
-  await scrollPageTo(page, 0);
-  await settle(page, 400);
-}
 
 /** Otwiera detal pierwszego kafla i czeka na spoczynek nakładki. */
 async function openFirstDetail(page: Page) {
@@ -69,6 +55,13 @@ test("realizacje: pełna strona vs baseline", async ({ page }) => {
   await expect(page).toHaveScreenshot("work-index-full.png", {
     fullPage: true,
     mask,
+    // Tolerancja per-shot (decyzja Mateusza, 2026-08-25): maszyny
+    // runnerów różnią się deterministycznie glifem 404-obrazka kafla
+    // preview i szumem AA zdjęcia CTA (pomiar CI: 730 px przy globalnym
+    // budżecie 0.0005 ≈ 395 px). 1185 px zapasu to wciąż ułamek realnej
+    // regresji układu (stanowe rozjazdy = tysiące px); globalny próg
+    // w playwright.config.ts zostaje 0.0005.
+    maxDiffPixelRatio: 0.0015,
   });
 });
 

@@ -13,6 +13,15 @@ import { CONTACT_PATH, HOME_PATH } from "@/lib/routes";
 import logoSign from "@/assets/logo/eha-logo-sign.svg";
 import sheetRyc from "@/assets/dom-ryc-house1.webp";
 
+interface Props {
+  /** „dark" = strona z ciemnym hero pod przezroczystym paskiem
+   *  (/ekipa-eha/, Etap 4.4): treść paska kremowa do wejścia w stan
+   *  solid (wzorzec eksportów — navColor/logoCol #F5EFE3). Czysty
+   *  skin — mechanika progów/auto-hide bez zmian. */
+  tone?: "dark";
+}
+const { tone } = Astro.props;
+
 // Normalizacja ukośnika — w dev Astro.url.pathname bywa bez końcowego "/".
 const currentPath = Astro.url.pathname.endsWith("/")
   ? Astro.url.pathname
@@ -29,7 +38,7 @@ const t = {
 };
 ---
 
-<header class="hdr" data-nav>
+<header class="hdr" data-nav data-tone={tone}>
   {/* papierowe tło stanu solid (oba progi — korekta 4.2) */}
   <span class="hdr-bg" aria-hidden="true"></span>
 
@@ -252,12 +261,34 @@ const t = {
       0 10px 30px rgba(33, 29, 24, 0.06);
   }
 
+  /* ── wariant tone="dark" (Etap 4.4 — /ekipa-eha/): nad ciemnym hero
+     treść paska jest KREMOWA (eksport: navColor/logoCol #F5EFE3),
+     atrament wraca ze stanem solid; przy otwartym sheecie ([data-open])
+     ikona X też wraca do atramentu — sheet jest papierowy. ── */
+  .hdr[data-tone="dark"]:not([data-solid]):not([data-open]) {
+    --hdr-ink: #f5efe3;
+  }
+  .hdr[data-tone="dark"]:not([data-solid]):not([data-open]) .hdr-logo {
+    color: #f5efe3;
+  }
+  /* hover/otwarty dropdown na ciemnym: zamiast zieleni akcentu (ginie na
+     zdjęciu) przygaszony krem — eksportowe style-hover „opacity .72" */
+  .hdr[data-tone="dark"]:not([data-solid]):not([data-open]) .nav-link:hover,
+  .hdr[data-tone="dark"]:not([data-solid]):not([data-open])
+    .nav-link:focus-visible,
+  .hdr[data-tone="dark"][data-onas]:not([data-solid]):not([data-open])
+    .nav-about-btn {
+    color: rgba(245, 239, 227, 0.72);
+  }
+
   .hdr-logo {
     position: relative;
     display: block;
     flex: none;
     width: 48px;
     color: #4c3b2b; /* sepia znaczka z designu */
+    /* zmiana koloru znaczka przy tone="dark" (eksport: .3s ease) */
+    transition: color 0.3s ease;
   }
   .hdr-logo:focus-visible {
     outline: 2px solid var(--hdr-ink);
@@ -293,6 +324,8 @@ const t = {
     color: var(--hdr-ink);
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
+    /* płynny powrót kremu→atramentu przy tone="dark" (jak eksport) */
+    transition: color 0.3s ease;
   }
   .mbtn:focus-visible {
     outline: 2px solid var(--hdr-ink);

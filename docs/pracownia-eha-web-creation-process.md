@@ -700,6 +700,14 @@ presetem (Presets → Export → `.json`):
 - kontener MP4, **H.264** (x264), profil High, **web optimized /
   faststart ✔** (start odtwarzania bez pobrania całości),
 - 1080p (downscale z 4K), 30 fps (albo „same as source" przy 24/25),
+- **Dimensions → Anamorphic: None/Off** (etykieta zależy od wersji
+  HandBrake — na Macu „Off"; = kwadratowe piksele, SAR 1:1;
+  NIE „Automatic") —
+  KRYTYCZNE: ekstraktor miniatur `/cdn-cgi/media` ignoruje flagę
+  proporcji piksela, więc plik anamorficzny odtwarza się dobrze, ale
+  daje ZGNIECIONĄ miniaturę (incydent z klipem testowym 2026-08-24 —
+  diagnoza i naprawa ffmpeg w `.claude/rules/cms-realizacje.md`);
+  Resolution Limit 1080p z „Optimal size" zostaje,
 - jakość RF **22–23**, audio AAC 128 kbps (albo bez audio — na stronie
   start bez dźwięku),
 - efekt: klip 20–30 s → zwykle 5–15 MB.
