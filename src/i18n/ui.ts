@@ -8,6 +8,9 @@ export const defaultLang = "pl";
 export const ui = {
   pl: {
     "meta.title": "Pracownia EH/A — remonty domów z historią",
+    "ekipaPage.title": "Ekipa EH/A — Pracownia EH/A",
+    "ekipaPage.description":
+      "Poznaj ekipę Pracowni EH/A — Łukasza i Maćka. Remonty domów z historią: ciesielstwo, murarstwo i fizyka budowli.",
     "workPage.title": "Realizacje — Pracownia EH/A",
     "workPage.description":
       "Realizacje Pracowni EH/A — remonty domów z historią: ciesielstwo, murarstwo, sklepienia, fizyka budowli i instalacje.",
