@@ -45,6 +45,15 @@ const mask = (page: Page) => [
   page.locator(".dt-poster"),
 ];
 
+/** Budżet zrzutów fullPage tego widoku. Domyślne 5 s expectu NIE mieści
+ *  dwóch stabilizacyjnych przebiegów zrzutu: to najcięższy fullPage
+ *  w projekcie (~7000 px wysokości z rozległymi mix-blend-mode —
+ *  luminosity hero, multiply płyt/rycin), a runner CI rasteryzuje
+ *  programowo (incydent workflow baseline'ów 2026-08-24: „Timeout
+ *  5000ms exceeded" w połowie DRUGIEGO zrzutu; darwin M-serii robi ten
+ *  test 8,3 s vs 3,5 s dla -top). Progi pikselowe bez zmian. */
+const FULLPAGE_SHOT_TIMEOUT_MS = 20_000;
+
 test("ekipa: widok startowy (ciemne hero + kremowy pasek) vs baseline", async ({
   page,
 }) => {
@@ -63,6 +72,7 @@ test("ekipa: pełna strona (akapity zwinięte) vs baseline", async ({ page }) =>
   await expect(page).toHaveScreenshot("ekipa-full.png", {
     fullPage: true,
     mask: mask(page),
+    timeout: FULLPAGE_SHOT_TIMEOUT_MS,
   });
 });
 
@@ -83,5 +93,6 @@ test("ekipa: pełna strona z rozwiniętymi akapitami (mobile)", async ({
   await expect(page).toHaveScreenshot("ekipa-full-open.png", {
     fullPage: true,
     mask: mask(page),
+    timeout: FULLPAGE_SHOT_TIMEOUT_MS,
   });
 });
