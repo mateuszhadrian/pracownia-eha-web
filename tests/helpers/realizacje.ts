@@ -42,9 +42,6 @@ export function readRealizacje<T extends { order: number }>(): T[] {
     .sort((a, b) => a.order - b.order);
 }
 
-/** Ile realizacji pokazuje zajawka na stronie głównej (kap z HomeRealizacje). */
-export const HOME_MAX = 3;
-
 // ── Fixture testów WIZUALNYCH (tests/fixtures/realizacje) ──
 // Zamrożony zestaw, na którym stoją baseline'y (`pnpm build:visual`).
 // Niezależny od treści produkcyjnej: NIE synchronizować po zmianach klienta

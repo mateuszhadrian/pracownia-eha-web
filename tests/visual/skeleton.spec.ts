@@ -22,7 +22,6 @@ import { expect, test } from "@playwright/test";
 import {
   CONTACT_PATH,
   EKIPA_PATH,
-  HOME_PATH,
   KOMPETENCJE_PATH,
   OBSLUGA_PATH,
   POLICY_PATH,
@@ -35,9 +34,9 @@ import { prepareSweep } from "../helpers/visual";
 
 usePreviewGuard();
 
-// Nazwa pliku baseline'u = slug trasy (home → „home").
+// Nazwa pliku baseline'u = slug trasy. Trasa `/` wypadła w Etapie 4.2
+// (własny spec: tests/visual/index.spec.ts).
 const ROUTES: { path: string; name: string }[] = [
-  { path: HOME_PATH, name: "home" },
   { path: EKIPA_PATH, name: "ekipa-eha" },
   { path: KOMPETENCJE_PATH, name: "kompetencje-i-technologie" },
   { path: TRADYCJA_PATH, name: "tradycja-i-ekologia" },

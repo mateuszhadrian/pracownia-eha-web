@@ -1,8 +1,9 @@
 // Nawigacja chrome'u (Etap 4.1): pasek fixed z dropdownem „O nas"
 // i AUTO-HIDE (E11) na desktopie, menu mobilne jako bottom sheet na
 // overlay.ts (otwieranie, Esc, scrim, swipe-down, akordeon „O nas"),
-// stopka („NA GÓRĘ ↑"), telefony/mail składane w JS (antyscraping),
-// kontrakt breakpointu 1024 (expectBreakpointFlip).
+// telefony/mail stopki składane w JS (antyscraping), kontrakt
+// breakpointu 1024 (expectBreakpointFlip). Przycisk „NA GÓRĘ ↑"
+// wycięty w korekcie 4.2 (decyzja Mateusza) — razem z kontraktem.
 import { expect, test, type Page } from "@playwright/test";
 import {
   NAV_DESKTOP_MIN_PX,
@@ -333,22 +334,6 @@ test("logo w pasku prowadzi na stronę główną z podstrony", async ({ page }) 
   await page.locator(".hdr-logo").click();
   await expect(page).toHaveURL(/\/$/);
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
-});
-
-test("stopka: NA GÓRĘ wraca na początek strony", async ({ page }) => {
-  await gotoReady(page, WORK_INDEX_PATH);
-  // szkielet na wysokim viewporcie mieści się bez scrolla — dosztukuj
-  // wysokości (kontrakt dotyczy przycisku stopki, nie długości strony)
-  await ensureScrollRoom(page);
-  const top = page.locator("footer [data-totop]");
-  await top.scrollIntoViewIfNeeded();
-  await settle(page);
-  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
-  await top.click();
-  // scroll jest płynny (behavior: smooth) — doczekaj dojazdu
-  await expect
-    .poll(() => page.evaluate(() => window.scrollY), { timeout: 5000 })
-    .toBe(0);
 });
 
 test("stopka: telefony i mail złożone w JS w slotach antyscrapingowych", async ({
