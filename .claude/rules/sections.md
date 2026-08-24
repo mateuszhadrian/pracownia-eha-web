@@ -65,13 +65,17 @@ która przeżyła kopię w całości (work) i mechaniki formularza (contact).
   realizacji, więc musi być zdjęciem — `viewProject()` liczy z niej
   `cover`, dzięki czemu konsumenci kafla nie wiedzą o zmianie.
 - Galeria detalu: zdjęcia przez `imgAt()`, wideo
-  `<video preload="none" poster playsinline>` — miniaturą jest **klatka ze
+  `<video preload="none" playsinline>` — miniaturą jest **klatka ze
   środka filmu** (`videoFrameAt()`), nie osobne zdjęcie. Klatka idzie
-  DWOMA drogami: `<img class="dt-poster">` pod `<video>` i atrybut `poster`
-  (ten sam URL = jedno pobranie). **Nie kasuj tego `<img>` jako duplikatu**:
+  JEDNĄ drogą: `<img class="dt-poster">` pod `<video>` — **BEZ atrybutu
+  `poster`** (korekta po produkcji 4.3: silniki malują obraz z atrybutu
+  ROZCIĄGNIĘTY do pudełka elementu, ignorując `object-fit` — WebKit —
+  więc nad poprawnym `<img>` lądowała zdeformowana klatka w galerii
+  i jako tło grającego filmu w podglądzie; atrybut i tak nie był pewny:
   przy `preload="none"` Chromium nie pobiera plakatu NIGDY — zmierzone
-  w szablonie na produkcji (Firefox 7/7, WebKit 1/1, Chromium 0/7),
-  a `preload="metadata"` tego nie zmienia. Kadr wideo na zrzutach
+  w szablonie na produkcji: Firefox 7/7, WebKit 1/1, Chromium 0/7,
+  a `preload="metadata"` tego nie zmienia). **Nie kasuj `<img.dt-poster>`
+  ani nie przywracaj atrybutu `poster`.** Kadr wideo na zrzutach
   wizualnych jest pod maską — `.dt-poster` też musi tam być. BEZ
   `controls` i bez własnego znaku play: ikonka kamery `[data-cam]` oraz
   podpowiedź `[data-cam-hint]` („STUKNIJ/KLIKNIJ, ABY OBEJRZEĆ" — oba

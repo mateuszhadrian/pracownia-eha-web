@@ -11,13 +11,12 @@
 //
 // Wideo (E8): preload="none", a miniaturą jest klatka wycięta z samego
 // filmu (videoFrameAt, środek liczony z `duration`) — pozycja z filmem
-// NIE MA własnego zdjęcia. Klatka jest podłożona DWOMA drogami: jako
-// <img class="dt-poster"> pod <video> ORAZ jako atrybut `poster`.
-// Powód (zmierzone w szablonie): przy preload="none" Chromium nie
-// pobiera plakatu NIGDY — także na produkcji i po zmianie na
-// "metadata" — więc na Chrome i Androidzie kadr filmu byłby pustym
-// prostokątem. Odtwarzanie na tap bez zmian; `duration` służy też za
-// badge czasu (desktop).
+// NIE MA własnego zdjęcia. Klatka JEDNĄ drogą: <img class="dt-poster">
+// pod <video>, BEZ atrybutu `poster` (korekta po produkcji 4.3 —
+// szczegóły przy mapowaniu galerii niżej; wcześniejsze „dwie drogi"
+// delung i tak nie działały w Chromium, które przy preload="none" nie
+// pobiera plakatu NIGDY — pomiar szablonu). Odtwarzanie na tap bez
+// zmian; `duration` służy też za badge czasu (desktop).
 import rycHouse from "@/assets/dom-ryc-house1.webp";
 import { imgAt, videoFrameAt } from "@/lib/img";
 import { CONTACT_PATH } from "@/lib/routes";
@@ -70,8 +69,16 @@ const showDashes = p.gallery.length <= WORK_GALLERY_DASHES_MAX;
   <div class="dt-track" data-track>
     {
       p.gallery.map((item, i) => {
-        // Klatka-miniatura liczona RAZ: leci i do <img> pod spodem,
-        // i do atrybutu `poster` (ten sam URL = jedno pobranie).
+        // Klatka-miniatura filmu — WYŁĄCZNIE jako <img class="dt-poster">
+        // pod <video>, BEZ atrybutu `poster` (korekta Mateusza po
+        // produkcji 4.3): silniki malują obraz z atrybutu ROZCIĄGNIĘTY
+        // do pudełka elementu, ignorując object-fit (WebKit), przez co
+        // nad poprawnym <img> lądowała zdeformowana klatka — w galerii
+        // i jako tło grającego filmu w podglądzie. Atrybut i tak nie był
+        // pewną drogą (Chromium przy preload="none" nie pobiera go
+        // NIGDY — pomiar szablonu), więc <img> zostaje jedynym źródłem:
+        // cover w galerii (wycięty środek wypełnia kadr), contain
+        // w podglądzie (czerń wokół — jak sam film).
         const klatka =
           item.type === "video"
             ? videoFrameAt(item.video, item.duration)
@@ -80,9 +87,7 @@ const showDashes = p.gallery.length <= WORK_GALLERY_DASHES_MAX;
           <div class="dt-slide" data-slide>
             {item.type === "video" ? (
               <>
-                {/* Miniatura filmu jako ZWYKŁY OBRAZ, nie tylko `poster`
-                  (gotcha Chromium przy preload="none" — patrz nagłówek).
-                  Galeria żyje w <template>, więc obraz nie jest pobierany
+                {/* Galeria żyje w <template>, więc obraz nie jest pobierany
                   do czasu otwarcia detalu — zero kosztu dla LCP listy. */}
                 {klatka && (
                   <img
@@ -107,7 +112,6 @@ const showDashes = p.gallery.length <= WORK_GALLERY_DASHES_MAX;
                   klipy realizacji to nieme b-rolle z placu budowy */}
                 <video
                   src={item.video}
-                  poster={klatka}
                   preload="none"
                   playsinline
                   style={

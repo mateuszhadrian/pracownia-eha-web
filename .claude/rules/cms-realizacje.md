@@ -63,9 +63,11 @@ paths:
 - Miniatura filmu **nie jest osobnym plikiem**: powstaje z klatki filmu
   (`videoFrameAt()` w `src/lib/img.ts` → `/cdn-cgi/media/mode=frame`).
   Środek liczony z pola `duration` („0:24" → `time=12s`), brak/śmieć → 1 s.
-  Ta sama klatka trafia w markup DWA razy — jako `<img class="dt-poster">`
-  i jako atrybut `poster` — bo Chromium przy `preload="none"` po plakat nie
-  sięga w ogóle (pomiar z szablonu; nie kasuj tego `<img>` jako duplikatu).
+  Klatka trafia w markup JEDNĄ drogą — `<img class="dt-poster">` pod
+  `<video>`, **BEZ atrybutu `poster`** (korekta po produkcji 4.3: silniki
+  malują obraz z atrybutu rozciągnięty, ignorując `object-fit`; a Chromium
+  przy `preload="none"` po plakat i tak nie sięga w ogóle — pomiar
+  z szablonu). Nie kasuj `<img.dt-poster>` i nie przywracaj atrybutu.
 
 ## Media (Cloudflare R2) — konfiguracja wchodzi w Etapie 2
 
@@ -85,7 +87,8 @@ paths:
   nie istnieje → funkcja zwraca oryginał; NIE debuguj „złych rozmiarów"
   lokalnie.
 - Wideo BEZ transformacji — sam plik serwowany wprost z R2
-  (`<video preload="none" poster={videoFrameAt(...)}>`). **Poster to klatka
+  (`<video preload="none">` + `<img.dt-poster>` z `videoFrameAt(...)`).
+  **Miniatura to klatka
   z tego samego filmu** (Media Transformations, JPEG, cache 20 dni). Limity
   pliku: H.264+AAC, 1080p, ≤ ~30 MB/klip (preset HandBrake „Pracownia
   EH/A – strona www", Część C instrukcji).

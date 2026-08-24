@@ -110,8 +110,9 @@ WorkDetailOverlay / WorkDetail) — PORT SKINU, architektura bez zmian.
   E8: `preload="none"`, `playsinline`, bez `controls`, `[data-cam]` +
   `[data-cam-hint]` (oba warianty tekstu w SSR, przełącza @media),
   tap w kadr startuje film i otwiera podgląd z grającym klipem,
-  w podglądzie tap = pauza↔play, poster DWIEMA drogami (gotcha
-  Chromium), miniatura = klatka ze środka (`videoFrameAt`).
+  w podglądzie tap = pauza↔play, miniatura = klatka ze środka
+  (`videoFrameAt`) — od korekty po produkcji JEDNĄ drogą jako
+  `<img.dt-poster>`, bez atrybutu `poster` (patrz §2a).
 
 ### CTA + stopka
 
@@ -253,6 +254,25 @@ WorkDetailOverlay / WorkDetail) — PORT SKINU, architektura bez zmian.
   101 KB (GET 200; HEAD nie jest wspierany przez transformację —
   zwraca 404, nie sugerować się nim).
 
+### 2b. Korekty po testach NA PRODUKCJI (2026-08-24, po merge'u PR #8)
+
+- **Atrybut `poster` WYCIĘTY z `<video>`** — na produkcji (gdzie klatka
+  wreszcie się ładuje) wyszło, że silniki malują obraz z atrybutu
+  ROZCIĄGNIĘTY do pudełka elementu, ignorując `object-fit` (WebKit):
+  w galerii nad poprawnym `<img.dt-poster>` (cover) lądowała
+  zdeformowana klatka, a w podglądzie pełnoekranowym rozciągała się na
+  cały ekran ZA grającym filmem (zamiast czerni). „Dwie drogi" delung
+  i tak nie działały w Chromium (przy `preload="none"` nie pobiera
+  plakatu nigdy — pomiar szablonu), więc `<img.dt-poster>` zostaje
+  JEDYNĄ drogą: cover w galerii (wycięty środek klatki wypełnia kadr),
+  contain w podglądzie (czerń wokół, jak sam film). Reguły
+  sections.md/cms-realizacje.md zaktualizowane; kontrakt e2e pilnuje
+  BRAKU atrybutu.
+- **Kamera w podglądzie pełnoekranowym mobile → LEWY DOLNY róg**
+  (przy pauzie nakładała się na chevron wyjścia w lewym górnym);
+  desktop bez zmian (chevrona nie ma, X jest po prawej). Kontrakt e2e
+  (dolna połowa ekranu + zero przecięcia z chevronem).
+
 ## 3. Czego świadomie NIE przenosimy
 
 - Podwójne drzewa, `sc-if`/`sc-for`, mnożniki `--k`/`--w`, cqw,
@@ -279,7 +299,8 @@ WorkDetailOverlay / WorkDetail) — PORT SKINU, architektura bez zmian.
   lightbox: otwarcie tapem, contain + czarne tło (kontrakt CSS),
   strzałki, klawiatura ←/→, Esc zamyka TYLKO podgląd, powrót na
   oglądany kadr; wideo funkcjonalnie (preload/playsinline/bez
-  controls, poster dwiema drogami z tym samym URL, hint per próg,
+  controls, miniatura jedną drogą — `<img.dt-poster>` bez atrybutu
+  `poster` (korekta §2b), hint per próg,
   autoplay w podglądzie `paused === false`, tap pauza↔play);
   mobile gesty: karuzela `scroll-snap-stop: always` + licznik ze
   scrolla (`offsetWidth + 10`), swipe-down sheeta dotykiem

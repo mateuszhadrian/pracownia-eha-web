@@ -430,18 +430,18 @@ test.describe("detal desktop: modal, galeria, projnav", () => {
     // Pozycja z filmem NIE MA własnego zdjęcia — plakatem jest klatka
     // wycięta z samego filmu (videoFrameAt). Na preview endpoint
     // /cdn-cgi/media 404-uje — znany artefakt.
-    const poster = await video.getAttribute("poster");
-    expect(poster).toMatch(
+    // Klatka JEDNĄ drogą: <img class="dt-poster"> pod <video>. Atrybutu
+    // `poster` NIE MA (korekta po produkcji 4.3 — silniki malują go
+    // rozciągnięty do pudełka elementu, ignorując object-fit).
+    expect(await video.getAttribute("poster")).toBeNull();
+    const klatka = await detail
+      .locator("[data-gal] .dt-poster")
+      .getAttribute("src");
+    expect(klatka).toMatch(
       /^\/cdn-cgi\/media\/mode=frame,time=\d+s,width=\d+\//,
     );
     // klatka pochodzi Z TEGO SAMEGO pliku, który jest odtwarzany
-    expect(poster).toContain(videoItem.video.replace(/^https?:\/\//, ""));
-    // …i idzie DRUGĄ drogą jako <img class="dt-poster"> (gotcha
-    // Chromium: przy preload="none" nie pobiera atrybutu poster nigdy)
-    await expect(detail.locator("[data-gal] .dt-poster")).toHaveAttribute(
-      "src",
-      poster ?? "",
-    );
+    expect(klatka).toContain(videoItem.video.replace(/^https?:\/\//, ""));
 
     // dojazd do kadru z wideo strzałkami (dashes są mobile-only w 4.3)
     for (let i = 0; i < videoIdx; i++) {
@@ -567,6 +567,49 @@ test.describe("detal mobile: bottom sheet, karuzela, gesty", () => {
     await page.mouse.up();
     await expect(lb).toBeHidden();
     await expect(detail).toHaveClass(/is-open/);
+  });
+
+  test("kamera w podglądzie mobile siedzi w lewym dolnym rogu (nie nachodzi na chevron)", async ({
+    page,
+  }) => {
+    test.skip(!VIDEO_ENTRY, "brak wpisu z wideo w kolekcji");
+    const entry = VIDEO_ENTRY!;
+    const videoIdx = entry.gallery.findIndex((g) => g.type === "video");
+    await gotoReady(page, PATH);
+    const card = page.locator(`.wk-grid [data-work-slug="${entry.slug}"]`);
+    // wpis z wideo może leżeć poza pierwszym krokiem „pokaż więcej"
+    while (await card.isHidden()) {
+      await page.locator("[data-more]").click();
+    }
+    await card.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(300);
+    const detail = await openDetail(page, card);
+
+    // dojazd karuzeli do kadru wideo i tap → podgląd z grającym filmem
+    await detail.locator("[data-track]").evaluate((el, idx) => {
+      const track = el as HTMLElement;
+      const slide = track.children[idx] as HTMLElement;
+      track.scrollTo({
+        left: slide.offsetLeft - track.offsetLeft,
+        behavior: "instant",
+      });
+    }, videoIdx);
+    await settle(page, 400);
+    await detail.locator("[data-slide]").nth(videoIdx).click();
+    const lb = detail.locator("[data-lightbox]");
+    await expect(lb).toBeVisible();
+
+    // pauza (tap w film) pokazuje ikonkę kamery
+    await lb.locator("video").click();
+    const cam = lb.locator("[data-cam]");
+    await expect(cam).toBeVisible();
+    const camBox = await cam.boundingBox();
+    const backBox = await lb.locator(".lb-back").boundingBox();
+    const vh = page.viewportSize()!.height;
+    // dolna połowa ekranu, zero przecięcia z chevronem wyjścia (korekta
+    // Mateusza — w lewym górnym rogu ikonka wchodziła pod chevron)
+    expect(camBox!.y).toBeGreaterThan(vh / 2);
+    expect(camBox!.y).toBeGreaterThan(backBox!.y + backBox!.height);
   });
 
   test("karuzela galerii: gotchas toru + licznik ze scrolla", async ({

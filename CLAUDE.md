@@ -341,9 +341,16 @@ zostają, widoki budowane od nowa wg `docs/design/` — patrz
     mobile na stałym dolnym pasie; **klawiatura ←/→** w podglądzie
     ORAZ w galerii detalu na desktopie (jedyna zmiana open-detail.ts;
     bez zapętlenia — krańce jak disabled). Esc-hierarchia bez zmian.
-    **Wideo E8** 1:1 (preload=none, playsinline, bez controls, poster
-    dwiema drogami, badge „STUKNIJ/KLIKNIJ, ABY OBEJRZEĆ" z tłem wg
-    designu — uppercase robi CSS, asercje e2e wersalikami).
+    **Wideo E8** 1:1 (preload=none, playsinline, bez controls, badge
+    „STUKNIJ/KLIKNIJ, ABY OBEJRZEĆ" z tłem wg designu — uppercase robi
+    CSS, asercje e2e wersalikami). **Miniatura filmu JEDNĄ drogą** —
+    `<img.dt-poster>` pod `<video>`, BEZ atrybutu `poster` (korekta
+    Mateusza po produkcji: silniki malują atrybut ROZCIĄGNIĘTY,
+    ignorując object-fit — WebKit — psuł miniaturę w galerii i tło
+    grającego filmu w podglądzie; „dwie drogi" delung i tak nie
+    działały w Chromium). Kamera w podglądzie mobile = LEWY DOLNY róg
+    (w górnym nachodziła na chevron wyjścia); reguły zaktualizowane
+    w sections.md i cms-realizacje.md.
   - Ruch za bramką `js-motion`: `work-motion.ts` rozszerzony o
     `[data-ryc]`/`[data-plxr]` (wzorce 4.2); reveale mobile w tempie
     delung; desktop statyczny. Bez nowych assetów (house8/house1/
