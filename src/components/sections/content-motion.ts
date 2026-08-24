@@ -131,11 +131,21 @@ function paint() {
     }
     return;
   }
+  // BEZ pomijania elementów poza viewportem (różnica względem
+  // home/work-motion): transform liczymy ZAWSZE, więc stan każdego
+  // elementu jest czystą funkcją bieżącej pozycji scrolla — poza
+  // kadrem `clamp` daje stały punkt krańcowy, w kadr element wchodzi
+  // dokładnie z niego (wizualnie identycznie). Z pomijaniem elementy
+  // środka strony zostawały z transformem „ostatniej klatki, kiedy
+  // były widoczne" — wynik zależny od próbkowania rAF podczas
+  // przewijania, różny między maszynami (flake webkit-CI 2026-08-24
+  // na zrzutach fullPage). Koszt: kilkanaście getBoundingClientRect
+  // na tick — pomijalny.
   const vh = window.innerHeight;
   const vc = vh / 2;
   for (const el of rycs) {
     const r = el.getBoundingClientRect();
-    if (!r.height || r.bottom < -120 || r.top > vh + 120) continue;
+    if (!r.height) continue;
     const p = clamp((r.top + r.height / 2 - vc) / (vh / 2));
     el.style.transform = `translateY(${(p * PLXR_MAX_PX).toFixed(1)}px)`;
   }
@@ -145,7 +155,7 @@ function paint() {
     const frame = el.parentElement;
     if (!frame) continue;
     const f = frame.getBoundingClientRect();
-    if (!f.height || f.bottom < -80 || f.top > vh + 80) continue;
+    if (!f.height) continue;
     const p = clamp((f.top + f.height / 2 - vc) / ((vh + f.height) / 2));
     el.style.transform = `translateY(${(p * (PLX_AMT / 2) * f.height).toFixed(1)}px)`;
   }

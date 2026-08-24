@@ -68,7 +68,29 @@ export async function revealSweep(page: Page): Promise<void> {
     await page.waitForTimeout(140);
   }
   await settle(page, 400);
+
+  // Dociśnięcie maruderów: na wolnym WebKit IO potrafi policzyć
+  // przecięcie już PO odjeździe na kolejny krok — element bywał w kadrze
+  // tylko przez jedną pauzę i jego reveal/rysowanie przepadało (flake
+  // CI 2026-08-24: płyta środka strony bez kickera/h2 na zrzucie).
+  // Każdy wciąż uzbrojony element wjeżdża do kadru na pełne settle;
+  // elementy nieodhaczalne (schowane pod zwiniętym max-height — IO tnie
+  // intersectionRect po overflow przodka) odpuszczamy po 3 przebiegach.
+  const armed = page.locator(
+    "html.js-motion [data-rev]:not(.in), html.js-motion [data-ryc]:not(.in), html.js-motion [data-rycsb]:not(.in)",
+  );
+  for (let pass = 0; pass < 3 && (await armed.count()) > 0; pass++) {
+    for (const el of await armed.all()) {
+      if (!(await el.isVisible().catch(() => false))) continue;
+      await el.scrollIntoViewIfNeeded().catch(() => {});
+      await settle(page, 200);
+    }
+  }
+
   await scrollPageTo(page, 0);
+  // Wymuszony przemalunek pętli rAF przy y=0: WebKit potrafi zgubić
+  // zdarzenie scroll po programowym skoku (pętla nie namalowałaby
+  // stanu końcowego transformów).
   await page.evaluate(() => window.dispatchEvent(new Event("scroll")));
   await settle(page, 400);
 }
