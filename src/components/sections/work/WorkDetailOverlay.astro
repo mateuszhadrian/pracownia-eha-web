@@ -591,6 +591,14 @@
     #work-detail .lb-track::-webkit-scrollbar {
       display: none;
     }
+    /* ikonka kamery w podglądzie mobile schodzi do LEWEGO DOLNEGO rogu
+       (korekta Mateusza): w lewym górnym nakładała się na chevron
+       wyjścia; dół trzyma odstęp od centrowanego licznika 01/NN */
+    #work-detail .lb-media [data-cam] {
+      top: auto;
+      left: 12px;
+      bottom: calc(max(16px, env(safe-area-inset-bottom)) + 32px);
+    }
   }
   @media (min-width: 1024px) {
     #work-detail .lb-track {
