@@ -37,8 +37,17 @@ const mask = (page: Page) => [
  *  luminosity hero, multiply płyt/rycin), a runner CI rasteryzuje
  *  programowo (incydent workflow baseline'ów 2026-08-24: „Timeout
  *  5000ms exceeded" w połowie DRUGIEGO zrzutu; darwin M-serii robi ten
- *  test 8,3 s vs 3,5 s dla -top). Progi pikselowe bez zmian. */
+ *  test 8,3 s vs 3,5 s dla -top). */
 const FULLPAGE_SHOT_TIMEOUT_MS = 20_000;
+
+/** Tolerancja pikselowa zrzutów fullPage ekipy (decyzja Mateusza,
+ *  2026-08-24): WebKit przy dpr=2 pod równoległym obciążeniem sypie
+ *  jednopikselowym szumem resamplingu na obszarach ZDJĘĆ (pomiar:
+ *  765 px przy globalnym budżecie 0.0005 ≈ 640 px — o ~20 % ponad,
+ *  klasa znanego granicznego index-full na SE). 0.001 daje zapas na
+ *  szum, a realna regresja layoutu to TYSIĄCE px; globalny próg
+ *  w playwright.config.ts zostaje 0.0005. */
+const FULLPAGE_MAX_DIFF_RATIO = 0.001;
 
 test("ekipa: widok startowy (ciemne hero + kremowy pasek) vs baseline", async ({
   page,
@@ -59,6 +68,7 @@ test("ekipa: pełna strona (akapity zwinięte) vs baseline", async ({ page }) =>
     fullPage: true,
     mask: mask(page),
     timeout: FULLPAGE_SHOT_TIMEOUT_MS,
+    maxDiffPixelRatio: FULLPAGE_MAX_DIFF_RATIO,
   });
 });
 
@@ -80,5 +90,6 @@ test("ekipa: pełna strona z rozwiniętymi akapitami (mobile)", async ({
     fullPage: true,
     mask: mask(page),
     timeout: FULLPAGE_SHOT_TIMEOUT_MS,
+    maxDiffPixelRatio: FULLPAGE_MAX_DIFF_RATIO,
   });
 });
