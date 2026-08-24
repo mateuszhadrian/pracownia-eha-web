@@ -450,7 +450,11 @@ zostają, widoki budowane od nowa wg `docs/design/` — patrz
     przełączenie przy okazji — może wyleczyć „graniczny" baseline
     index-full webkit; wymaga decyzji, bo dotyka baseline'ów `/`).
     Do tego `expect.poll` na kolory paska (transition 0.3 s) i budżet
-    20 s na fullPage (najcięższe blendy + software raster runnera).
+    20 s na fullPage (najcięższe blendy + software raster runnera);
+    zrzuty fullPage ekipy mają per-shot `maxDiffPixelRatio: 0.001`
+    (decyzja Mateusza — WebKit dpr=2 pod równoległym obciążeniem sypie
+    1-px szumem resamplingu na zdjęciach: pomiar 765 px vs budżet
+    640 px; globalny próg 0.0005 nietknięty).
   - UWAGI dla 4.4 cz. 2 (kompetencje): konsumować `CollapsibleText`
     (collapsedMax 132/128 px z eksportu; przycisk bywa w osobnym
     kontenerze — stylować z poziomu strony) + `content-motion.ts` +
