@@ -1,11 +1,15 @@
 ---
-// Kafel siatki /realizacje/ (część 4.4) — port `tile` z designu
-// docs/design/realizacje.html. Karta jest <button>, bo klik otwiera
-// detal w #work-detail (WorkDetailOverlay), nie nawigację.
-// `data-cat` konsumuje filtrowanie (skrypt WorkIndexPage), kontrakty
-// data-work-slug/-name — open-detail i testy. Zdjęcie kafla: cover przez
-// imgAt() (media w R2); mobile parallax ±70 px robi work-motion.ts na
-// [data-tilepar] (stan bez JS = statyczny offset z CSS, jak w eksporcie).
+// Kafel siatki /realizacje/ (Etap 4.3) — port kafla z eksportu
+// docs/design/export/realizacje.html (analiza-realizacje §1): kadr 4:3
+// z gradientem, lupa „w narożnikach kadru" (wzór z 4.2 — re-lens),
+// meta MIEJSCE · ROK + tytuł serif; desktop dokłada hover
+// (przyciemnienie + pill „ZOBACZ REALIZACJĘ"). Karta jest <button>,
+// bo klik otwiera detal w #work-detail (WorkDetailOverlay), nie
+// nawigację — bez JS lista jest kompletna, detal to enhancement.
+// Kontrakty data-work-slug/-name — open-detail i testy. Zdjęcie kafla:
+// cover przez imgAt() (media w R2); mobile parallax ±35 px robi
+// work-motion.ts na [data-tilepar] (zapas 70 px w CSS — D-U1;
+// stan bez JS = statyczny offset −35 px).
 import { imgAt } from "@/lib/img";
 import type { ViewProject } from "./work-data";
 
@@ -37,57 +41,51 @@ const p = project;
         : undefined}
     />
     <span class="tile-scrim" aria-hidden="true"></span>
+    <span class="tile-dim" aria-hidden="true"></span>
     <span class="tile-lupa" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none">
-        <circle cx="11" cy="11" r="7" stroke="#fff" stroke-width="1.5"></circle>
+      <svg viewBox="0 0 16 16">
+        <circle
+          cx="6.6"
+          cy="6.6"
+          r="4.9"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.4"></circle>
         <path
-          d="M16.8 16.8L21 21M11 8.2v5.6M8.2 11h5.6"
-          stroke="#fff"
-          stroke-width="1.5"
+          d="M10.4 10.4L14.4 14.4"
+          stroke="currentColor"
+          stroke-width="1.4"
           stroke-linecap="round"></path>
       </svg>
     </span>
-  </span>
-  <span class="tile-body">
-    <span class="tile-title">{p.title}</span>
-    <span class="tile-foot">
-      <span class="tile-cta">
-        Zobacz szczegóły<span class="tile-ctaLong"> realizacji</span>
-      </span>
-      <span class="tile-circle" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none">
-          <circle cx="11" cy="11" r="7" stroke="#1a1a1a" stroke-width="1.5"
-          ></circle>
-          <path
-            d="M16.8 16.8L21 21M11 8.2v5.6M8.2 11h5.6"
-            stroke="#1a1a1a"
-            stroke-width="1.5"
-            stroke-linecap="round"></path>
-        </svg>
-      </span>
+    {
+      /* tekst pilla siedzi w CSS (content) — warstwa czysto dekoracyjna,
+      widoczna tylko na hover desktop; nazwa akcji jest w aria-label */
+    }
+    <span class="tile-see" aria-hidden="true"></span>
+    <span class="tile-meta">
+      <span class="tile-place">{p.place} · {p.year}</span>
+      <span class="tile-title">{p.title}</span>
     </span>
   </span>
 </button>
 
 <style>
-  /* ── Mobile (<1024): kafel z ramką, parallax kadru ── */
+  /* ── Wspólne: kadr 4:3, gradient, meta na dole (eksport) ── */
   .tile {
     /* reset przycisku */
     appearance: none;
     margin: 0;
     padding: 0;
+    border: none;
     background: none;
-    color: var(--ink);
     font: inherit;
     text-align: left;
     cursor: pointer;
 
     display: block;
     width: 100%;
-    border: 1px solid rgba(26, 26, 26, 0.28);
-  }
-  .tile:hover {
-    border-color: rgba(26, 26, 26, 0.5);
+    color: #f5efe3;
   }
   .tile:focus-visible {
     outline: 2px solid var(--ink);
@@ -100,10 +98,12 @@ const p = project;
   .tile-fig {
     display: block;
     position: relative;
-    aspect-ratio: 1.034;
+    aspect-ratio: 4 / 3;
     overflow: hidden;
-    background: #e5e1da;
+    background: var(--bg-dark);
   }
+  /* zapas 70 px = ruch ±35 px parallaxu [data-tilepar] (D-U1); stan
+     bez JS/desktop: statyczny offset (desktop zdejmuje w @media) */
   .tile-fig img {
     position: absolute;
     left: 0;
@@ -113,153 +113,176 @@ const p = project;
     height: calc(100% + 70px);
     object-fit: cover;
     transform: translate3d(0, -35px, 0);
+    filter: sepia(0.16) saturate(0.88);
   }
   .tile-scrim {
     position: absolute;
     inset: 0;
     background: linear-gradient(
       180deg,
-      rgba(0, 0, 0, 0.22) 0%,
-      rgba(0, 0, 0, 0) 34%
+      rgba(24, 19, 14, 0.15) 0%,
+      rgba(24, 19, 14, 0) 28%,
+      rgba(24, 19, 14, 0.55) 62%,
+      rgba(24, 19, 14, 0.9) 100%
     );
   }
-  .tile-lupa {
+  .tile-dim,
+  .tile-see {
     display: none;
   }
 
-  .tile-body {
-    display: block;
-    padding: 16px 18px 18px;
-  }
-  .tile-title {
-    display: block;
-    font-family: var(--font-display), sans-serif;
-    font-weight: 300;
-    font-size: clamp(17px, 5.13vw, 21px);
-    line-height: 1.3;
-    text-wrap: pretty;
-  }
-  .tile-foot {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-    margin-top: 14px;
-    padding-top: 14px;
-    border-top: 1px solid rgba(26, 26, 26, 0.14);
-  }
-  .tile-cta {
-    font-family: var(--font-display), sans-serif;
-    font-weight: 500;
-    font-size: clamp(10px, 2.82vw, 11px);
-    line-height: 1.5;
-    letter-spacing: 0.14em;
-    color: var(--faint);
-    text-transform: uppercase;
-  }
-  .tile-circle {
+  /* lupa „w narożnikach kadru" (8 gradientów 11×1 px — wzór re-lens
+     z 4.2, 1:1 z designem podstrony) */
+  .tile-lupa {
+    position: absolute;
+    right: 14px;
+    top: 14px;
     width: 38px;
     height: 38px;
-    flex: none;
-    border: 1px solid rgba(26, 26, 26, 0.4);
-    border-radius: 999px;
+    color: #f5efe3;
     display: flex;
     align-items: center;
     justify-content: center;
+    background:
+      linear-gradient(#f5efe3, #f5efe3) 0 0 / 11px 1px no-repeat,
+      linear-gradient(#f5efe3, #f5efe3) 0 0 / 1px 11px no-repeat,
+      linear-gradient(#f5efe3, #f5efe3) 100% 0 / 11px 1px no-repeat,
+      linear-gradient(#f5efe3, #f5efe3) 100% 0 / 1px 11px no-repeat,
+      linear-gradient(#f5efe3, #f5efe3) 0 100% / 11px 1px no-repeat,
+      linear-gradient(#f5efe3, #f5efe3) 0 100% / 1px 11px no-repeat,
+      linear-gradient(#f5efe3, #f5efe3) 100% 100% / 11px 1px no-repeat,
+      linear-gradient(#f5efe3, #f5efe3) 100% 100% / 1px 11px no-repeat;
+    filter: drop-shadow(0 1px 4px rgba(18, 13, 9, 0.55));
+    pointer-events: none;
   }
-  .tile-circle svg {
+  .tile-lupa svg {
     width: 17px;
     height: 17px;
   }
 
-  /* ── Desktop (≥1024): bez ramki, hover zoom + lupka ── */
+  .tile-meta {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 0 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .tile-place {
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: clamp(10px, 1.32vw, 11px);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(245, 239, 227, 0.86);
+    text-shadow: 0 1px 2px rgba(24, 19, 14, 0.5);
+  }
+  .tile-title {
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: clamp(22px, 3.2vw, 25px);
+    line-height: 1.16;
+    text-wrap: pretty;
+  }
+
+  /* ════ Desktop ≥1024 (para: WORK_DESKTOP_MIN_PX): hover-stany ════ */
   @media (min-width: 1024px) {
-    .tile {
-      border: none;
-    }
-    .tile-fig {
-      aspect-ratio: 1.384;
-    }
     .tile-fig img {
-      bottom: 0;
       height: 100%;
       transform: none;
-      transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: transform 0.4s ease;
     }
     .tile:hover .tile-fig img {
-      transform: scale(1.06);
+      transform: scale(1.005);
     }
     .tile-scrim {
       background: linear-gradient(
         180deg,
-        rgba(0, 0, 0, 0.2) 0%,
-        rgba(0, 0, 0, 0) 32%
+        rgba(24, 19, 14, 0.12) 0%,
+        rgba(24, 19, 14, 0) 32%,
+        rgba(24, 19, 14, 0.5) 66%,
+        rgba(24, 19, 14, 0.88) 100%
       );
     }
-    .tile-lupa {
-      display: flex;
+    /* przyciemnienie + lupa + pill wchodzą na hover/focus */
+    .tile-dim {
+      display: block;
       position: absolute;
-      right: 18px;
-      bottom: 18px;
-      width: 44px;
-      height: 44px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.7);
-      background: rgba(255, 255, 255, 0.16);
-      align-items: center;
-      justify-content: center;
-      transition:
-        background 0.4s ease,
-        border-color 0.4s ease;
-    }
-    .tile:hover .tile-lupa {
-      background: #fff;
-      border-color: #fff;
-    }
-    .tile:hover .tile-lupa svg circle,
-    .tile:hover .tile-lupa svg path {
-      stroke: #1a1a1a;
-    }
-    .tile-lupa svg {
-      width: 18px;
-      height: 18px;
-    }
-    .tile-body {
-      padding: 16px 0 0;
-    }
-    .tile-title {
-      font-weight: 200;
-      font-size: clamp(18px, 1.53vw, 22px);
-      line-height: 1.28;
+      inset: 0;
+      background: rgba(24, 19, 14, 0.42);
+      opacity: 0;
       transition: opacity 0.3s ease;
     }
-    .tile:hover .tile-title {
-      opacity: 0.72;
+    .tile:hover .tile-dim,
+    .tile:focus-visible .tile-dim {
+      opacity: 1;
     }
-    .tile-foot {
-      margin-top: 12px;
-      padding-top: 0;
-      border-top: none;
+    .tile-lupa {
+      right: clamp(14px, 1.39vw, 22px);
+      top: clamp(14px, 1.39vw, 22px);
+      width: clamp(38px, 3.2vw, 51px);
+      height: clamp(38px, 3.2vw, 51px);
+      opacity: 0;
+      transition: opacity 0.25s ease;
+      z-index: 2;
     }
-    .tile-cta {
-      font-family: var(--font-body), sans-serif;
-      font-size: 13px;
-      letter-spacing: 0;
-      text-transform: none;
-      color: var(--faint);
+    .tile:hover .tile-lupa,
+    .tile:focus-visible .tile-lupa {
+      opacity: 1;
     }
-    .tile-ctaLong {
-      display: none;
+    /* pill „ZOBACZ REALIZACJĘ" na środku kadru: obrys + „szkło"
+       (backdrop-blur) — 1:1 z eksportem; centruje grid rodzica */
+    .tile-see {
+      display: grid;
+      position: absolute;
+      inset: 0;
+      place-items: center;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+      pointer-events: none;
+      z-index: 1;
+      font-family: var(--font-mono), monospace;
+      font-weight: 500;
+      font-size: clamp(9px, 0.66vw, 10.5px);
+      letter-spacing: 0.18em;
+      color: #f5efe3;
     }
-    .tile-circle {
-      display: none;
+    .tile-see::before {
+      content: "ZOBACZ REALIZACJĘ";
+      box-sizing: border-box;
+      border: 1px solid rgba(245, 239, 227, 0.34);
+      background: rgba(245, 239, 227, 0.16);
+      -webkit-backdrop-filter: blur(6px) saturate(1.1);
+      backdrop-filter: blur(6px) saturate(1.1);
+      padding: 12px 22px;
+    }
+    .tile:hover .tile-see,
+    .tile:focus-visible .tile-see {
+      opacity: 1;
+    }
+    .tile-meta {
+      padding: 0 clamp(20px, 1.95vw, 31px) clamp(18px, 1.81vw, 29px);
+      gap: clamp(7px, 0.63vw, 10px);
+    }
+    .tile-place {
+      font-size: clamp(9px, 0.66vw, 10.5px);
+      letter-spacing: 0.18em;
+      text-shadow: none;
+    }
+    .tile-title {
+      font-size: clamp(22px, 2.15vw, 34px);
+      line-height: 1.14;
+      max-width: 30em;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .tile-fig img,
+    .tile-dim,
     .tile-lupa,
-    .tile-title {
+    .tile-see {
       transition: none;
     }
     .tile:hover .tile-fig img {

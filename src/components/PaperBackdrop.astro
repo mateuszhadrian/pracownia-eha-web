@@ -1,15 +1,21 @@
 ---
-// Tło strony głównej wg eksportu (korekta Mateusza po testach 4.2):
-// duży skan papieru (paper-background) na kremowej bazie — mobile
+// Tło widoku wg eksportów (korekta Mateusza z 4.2, od 4.3 wspólne dla
+// `/` i `/realizacje/` — oba eksporty mają identyczny wzorzec): duży
+// skan papieru (paper-background) na kremowej bazie — mobile
 // `center/cover`, scrolluje się z treścią 1:1; desktop `top center /
 // 100% auto repeat-y` z DRYFEM: eksport przesuwał background-position
 // o 0.15·scroll na elemencie jadącym z treścią, więc tekstura płynie
-// w 0.85 tempa treści. Port dryfu: element FIXED przesuwany TRANSFORMEM
-// zawiniętym modulo okres tekstury (sam kompozytor, zero przemalowań —
-// lekcja D-Q1; eksportowe ruszanie background-position przemalowywałoby
-// warstwę co klatkę). Ruch liczy pętla home-motion.ts za bramką
+// w 0.85 tempa treści (PAPER_BG_SPEED). Port dryfu: element FIXED
+// przesuwany TRANSFORMEM zawiniętym modulo okres tekstury (sam
+// kompozytor, zero przemalowań — lekcja D-Q1; eksportowe ruszanie
+// background-position przemalowywałoby warstwę co klatkę). Ruch liczy
+// pętla modułu ruchu widoku (home-motion.ts / work-motion.ts) za bramką
 // js-motion; bez JS / przy reduce tekstura desktop zostaje absolute
 // i scrolluje z treścią (strona kompletna bez dryfu).
+//
+// Konsument daje kontenerowi: position:relative + isolation:isolate
+// (z-index -1 tekstury zostaje pod treścią) + background var(--bg-cream);
+// kafelek body zostaje pod chrome'em pozostałych tras.
 import paper from "@/assets/paper-background.webp";
 
 // okres pionowy tekstury przy szerokości 100vw (repeat-y)
@@ -30,7 +36,7 @@ const ratio = paper.height / paper.width;
   .pbk {
     position: absolute;
     inset: 0;
-    /* pod treścią main (stacking context: isolation na .home) */
+    /* pod treścią main (stacking context: isolation na kontenerze) */
     z-index: -1;
     pointer-events: none;
   }
@@ -42,7 +48,7 @@ const ratio = paper.height / paper.width;
     opacity: 0.2;
   }
 
-  /* ════ DESKTOP ≥1024 (para: HOME_DESKTOP_MIN_PX) ════ */
+  /* ════ DESKTOP ≥1024 (breakpoint projektu) ════ */
   @media (min-width: 1024px) {
     .pbk-tex {
       background: var(--pbk-url) top center / 100% auto repeat-y;

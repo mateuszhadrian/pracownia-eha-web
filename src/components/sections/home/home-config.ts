@@ -11,7 +11,8 @@ export const HOME_DESKTOP_MIN_PX = 1024;
  *  Lustro tej stałej dla testów: tests/helpers/realizacje.ts (HOME_MAX). */
 export const HOME_REALIZACJE_MAX = 3;
 
-// ── Dryf tła papieru (desktop; HomeBackdrop + home-motion.ts) ──
+// ── Dryf tła papieru (desktop; PaperBackdrop — od 4.3 wspólny dla
+// `/` i `/realizacje/`; pętle: home-motion.ts + work-motion.ts) ──
 /** Tempo tekstury tła względem treści. Eksport przesuwał
  *  background-position o 0.15·scroll na elemencie jadącym z treścią,
  *  czyli tekstura płynie względem viewportu w 1 − 0.15 = 0.85 tempa. */

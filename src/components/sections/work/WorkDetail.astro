@@ -1,25 +1,27 @@
 ---
-// Treść detalu realizacji (część 4.4) — markup `dt-*` z designu
-// docs/design/realizacje.html, wspólny dla obu progów JEDNEGO overlaya
-// #work-detail (WorkDetailOverlay.astro): <1024 bottom sheet (galeria
+// Treść detalu realizacji (Etap 4.3) — skin wg eksportu
+// docs/design/export/realizacje.html (analiza-realizacje §1–2), markup
+// `dt-*` wspólny dla obu progów JEDNEGO overlaya #work-detail
+// (WorkDetailOverlay.astro): <1024 bottom sheet (galeria-karuzela
 // w strumieniu scrolla), ≥1024 modal (galeria przenoszona przez
 // open-detail.ts do lewej kolumny panelu — wzorzec placeGal eksportu).
 // Renderowana wewnątrz <template data-work-detail={slug}> i klonowana
 // do hosta przy otwarciu; liczniki (REALIZACJA NN/NN, 01/0N) maluje
 // open-detail.ts po klonowaniu.
 //
-// Wideo: preload="none", a miniaturą jest klatka wycięta z samego filmu
-// (videoFrameAt, środek liczony z `duration`) — po remoncie panelu pozycja
-// z filmem NIE MA własnego zdjęcia. Klatka jest podłożona DWOMA drogami:
-// jako <img class="dt-poster"> pod <video> ORAZ jako atrybut `poster`.
-// Powód (runda 4, zmierzone): przy preload="none" Chromium nie pobiera
-// plakatu nigdy — także na produkcji i także po zmianie na "metadata" —
-// więc na Chrome i Androidzie kadr filmu był pustym prostokątem.
-// Odtwarzanie na tap bez zmian; `duration` dalej służy za badge czasu.
-// Kontrasty podbite pod pustą allowlistę axe (D-R8): --accent-ink
-// zamiast --gr, --faint zamiast alpha .45–.55.
+// Wideo (E8): preload="none", a miniaturą jest klatka wycięta z samego
+// filmu (videoFrameAt, środek liczony z `duration`) — pozycja z filmem
+// NIE MA własnego zdjęcia. Klatka jest podłożona DWOMA drogami: jako
+// <img class="dt-poster"> pod <video> ORAZ jako atrybut `poster`.
+// Powód (zmierzone w szablonie): przy preload="none" Chromium nie
+// pobiera plakatu NIGDY — także na produkcji i po zmianie na
+// "metadata" — więc na Chrome i Androidzie kadr filmu byłby pustym
+// prostokątem. Odtwarzanie na tap bez zmian; `duration` służy też za
+// badge czasu (desktop).
+import rycHouse from "@/assets/dom-ryc-house1.webp";
 import { imgAt, videoFrameAt } from "@/lib/img";
-import { WORK_INDEX_PATH, CONTACT_PATH } from "@/lib/routes";
+import { CONTACT_PATH } from "@/lib/routes";
+import { WORK_GALLERY_DASHES_MAX } from "./work-config";
 import type { ViewProject } from "./work-data";
 
 interface Props {
@@ -28,6 +30,9 @@ interface Props {
 const { project } = Astro.props as unknown as Props;
 const p = project;
 const pad = (n: number) => String(n).padStart(2, "0");
+// Kreski-wskaźniki tylko przy krótkiej galerii (korekta Mateusza) —
+// powyżej progu rząd przestaje się mieścić, zostaje sam licznik.
+const showDashes = p.gallery.length <= WORK_GALLERY_DASHES_MAX;
 ---
 
 <div class="dt-head">
@@ -38,13 +43,27 @@ const pad = (n: number) => String(n).padStart(2, "0");
 </div>
 
 <div class="dt-txt">
+  {
+    /* rycina za prawą krawędzią kolumny treści (eksport: opacity
+      .12–.13, multiply) — wersja Z ALFĄ (lekcja 4.2 §2a: blend potrafi
+      zgasnąć przy body{position:fixed}, alfa degraduje się niewidocznie) */
+  }
+  <img
+    class="dt-ryc"
+    src={rycHouse.src}
+    width={rycHouse.width}
+    height={rycHouse.height}
+    alt=""
+    loading="lazy"
+    decoding="async"
+    aria-hidden="true"
+  />
   <div class="dt-meta">
     <span class="dt-place">{p.place}</span>
     <span class="dt-meta-dash" aria-hidden="true"></span>
     <span class="dt-year">{p.year}</span>
   </div>
   <h2 class="dt-title">{p.title}</h2>
-  <div class="dt-rule" aria-hidden="true"></div>
 </div>
 
 <div class="dt-gal" data-gal>
@@ -62,13 +81,7 @@ const pad = (n: number) => String(n).padStart(2, "0");
             {item.type === "video" ? (
               <>
                 {/* Miniatura filmu jako ZWYKŁY OBRAZ, nie tylko `poster`
-                  (runda 4, zmierzone na produkcji): przy `preload="none"`
-                  Chromium NIGDY nie pobiera plakatu — ani na dev, ani na
-                  produkcji, ani po zmianie na `preload="metadata"`. Firefox
-                  pobiera 7/7, WebKit 1/1, Chromium 0/7, więc na Chrome
-                  i Androidzie kadr filmu był pustym prostokątem. `poster`
-                  ZOSTAJE (silniki, które go pobierają, mają ten sam URL
-                  z cache), a ten <img> gwarantuje kadr wszędzie.
+                  (gotcha Chromium przy preload="none" — patrz nagłówek).
                   Galeria żyje w <template>, więc obraz nie jest pobierany
                   do czasu otwarcia detalu — zero kosztu dla LCP listy. */}
                 {klatka && (
@@ -87,11 +100,11 @@ const pad = (n: number) => String(n).padStart(2, "0");
                     }
                   />
                 )}
-                {/* Bez `controls` i bez własnego znaku play (korekta
-                  Mateusza): tap/klik w kadr odpala film w podglądzie
+                {/* Bez `controls` i bez własnego znaku play (E8):
+                  tap/klik w kadr odpala film w podglądzie
                   pełnoekranowym; stan sygnalizuje ikonka kamery. */}
                 {/* eslint-disable-next-line astro/jsx-a11y/media-has-caption --
-                  klipy realizacji to nieme b-rolle mebli (bez dialogów) */}
+                  klipy realizacji to nieme b-rolle z placu budowy */}
                 <video
                   src={item.video}
                   poster={klatka}
@@ -103,34 +116,28 @@ const pad = (n: number) => String(n).padStart(2, "0");
                       : undefined
                   }
                 />
-                {/* Podpowiedź w prawym górnym rogu kadru — pokazuje się
-                  i znika RAZEM z ikonką kamery (ta sama reguła
-                  .is-playing w WorkDetailOverlay.astro). Dwa warianty
-                  treści w SSR zamiast podmiany w JS: wzorzec duplikatów
-                  per-breakpoint (4.5), przełącza je @media w parze
-                  z WORK_DESKTOP_MIN_PX. aria-hidden — to dekoracja
-                  dla wzroku, a nie druga nazwa kadru. */}
+                {/* Badge „…, aby obejrzeć" w prawym górnym rogu kadru
+                  (design eha: tekst na ciemnej plakietce). Dwa warianty
+                  treści w SSR zamiast podmiany w JS — przełącza @media
+                  w parze z WORK_DESKTOP_MIN_PX. aria-hidden — to
+                  dekoracja dla wzroku, nie druga nazwa kadru. Znika
+                  i wraca RAZEM z ikonką kamery (reguła .is-playing
+                  w WorkDetailOverlay.astro). */}
                 <span class="dt-hint" data-cam-hint aria-hidden="true">
                   <span class="dt-hint-d">Kliknij, aby obejrzeć</span>
                   <span class="dt-hint-m">Stuknij, aby obejrzeć</span>
                 </span>
                 <span class="dt-cam" data-cam aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none">
+                  <svg viewBox="0 0 21 14" fill="none">
                     <rect
-                      x="3"
-                      y="7"
-                      width="12"
+                      x="0.5"
+                      y="2"
+                      width="12.5"
                       height="10"
-                      rx="2"
-                      stroke="#fff"
-                      stroke-width="1.5"
+                      rx="2.2"
+                      fill="currentColor"
                     />
-                    <path
-                      d="M15 10.5l6-3v9l-6-3"
-                      stroke="#fff"
-                      stroke-width="1.5"
-                      stroke-linejoin="round"
-                    />
+                    <path d="M14.4 6.2l6-3.4v8.4l-6-3.4z" fill="currentColor" />
                   </svg>
                 </span>
                 {item.duration && <span class="dt-time">{item.duration}</span>}
@@ -157,128 +164,160 @@ const pad = (n: number) => String(n).padStart(2, "0");
   <div class="dt-galbar">
     <span class="dt-shotnav">
       <button type="button" data-prevshot aria-label="Poprzednie zdjęcie">
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <svg viewBox="0 0 11 18" fill="none" aria-hidden="true">
           <path
-            d="M15 5l-7 7 7 7"
-            stroke="#fff"
+            d="M9.5 1L1.5 9l8 8"
+            stroke="currentColor"
             stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"></path>
+            stroke-linecap="round"></path>
         </svg>
       </button>
       <button type="button" data-nextshot aria-label="Następne zdjęcie">
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <svg viewBox="0 0 11 18" fill="none" aria-hidden="true">
           <path
-            d="M9 5l7 7-7 7"
-            stroke="#fff"
+            d="M1.5 1l8 8-8 8"
+            stroke="currentColor"
             stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"></path>
+            stroke-linecap="round"></path>
         </svg>
       </button>
     </span>
     <span class="dt-galside">
-      <span class="dt-dashes" data-dashes>
-        {
-          p.gallery.map((_, i) => (
-            <button
-              type="button"
-              data-shot={i}
-              class={i === 0 ? "on" : undefined}
-              aria-label={`Zdjęcie ${i + 1}`}
-            />
-          ))
-        }
-      </span>
+      {
+        showDashes && (
+          <span class="dt-dashes" data-dashes>
+            {p.gallery.map((_, i) => (
+              <button
+                type="button"
+                data-shot={i}
+                class={i === 0 ? "on" : undefined}
+                aria-label={`Zdjęcie ${i + 1}`}
+              />
+            ))}
+          </span>
+        )
+      }
       <span class="dt-count" data-shotcount>01 / {pad(p.gallery.length)}</span>
     </span>
   </div>
 </div>
 
 <div class="dt-about">
-  <p class="dt-about-h">O PROJEKCIE</p>
   {p.paras.map((t) => <p class="dt-desc">{t}</p>)}
 </div>
 
 <div class="dt-specs">
-  {
-    p.specs.map((s) => (
-      <div class="dt-spec">
-        <b>{s.label}</b>
-        <span>{s.value}</span>
-      </div>
-    ))
-  }
+  <div class="dt-specs-h">
+    <span>PARAMETRY</span>
+    <i aria-hidden="true"></i>
+  </div>
+  <div class="dt-spec-list">
+    {
+      p.specs.map((s) => (
+        <div class="dt-spec">
+          <b>{s.label}</b>
+          <i aria-hidden="true" />
+          <span>{s.value}</span>
+        </div>
+      ))
+    }
+  </div>
 </div>
 
 <div class="dt-foot">
+  <span class="dt-ask-k">CHCESZ WIĘCEJ INFORMACJI?</span>
   <a class="dt-ask" href={CONTACT_PATH}>
-    <span>
-      <span class="dt-ask-k">PODOBA CI SIĘ PROJEKT?</span>
-      <span class="dt-ask-t">Zapytaj o wycenę</span>
-    </span>
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    Skontaktuj się z nami
+    <svg viewBox="0 0 16 10" aria-hidden="true">
       <path
-        d="M6 18L18 6M18 6H8M18 6v10"
-        stroke="#fff"
+        d="M0 5h14M10.4 1.2L14.2 5l-3.8 3.8"
+        fill="none"
+        stroke="currentColor"
         stroke-width="1.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"></path>
+        stroke-linecap="round"></path>
     </svg>
   </a>
-  {/* eha nie ma kategorii (E5) — link wraca po prostu na pełną listę */}
-  <a class="dt-more" href={WORK_INDEX_PATH}> Zobacz wszystkie realizacje </a>
 </div>
 
 <style>
-  /* ── Mobile (<1024): jeden strumień scrolla w dt-body ── */
+  /* ── Mobile (<1024): jeden strumień scrolla w dt-body (sheet) ── */
   .dt-head {
     display: none;
   }
+
+  /* dt-body (sheet) to flex column ze scrollem — bloki treści muszą być
+     nieściśliwe (flex: none), inaczej overflow:hidden zeruje ich
+     automatyczny minimalny rozmiar i flex zgniata je do paddingu */
+  .dt-txt,
+  .dt-gal,
+  .dt-about,
+  .dt-specs,
+  .dt-foot {
+    flex: none;
+  }
   .dt-txt {
-    padding-block: 2px 0;
-    padding-left: var(--pad);
-    padding-right: 70px;
+    position: relative;
+    overflow: hidden;
+    padding: 4px 24px 0;
+  }
+  .dt-ryc {
+    position: absolute;
+    right: -40px;
+    top: -14px;
+    width: 150px;
+    max-width: none;
+    height: auto;
+    opacity: 0.13;
+    mix-blend-mode: multiply;
+    pointer-events: none;
   }
   .dt-meta {
+    position: relative;
     display: flex;
     align-items: baseline;
-    gap: 12px;
+    gap: 10px;
     margin-bottom: 9px;
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: rgba(87, 101, 74, 0.95);
   }
-  /* Miejscowość + rok: na mobile (jak w szablonie) schowane do Etapu 4.3,
-     na desktopie w jednej linii „CZERNICA — 2023" (design realizacje.html). */
-  .dt-place,
-  .dt-meta-dash,
-  .dt-year {
-    display: none;
+  .dt-place {
+    text-transform: uppercase;
+  }
+  .dt-meta-dash {
+    flex: none;
+    width: 14px;
+    height: 1px;
+    background: rgba(87, 101, 74, 0.5);
   }
   .dt-title {
-    font-family: var(--font-display), sans-serif;
-    font-weight: 200;
-    font-size: clamp(20px, 6.15vw, 26px);
-    line-height: 1.21;
-    text-wrap: balance;
-  }
-  .dt-rule {
-    width: 44px;
-    height: 1px;
-    background: rgba(26, 26, 26, 0.3);
-    margin-top: 12px;
+    position: relative;
+    margin: 0;
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: clamp(26px, 7.4vw, 29px);
+    line-height: 1.14;
+    color: var(--ink);
+    text-wrap: pretty;
+    padding-right: 34px;
   }
 
-  /* ── Galeria: karuzela snap ── */
+  /* ── Galeria: karuzela snap 4:3 (eksport: 300 px + gap 10) ── */
   .dt-gal {
-    margin-top: 16px;
+    margin-top: 18px;
     position: relative;
   }
   .dt-track {
     display: flex;
+    /* gap zaszyty też w JS: open-detail liczy `offsetWidth + 10` —
+       zmiana gapu wymaga zmiany PARY (twarde założenie portu) */
     gap: 10px;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
-    scroll-padding-left: var(--pad);
-    padding-inline: var(--pad);
+    scroll-padding-left: 24px;
+    padding-inline: 24px;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
   }
@@ -286,24 +325,16 @@ const pad = (n: number) => String(n).padStart(2, "0");
     display: none;
   }
   .dt-slide {
-    flex: none;
-    width: min(330px, 84.6vw);
-    aspect-ratio: 330 / 412;
+    flex: 0 0 300px;
+    aspect-ratio: 4 / 3;
     position: relative;
     overflow: hidden;
-    background: #e5e1da;
+    background: var(--bg-dark);
     scroll-snap-align: start;
     /* kafel po kaflu — gotcha karuzel (sections.md) */
     scroll-snap-stop: always;
-    /* tap/klik w kadr otwiera podgląd pełnoekranowy (korekta 4.4) */
+    /* tap/klik w kadr otwiera podgląd pełnoekranowy */
     cursor: zoom-in;
-  }
-  /* szerokie, niskie ekrany widoku mobilnego: kadry o połowę mniejsze
-     (1:1 z eksportem) */
-  @media (min-width: 835px) and (max-width: 1023px) {
-    .dt-slide {
-      width: 165px;
-    }
   }
   .dt-slide img,
   .dt-slide video {
@@ -312,248 +343,266 @@ const pad = (n: number) => String(n).padStart(2, "0");
     width: 100%;
     height: 100%;
     object-fit: cover;
+    filter: sepia(0.16) saturate(0.88);
   }
   /* ikonka kamery (lewy górny róg kadru wideo) — znika, gdy film gra
      (klasa is-playing na slajdzie podglądu; w galerii film nie gra) */
   .dt-cam {
     position: absolute;
-    top: 10px;
-    left: 10px;
-    width: 32px;
-    height: 32px;
+    top: 12px;
+    left: 12px;
+    width: 40px;
+    height: 40px;
     border-radius: 999px;
-    background: rgba(0, 0, 0, 0.45);
+    background: rgba(12, 10, 8, 0.55);
+    color: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
     pointer-events: none;
   }
   .dt-cam svg {
-    width: 17px;
-    height: 17px;
+    width: 21px;
+    height: 14px;
   }
-  /* podpowiedź „Stuknij/Kliknij, aby obejrzeć" — prawy górny róg kadru,
-     bez tła (decyzja Mateusza): sam biały tekst z cieniem, który trzyma
-     czytelność także na jasnym kadrze. Nie łapie zdarzeń — tap w kadr
+  /* badge „Stuknij/Kliknij, aby obejrzeć" — prawy górny róg kadru,
+     ciemna plakietka (design eha). Nie łapie zdarzeń — tap w kadr
      ma otwierać podgląd, tak jak przy ikonce kamery. */
   .dt-hint {
     position: absolute;
-    top: 10px;
+    top: 14px;
     right: 10px;
-    max-width: calc(100% - 62px);
-    font-family: var(--font-display), sans-serif;
+    max-width: calc(100% - 68px);
+    padding: 5px 9px;
+    background: rgba(12, 10, 8, 0.55);
+    font-family: var(--font-mono), monospace;
     font-weight: 500;
-    font-size: 12px;
-    line-height: 1.25;
+    font-size: 9px;
+    line-height: 1.3;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
     text-align: right;
-    color: #fff;
-    text-shadow:
-      0 1px 5px rgba(0, 0, 0, 0.75),
-      0 0 2px rgba(0, 0, 0, 0.55);
+    color: #f5efe3;
     pointer-events: none;
   }
   .dt-hint-d {
     display: none;
   }
-  /* wąskie kadry widoku mobilnego (165 px — pasmo 835–1023 px): tekst
-     musi zmieścić się obok ikonki kamery, więc schodzi o stopień */
-  @media (min-width: 835px) and (max-width: 1023px) {
-    .dt-hint {
-      font-size: 10.5px;
-      max-width: calc(100% - 54px);
-    }
-  }
   .dt-time {
     display: none;
   }
 
+  /* pasek pod karuzelą: kreski-wskaźniki po lewej + licznik po prawej */
   .dt-galbar {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding-block: 16px 0;
-    padding-inline: var(--pad);
+    padding: 11px 24px 0;
   }
-  .dt-galbar::before {
-    content: "";
-    width: 24px;
-    height: 1px;
-    background: rgba(26, 26, 26, 0.3);
-  }
-  .dt-count {
-    font-family: var(--font-display), sans-serif;
-    font-weight: 500;
-    font-size: 11px;
-    line-height: 1;
-    letter-spacing: 0.18em;
-    color: var(--faint);
-  }
-  .dt-dashes,
   .dt-shotnav {
     display: none;
   }
-
-  .dt-about {
-    padding-block: 20px 0;
-    padding-inline: var(--pad);
-  }
-  .dt-about-h {
-    font-family: var(--font-display), sans-serif;
-    font-weight: 500;
-    font-size: 11px;
-    line-height: 1;
-    letter-spacing: 0.2em;
-    color: var(--faint);
-    margin-bottom: 11px;
-  }
-  .dt-desc {
-    font-family: var(--font-display), sans-serif;
-    font-weight: 200;
-    font-size: clamp(13.5px, 3.85vw, 16px);
-    line-height: 1.47;
-    color: rgba(26, 26, 26, 0.78);
-    text-wrap: pretty;
-  }
-  /* Opis to lista akapitów (paras[]) — odstęp między nimi, nie pod ostatnim. */
-  .dt-desc + .dt-desc {
-    margin-top: 0.85em;
-  }
-
-  .dt-specs {
-    padding-block: 20px 150px;
-    padding-inline: var(--pad);
-  }
-  .dt-spec {
-    padding: 13px 0;
-    border-top: 1px solid rgba(26, 26, 26, 0.1);
-  }
-  .dt-spec b {
-    display: block;
-    font-family: var(--font-display), sans-serif;
-    font-weight: 500;
-    font-size: 10.5px;
-    line-height: 1;
-    letter-spacing: 0.18em;
-    /* zieleń jak na desktopie (runda 4) — etykieta parametru ma ten sam
-       kolor na obu progach; desktop nadpisuje już tylko rozmiar i odstępy */
-    color: var(--accent-ink);
-    margin-bottom: 6px;
-    /* Kapitalik z makiety, niezależnie od tego, jak klient wpisze etykietę
-       w panelu (M5). Świadomie w CSS, nie w danych: to decyzja
-       typograficzna (waga 500 + letter-spacing), a czytnik ekranu ma
-       przeczytać oryginał, nie literowanie. Reguła bazowa obowiązuje na
-       obu progach — desktop nadpisuje tylko rozmiar, odstępy i kolor. */
-    text-transform: uppercase;
-  }
-  .dt-spec span {
-    display: block;
-    font-family: var(--font-display), sans-serif;
-    font-weight: 300;
-    font-size: clamp(13px, 3.72vw, 15px);
-    line-height: 1.38;
-  }
-
-  /* ── Stopka CTA: mobile przyklejona nad dołem sheeta (gradient) ── */
-  .dt-foot {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    padding-block: 40px 24px;
-    padding-inline: var(--pad);
-    pointer-events: none;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0), #fff 26%);
-  }
-  .dt-ask {
+  .dt-galside {
+    flex: 1;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 14px;
-    background: var(--ink);
-    color: #fff;
-    border-radius: 999px;
-    padding: 12px 26px;
-    pointer-events: auto;
-    text-decoration: none;
   }
-  .dt-ask:hover {
-    background: #2b2b2b;
+  .dt-dashes {
+    display: flex;
+    align-items: center;
+    gap: 5px;
   }
-  .dt-ask-k {
-    display: block;
-    font-family: var(--font-display), sans-serif;
+  .dt-dashes button {
+    appearance: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    width: 8px;
+    height: 2px;
+    background: rgba(33, 29, 24, 0.2);
+    transition:
+      width 0.2s ease,
+      background 0.2s ease;
+  }
+  .dt-dashes button.on {
+    width: 16px;
+    background: var(--accent);
+  }
+  .dt-count {
+    font-family: var(--font-mono), monospace;
     font-weight: 500;
-    font-size: 10.5px;
+    font-size: 10px;
     line-height: 1;
-    letter-spacing: 0.16em;
-    color: rgba(255, 255, 255, 0.7);
-    margin-bottom: 4px;
-  }
-  .dt-ask-t {
-    display: block;
-    font-family: var(--font-body), sans-serif;
-    font-weight: 500;
-    font-size: clamp(14px, 4.1vw, 17px);
-    line-height: 1.2;
-  }
-  .dt-ask svg {
-    width: 24px;
-    height: 24px;
-    flex: none;
-    transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .dt-ask:hover svg {
-    transform: translate(5px, -5px);
-  }
-  .dt-more {
-    display: none;
+    letter-spacing: 0.12em;
+    color: var(--faint);
+    /* licznik trzyma prawą krawędź także BEZ kresek (galeria > próg —
+       wskaźniki nie są wtedy renderowane) */
+    margin-left: auto;
   }
 
-  /* ════ Desktop (≥1024): modal — galeria w lewej kolumnie (JS move),
-     treść scrolluje w prawej ════ */
+  /* ── Akapity ── */
+  .dt-about {
+    padding: 22px 24px 0;
+  }
+  .dt-desc {
+    margin: 0;
+    font-family: var(--font-body), sans-serif;
+    font-size: clamp(14px, 3.85vw, 14.5px);
+    line-height: 1.75;
+    color: var(--faint);
+    text-wrap: pretty;
+  }
+  .dt-desc + .dt-desc {
+    margin-top: 13px;
+  }
+
+  /* ── PARAMETRY: wiersze z kropkowanym wypełniaczem (design) ── */
+  .dt-specs {
+    margin-top: 26px;
+    padding: 0 24px 34px;
+  }
+  .dt-specs-h {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: 10px;
+    line-height: 1;
+    letter-spacing: 0.2em;
+    color: rgba(87, 101, 74, 0.95);
+  }
+  .dt-specs-h i {
+    flex: 1;
+    height: 1px;
+    background: rgba(33, 29, 24, 0.14);
+  }
+  .dt-spec-list {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+  .dt-spec {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .dt-spec b {
+    font-family: var(--font-body), sans-serif;
+    font-weight: 400;
+    font-size: 13px;
+    color: rgba(33, 29, 24, 0.62);
+  }
+  .dt-spec i {
+    flex: 1;
+    height: 0;
+    border-bottom: 1px dotted rgba(33, 29, 24, 0.3);
+  }
+  .dt-spec span {
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: 12.5px;
+    text-align: right;
+    color: var(--ink);
+  }
+
+  /* ── Stopka CTA: mobile przyklejona do dołu strumienia sheeta.
+     Papier zamiast płaskiego #F1ECE0 z eksportu i BEZ border-top
+     (korekta Mateusza) — te same warstwy co dt-body, statyczne
+     (element sticky nie scrolluje); separację robi sam cień. ── */
+  .dt-foot {
+    position: sticky;
+    bottom: 0;
+    margin-top: auto;
+    background:
+      linear-gradient(rgba(250, 247, 241, 0.8), rgba(250, 247, 241, 0.8)),
+      url("../../../assets/paper-background.webp") bottom center / 100% auto
+        repeat-y #faf7f1;
+    box-shadow: 0 -6px 18px rgba(24, 19, 14, 0.06);
+    padding: 12px 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .dt-ask-k {
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: 9.5px;
+    line-height: 1;
+    letter-spacing: 0.18em;
+    color: rgba(33, 29, 24, 0.62);
+  }
+  .dt-ask {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    text-decoration: none;
+    background: #26221b;
+    color: #f5efe3;
+    font-family: var(--font-body), sans-serif;
+    font-weight: 500;
+    font-size: 13.5px;
+    padding: 14px 18px;
+    border-radius: 2px;
+    transition: background 0.2s ease;
+  }
+  .dt-ask:hover {
+    background: #332d24;
+  }
+  .dt-ask svg {
+    flex: none;
+    width: 15px;
+    height: 10px;
+  }
+
+  /* ════ Desktop (≥1024, para: WORK_DESKTOP_MIN_PX): modal — galeria
+     w lewej kolumnie 57 % (JS move), treść scrolluje w prawej ════ */
   @media (min-width: 1024px) {
     .dt-head {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 20px;
-      padding: 26px clamp(28px, 3.19vw, 46px) 0;
+      padding: clamp(24px, 2.1vw, 32px) clamp(34px, 3.33vw, 53px) 0;
       flex: none;
-      font-family: var(--font-display), sans-serif;
+      font-family: var(--font-mono), monospace;
       font-weight: 500;
-      font-size: 11px;
+      font-size: 10px;
       line-height: 1;
       letter-spacing: 0.18em;
       color: var(--faint);
     }
     .dt-x {
       appearance: none;
-      border: none;
-      background: none;
+      border: 1px solid rgba(33, 29, 24, 0.12);
+      background: rgba(236, 232, 221, 0.9);
       padding: 0;
       cursor: pointer;
-      width: 42px;
-      height: 42px;
-      margin-right: -8px;
+      width: 44px;
+      height: 44px;
+      margin: -6px -14px 0 0;
       display: flex;
       align-items: center;
       justify-content: center;
     }
     .dt-x:hover {
-      opacity: 0.55;
+      background: #e3decf;
     }
     .dt-x i {
       position: relative;
-      width: 18px;
-      height: 18px;
+      width: 14px;
+      height: 14px;
       display: block;
     }
     .dt-x i b {
       position: absolute;
-      top: 8px;
+      top: 6px;
       left: 0;
-      width: 18px;
-      height: 1.5px;
+      width: 14px;
+      height: 1.6px;
       background: var(--ink);
     }
     .dt-x i b:first-child {
@@ -564,58 +613,50 @@ const pad = (n: number) => String(n).padStart(2, "0");
     }
 
     .dt-txt {
-      padding: 22px clamp(28px, 3.19vw, 46px) 0;
+      overflow: visible;
+      padding: clamp(16px, 1.5vw, 24px) clamp(34px, 3.33vw, 53px) 0;
+    }
+    .dt-ryc {
+      right: 0;
+      top: 14px;
+      width: clamp(140px, 12.5vw, 200px);
+      opacity: 0.12;
     }
     .dt-meta {
-      margin-bottom: 14px;
-    }
-    .dt-place,
-    .dt-year {
-      display: block;
-      font-family: var(--font-display), sans-serif;
-      font-weight: 500;
       font-size: 11px;
-      line-height: 1;
-      letter-spacing: 0.18em;
-      color: var(--faint);
-    }
-    /* Kapitalik z CSS — klient wpisuje „Czernica", czytnik czyta oryginał. */
-    .dt-place {
-      text-transform: uppercase;
+      margin-bottom: clamp(11px, 0.97vw, 16px);
     }
     .dt-meta-dash {
-      display: block;
       width: 16px;
-      height: 1px;
-      background: var(--faint);
     }
     .dt-title {
-      font-size: clamp(26px, 2.36vw, 34px);
-      line-height: 1.16;
-    }
-    .dt-rule {
-      display: none;
+      font-size: clamp(26px, 2.5vw, 40px);
+      line-height: 1.1;
+      padding-right: 40px;
     }
 
-    /* galeria po przeniesieniu do .dt (lewa połowa panelu) */
+    /* galeria po przeniesieniu do .dt (lewa kolumna 57 % — design) */
     .dt-gal {
       order: 0;
       flex: none;
-      width: 50%;
+      width: 57%;
       height: 100%;
       margin: 0;
-      background: #e5e1da;
+      background: var(--bg-dark);
       overflow: hidden;
     }
     .dt-gal::after {
       content: "";
       position: absolute;
-      inset: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 180px;
       pointer-events: none;
       background: linear-gradient(
         180deg,
-        rgba(0, 0, 0, 0) 62%,
-        rgba(0, 0, 0, 0.42) 100%
+        rgba(24, 19, 14, 0),
+        rgba(24, 19, 14, 0.6)
       );
     }
     .dt-track {
@@ -632,23 +673,27 @@ const pad = (n: number) => String(n).padStart(2, "0");
     .dt-slide {
       width: 100%;
       height: 100%;
+      flex-basis: 100%;
       aspect-ratio: auto;
       scroll-snap-align: none;
     }
+    /* kamera desktop 4× większa niż mobilne 40 px (korekty Mateusza:
+       najpierw 8×, po obejrzeniu zmniejszona o połowę — 160 px;
+       mobile zostaje przy 40 px) */
     .dt-cam {
-      top: 14px;
-      left: 14px;
-      width: 36px;
-      height: 36px;
+      top: 24px;
+      left: 24px;
+      width: 160px;
+      height: 160px;
     }
     .dt-cam svg {
-      width: 19px;
-      height: 19px;
+      width: 52.5%;
+      height: auto;
     }
     .dt-hint {
       top: 16px;
-      right: 16px;
-      font-size: 13px;
+      right: 14px;
+      font-size: 10px;
       max-width: calc(100% - 76px);
     }
     .dt-hint-d {
@@ -660,17 +705,20 @@ const pad = (n: number) => String(n).padStart(2, "0");
     .dt-time {
       display: block;
       position: absolute;
-      right: 18px;
-      bottom: 86px;
+      right: 24px;
+      bottom: 94px;
+      z-index: 2;
       padding: 6px 11px;
-      border-radius: 4px;
-      background: rgba(0, 0, 0, 0.5);
-      font-family: var(--font-display), sans-serif;
+      background: rgba(12, 10, 8, 0.5);
+      font-family: var(--font-mono), monospace;
       font-weight: 500;
       font-size: 11px;
       letter-spacing: 0.12em;
       color: #fff;
     }
+
+    /* pasek galerii na kadrze: licznik lewy dolny róg, strzałki prawy
+       (design) — row-reverse odwraca kolejność markupu */
     .dt-galbar {
       position: absolute;
       left: 0;
@@ -678,28 +726,27 @@ const pad = (n: number) => String(n).padStart(2, "0");
       bottom: 0;
       z-index: 2;
       display: flex;
+      flex-direction: row-reverse;
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      padding: 26px;
-    }
-    .dt-galbar::before {
-      display: none;
+      padding: 22px 24px 22px 26px;
     }
     .dt-shotnav {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 8px;
     }
     .dt-shotnav button {
       appearance: none;
       padding: 0;
       cursor: pointer;
-      width: 46px;
-      height: 46px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.7);
-      background: rgba(255, 255, 255, 0.14);
+      width: 52px;
+      height: 52px;
+      box-sizing: border-box;
+      border: 1px solid rgba(245, 239, 227, 0.5);
+      background: none;
+      color: #f5efe3;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -708,119 +755,89 @@ const pad = (n: number) => String(n).padStart(2, "0");
         background 0.3s ease;
     }
     .dt-shotnav button:hover {
-      background: rgba(255, 255, 255, 0.3);
+      background: rgba(245, 239, 227, 0.16);
     }
     .dt-shotnav button[disabled] {
       opacity: 0.35;
       cursor: default;
     }
     .dt-shotnav svg {
-      width: 17px;
+      width: 10px;
       height: 17px;
     }
     .dt-galside {
-      display: flex;
-      align-items: center;
-      gap: 14px;
+      flex: none;
     }
+    /* kreski-wskaźniki żyją na mobile — desktop ma licznik + strzałki */
     .dt-dashes {
-      display: flex;
-      gap: 6px;
-    }
-    .dt-dashes button {
-      appearance: none;
-      border: none;
-      padding: 0;
-      cursor: pointer;
-      width: 26px;
-      height: 2px;
-      background: rgba(255, 255, 255, 0.35);
-      transition: background 0.35s ease;
-    }
-    .dt-dashes button.on {
-      background: #fff;
+      display: none;
     }
     .dt-count {
-      color: #fff;
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      color: rgba(245, 239, 227, 0.9);
     }
 
     .dt-about {
-      padding: 22px clamp(28px, 3.19vw, 46px) 0;
-    }
-    .dt-about-h {
-      display: none;
+      padding: clamp(20px, 1.81vw, 29px) clamp(34px, 3.33vw, 53px) 0;
     }
     .dt-desc {
-      font-size: clamp(15px, 1.11vw, 16px);
-      line-height: 1.62;
+      font-size: clamp(13.5px, 1.08vw, 17px);
+      line-height: 1.78;
     }
-    .dt-specs {
-      padding: 28px clamp(28px, 3.19vw, 46px) 0;
-    }
-    .dt-spec {
-      display: flex;
-      align-items: baseline;
-      gap: 22px;
-      border-top: 1px solid rgba(26, 26, 26, 0.12);
-    }
-    .dt-spec b {
-      flex: none;
-      width: clamp(104px, 9.17vw, 132px);
-      margin-bottom: 0;
-      font-size: 10.5px;
-      line-height: 1.5;
-      letter-spacing: 0.14em;
-      color: var(--accent-ink);
-    }
-    .dt-spec span {
-      flex: 1;
-      font-weight: 200;
-      font-size: clamp(14px, 1.08vw, 15.5px);
-      line-height: 1.5;
+    .dt-desc + .dt-desc {
+      margin-top: clamp(11px, 0.97vw, 16px);
     }
 
+    .dt-specs {
+      margin-top: clamp(20px, 1.81vw, 29px);
+      padding: 0 clamp(34px, 3.33vw, 53px) 0;
+    }
+    .dt-spec-list {
+      gap: 9px;
+    }
+    .dt-spec b {
+      font-size: clamp(11.5px, 0.94vw, 14.8px);
+    }
+    .dt-spec span {
+      font-size: clamp(10.5px, 0.86vw, 13.6px);
+    }
+
+    /* CTA jako blok w strumieniu treści (design: za linią, na końcu) */
     .dt-foot {
       position: static;
-      order: 4;
-      margin-top: auto;
-      padding: 30px clamp(28px, 3.19vw, 46px);
+      margin-top: clamp(6px, 0.6vw, 10px);
+      padding: clamp(20px, 1.81vw, 29px) clamp(34px, 3.33vw, 53px)
+        clamp(32px, 3.06vw, 49px);
       background: none;
-      pointer-events: auto;
-      display: flex;
-      flex-direction: column;
+      border-top: none;
+      box-shadow: none;
+      align-items: flex-start;
+      gap: 12px;
     }
-    .dt-ask {
-      padding: 18px 32px;
+    .dt-foot::before {
+      content: "";
+      display: block;
+      width: 100%;
+      height: 1px;
+      background: rgba(33, 29, 24, 0.14);
+      margin-bottom: clamp(8px, 0.8vw, 13px);
     }
     .dt-ask-k {
-      margin-bottom: 5px;
+      font-size: 9.5px;
+      letter-spacing: 0.18em;
     }
-    .dt-ask-t {
-      font-size: clamp(15px, 1.18vw, 17px);
-    }
-    .dt-ask svg {
-      width: 21px;
-      height: 21px;
-    }
-    .dt-more {
-      display: block;
-      align-self: center;
-      margin-top: 16px;
-      font-family: var(--font-body), sans-serif;
-      font-weight: 500;
-      font-size: 13.5px;
-      line-height: 1;
-      color: var(--faint);
-      text-decoration: none;
-    }
-    .dt-more:hover {
-      color: var(--ink);
+    .dt-ask {
+      display: inline-flex;
+      gap: 10px;
+      font-size: clamp(13.5px, 1.08vw, 17px);
+      padding: clamp(13px, 1.11vw, 18px) clamp(22px, 1.94vw, 31px);
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .dt-track,
-    .dt-ask svg,
+    .dt-ask,
     .dt-shotnav button,
     .dt-dashes button {
       transition: none;
