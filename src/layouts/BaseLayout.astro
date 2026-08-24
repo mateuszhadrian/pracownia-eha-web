@@ -68,7 +68,12 @@ const ogImageUrl = new URL("/og-image.png", urlBase);
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
-    <meta name="theme-color" content="#ffffff" />
+    {
+      /* Kolor UI przeglądarki = papier strony (--bg z global.css).
+         Białe #fff dawało na Androidzie BIAŁY pas przy zwijaniu paska
+         URL (widoczny na Galaxy S20 FE — korekta Mateusza, Etap 4.2). */
+    }
+    <meta name="theme-color" content="#f5efe3" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     {/* Slot head — dla skryptów, które MUSZĄ odpalić przed paintem. */}
     <slot name="head" />

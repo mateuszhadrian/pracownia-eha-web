@@ -1,0 +1,474 @@
+---
+// Zajawka 04 — Obsługa budowy (analiza §1): wspólny motyw „ZAKRES
+// PROWADZENIA INWESTYCJI" (4 kroki, ostatni ciemny „tu kończymy").
+// Mobile: pas zdjęcia pod papierem .72 z parallaxem [data-plx] + pionowa
+// oś kroków + cytat + pasek CTA; desktop: górny pas zdjęcia, dwie kolumny
+// (tekst | cytat+CTA), kroki w 4 kolumnach na kreskowanej linii.
+import remont2 from "@/assets/dom-remont-ryc2.webp";
+import koparka from "@/assets/koparka-rycina1.webp";
+import plac2 from "@/assets/plac-budowy-photo2.webp";
+import plac3 from "@/assets/plac-budowy-photo3.webp";
+import taczka from "@/assets/taczka-ryc1.webp";
+import wiertnica from "@/assets/wiertnica-rycina1.webp";
+import { OBSLUGA_PATH } from "@/lib/routes";
+import HomeSectionHead from "./HomeSectionHead.astro";
+
+const STEPS = [
+  { t: "Wykopy i fundamenty", s: "ciężki sprzęt na placu" },
+  { t: "Konstrukcja i mury", s: "ciesielstwo, zaprawa wapienna" },
+  { t: "Dach i stolarka", s: "więźba, pokrycie, okna" },
+  { t: "Stan surowy zamknięty +", s: "tu kończymy", final: true },
+];
+const QUOTE =
+  "Cała logistyka między tymi etapami jest naszym problemem, nie Twoim.";
+---
+
+<section class="sec ob">
+  <img
+    class="mOnly ob-ryc"
+    data-ryc="r"
+    data-plxr
+    src={koparka.src}
+    width={koparka.width}
+    height={koparka.height}
+    alt=""
+    loading="lazy"
+    decoding="async"
+  />
+  <img
+    class="dOnly ob-taczka"
+    data-rycsb="l"
+    src={taczka.src}
+    width={taczka.width}
+    height={taczka.height}
+    alt=""
+    loading="lazy"
+    decoding="async"
+  />
+  <img
+    class="dOnly ob-remont"
+    data-rycsb="r"
+    src={remont2.src}
+    width={remont2.width}
+    height={remont2.height}
+    alt=""
+    loading="lazy"
+    decoding="async"
+  />
+  <img
+    class="dOnly ob-wiertnica"
+    src={wiertnica.src}
+    width={wiertnica.width}
+    height={wiertnica.height}
+    alt=""
+    loading="lazy"
+    decoding="async"
+  />
+
+  {/* desktop: górny pas zdjęcia */}
+  <div class="dOnly ob-dband">
+    <img
+      src={plac2.src}
+      width={plac2.width}
+      height={plac2.height}
+      alt="Inwestor z rysunkiem przed szachulcowym domem w budowie"
+      loading="lazy"
+      decoding="async"
+    />
+  </div>
+
+  <div class="ob-head">
+    <HomeSectionHead
+      num="04"
+      label="OBSŁUGA BUDOWY"
+      title="Obsługa budowy."
+      lead="Przyjeżdżasz i patrzysz."
+    >
+      Remont starego domu to kilka ekip, dostawy, terminy i telefony. Bierzemy
+      to na siebie. Jeden punkt kontaktu zamiast rozmów z każdym fachowcem
+      osobno. Zamawiamy materiały, pilnujemy dostaw, wprowadzamy sprzęt na plac.
+      Ty dostajesz regularne raporty i zdjęcia z budowy.
+    </HomeSectionHead>
+  </div>
+
+  <div class="dOnly ob-side">
+    <p class="ob-quote">{QUOTE}</p>
+    <a class="zaj-out" href={OBSLUGA_PATH}>
+      Zobacz, jak prowadzimy budowę
+      <svg width="15" height="10" viewBox="0 0 16 10" aria-hidden="true"
+        ><path
+          d="M0 5h14M10.4 1.2L14.2 5l-3.8 3.8"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"></path></svg
+      >
+    </a>
+  </div>
+
+  {/* mobile: pas zdjęcia pod papierem + pionowa oś kroków */}
+  <div class="mOnly ob-flow">
+    <div class="ob-band">
+      <div class="ob-mask" aria-hidden="true">
+        <img
+          data-plx
+          src={plac3.src}
+          width={plac3.width}
+          height={plac3.height}
+          alt=""
+          loading="lazy"
+          decoding="async"
+        />
+        <span class="ob-veil"></span>
+      </div>
+      <div class="ob-bandin">
+        <div class="ob-label">ZAKRES PROWADZENIA INWESTYCJI</div>
+        <div class="ob-steps">
+          {
+            STEPS.map((step) => (
+              <div class="ob-step">
+                <span class="ob-rail" aria-hidden="true">
+                  <i class:list={["ob-dot", { "is-final": step.final }]} />
+                  {!step.final && <b class="ob-dash" />}
+                </span>
+                <span class="ob-body">
+                  <span class="ob-t">{step.t}</span>
+                  <span class="ob-s">{step.s}</span>
+                </span>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+    <p class="ob-quote">{QUOTE}</p>
+  </div>
+
+  {/* desktop: kroki w 4 kolumnach */}
+  <div class="dOnly ob-zakres">
+    <div class="ob-label">ZAKRES PROWADZENIA INWESTYCJI</div>
+    <div class="ob-grid-wrap">
+      <span class="ob-line" aria-hidden="true"></span>
+      <div class="ob-grid">
+        {
+          STEPS.map((step) => (
+            <a class="ob-col" href={OBSLUGA_PATH}>
+              <i class:list={["ob-dot", { "is-final": step.final }]} />
+              <span class="ob-t">{step.t}</span>
+              <span class="ob-s">{step.s}</span>
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+
+  <a class="zaj-bar mOnly" href={OBSLUGA_PATH}>
+    <span>Zobacz, jak prowadzimy budowę</span>
+    <span class="zaj-arr" aria-hidden="true">
+      <svg width="16" height="12" viewBox="0 0 16 12"
+        ><path
+          d="M1 6h13M9.5 1.5L14 6l-4.5 4.5"
+          stroke="currentColor"
+          stroke-width="1.4"
+          fill="none"></path></svg
+      >
+    </span>
+  </a>
+</section>
+
+<style>
+  .ob-ryc {
+    position: absolute;
+    right: -72px;
+    top: 26px;
+    width: clamp(190px, 27vw, 246px);
+    max-width: none;
+    height: auto;
+    opacity: calc(0.16 * var(--ryc-vis));
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+  .ob-head {
+    position: relative;
+    flex: none;
+    width: 100%;
+    max-width: var(--smax);
+    margin-inline: auto;
+    padding: 74px var(--sp) 0;
+    box-sizing: border-box;
+  }
+  .ob-flow {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: clamp(18px, 2.6vw, 28px);
+    padding: clamp(20px, 2.8vw, 32px) 0 clamp(30px, 4vw, 44px);
+  }
+  .ob-band {
+    position: relative;
+    overflow: hidden;
+  }
+  .ob-mask {
+    position: absolute;
+    inset: 0;
+    -webkit-mask-image: linear-gradient(
+      rgba(0, 0, 0, 0),
+      #000 22%,
+      #000 78%,
+      rgba(0, 0, 0, 0)
+    );
+    mask-image: linear-gradient(
+      rgba(0, 0, 0, 0),
+      #000 22%,
+      #000 78%,
+      rgba(0, 0, 0, 0)
+    );
+  }
+  .ob-mask img {
+    position: absolute;
+    left: 0;
+    right: 0;
+    /* zapas kadru = ruch parallaxu (PLX_AMT w home-config — D-U1) */
+    top: -9%;
+    width: 100%;
+    height: 118%;
+    object-fit: cover;
+    object-position: 64% 46%;
+    filter: sepia(0.24) saturate(0.85);
+    will-change: transform;
+  }
+  .ob-veil {
+    position: absolute;
+    inset: 0;
+    background: rgba(250, 247, 241, 0.72);
+  }
+  .ob-bandin {
+    position: relative;
+    padding: clamp(22px, 3vw, 32px) 0 clamp(24px, 3.2vw, 34px);
+  }
+  .ob-label {
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: clamp(10px, 1.32vw, 11px);
+    letter-spacing: 0.2em;
+    color: rgba(33, 29, 24, 0.64);
+  }
+  .ob-bandin .ob-label,
+  .ob-steps {
+    width: 100%;
+    max-width: var(--smax);
+    margin-inline: auto;
+    padding-inline: var(--sp);
+    box-sizing: border-box;
+  }
+  .ob-bandin .ob-label {
+    padding-bottom: 16px;
+  }
+  .ob-step {
+    display: grid;
+    grid-template-columns: 22px 1fr;
+    gap: 0 12px;
+  }
+  .ob-rail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 5px;
+  }
+  .ob-dot {
+    flex: none;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .ob-dot.is-final {
+    width: 11px;
+    height: 11px;
+    background: #3a3428;
+  }
+  .ob-dash {
+    flex: 1;
+    width: 1px;
+    background: repeating-linear-gradient(
+      rgba(33, 29, 24, 0.38) 0 4px,
+      transparent 4px 8px
+    );
+  }
+  .ob-body {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding-bottom: clamp(18px, 2.5vw, 26px);
+  }
+  .ob-step:last-child .ob-body {
+    padding-bottom: 0;
+  }
+  .ob-t {
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: clamp(21px, 2.95vw, 25px);
+    line-height: 1.16;
+    color: var(--ink);
+  }
+  .ob-s {
+    font-family: var(--font-mono), monospace;
+    font-size: clamp(11.5px, 1.6vw, 13px);
+    line-height: 1.5;
+    color: var(--faint);
+  }
+  .ob-step:last-child .ob-s {
+    color: var(--accent-ink);
+  }
+  .ob-flow .ob-quote {
+    width: 100%;
+    max-width: var(--smax);
+    margin-inline: auto;
+    padding-inline: var(--sp);
+    box-sizing: border-box;
+  }
+  .ob-quote {
+    margin: 0;
+    font-family: var(--font-serif), serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: clamp(17px, 2.4vw, 20px);
+    line-height: 1.5;
+    color: var(--sepia);
+    text-wrap: pretty;
+  }
+
+  /* ════ DESKTOP ≥1024 (para: HOME_DESKTOP_MIN_PX) ════ */
+  @media (min-width: 1024px) {
+    .ob {
+      overflow: hidden;
+    }
+    .ob-taczka {
+      position: absolute;
+      left: 23%;
+      top: 78%;
+      width: 340px;
+      max-width: none;
+      height: auto;
+      transform: translate(-50%, -50%);
+      opacity: calc(0.16 * var(--ryc-vis));
+      mix-blend-mode: multiply;
+      pointer-events: none;
+    }
+    .ob-remont {
+      position: absolute;
+      left: 72%;
+      top: 62%;
+      width: 490px;
+      max-width: none;
+      height: auto;
+      transform: translate(-50%, -50%);
+      opacity: calc(0.12 * var(--ryc-vis));
+      mix-blend-mode: multiply;
+      pointer-events: none;
+    }
+    .ob-wiertnica {
+      position: absolute;
+      right: -5.4vw;
+      top: 59%;
+      width: clamp(215px, 20.8vw, 333px);
+      max-width: none;
+      height: auto;
+      opacity: calc(0.18 * var(--ryc-vis));
+      mix-blend-mode: multiply;
+      pointer-events: none;
+    }
+    .ob-dband {
+      position: relative;
+      flex: none;
+      height: clamp(280px, 40vh, 460px);
+      background: var(--bg-dark);
+      overflow: hidden;
+    }
+    .ob-dband img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 54% 46%;
+      filter: sepia(0.5) saturate(0.67) brightness(1.04) contrast(1.03);
+    }
+    .ob-head {
+      max-width: none;
+      width: var(--col-w);
+      margin: clamp(36px, 6vh, 64px) 0 0;
+      padding: 0 0 0 var(--g);
+      box-sizing: content-box;
+    }
+    .ob-side {
+      position: absolute;
+      right: var(--g);
+      top: calc(clamp(280px, 40vh, 460px) + clamp(44px, 8vh, 80px));
+      width: clamp(300px, 27.8vw, 444px);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(16px, 1.53vw, 24px);
+      align-items: flex-start;
+    }
+    .ob-zakres {
+      position: relative;
+      margin-top: auto;
+      padding: clamp(44px, 8vh, 88px) var(--g) clamp(48px, 9vh, 96px);
+    }
+    .ob-zakres .ob-label {
+      font-size: var(--monos);
+      padding-bottom: clamp(22px, 3.6vh, 36px);
+    }
+    .ob-grid-wrap {
+      position: relative;
+    }
+    .ob-line {
+      position: absolute;
+      left: calc(-1 * var(--g));
+      right: calc(-1 * var(--g));
+      top: 4px;
+      border-top: 1px dashed rgba(33, 29, 24, 0.3);
+    }
+    .ob-grid {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+    }
+    .ob-col {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      padding-right: clamp(20px, 2.5vw, 40px);
+      text-decoration: none;
+      color: var(--accent-ink);
+      transition: color 0.2s ease;
+    }
+    .ob-col:hover {
+      color: var(--sepia);
+    }
+    .ob-col .ob-dot {
+      background: currentColor;
+      /* „aureola" odcina kropkę od kreskowanej linii */
+      box-shadow: 0 0 0 5px #faf7f1;
+    }
+    .ob-col .ob-dot.is-final {
+      background: var(--bg-dark);
+      margin: -1px 0 -1px -1px;
+    }
+    .ob-col .ob-t {
+      font-size: var(--item);
+      line-height: 1.1;
+    }
+    .ob-col .ob-s {
+      font-family: var(--font-mono), monospace;
+      font-weight: 500;
+      font-size: var(--eyebrow);
+      line-height: 1.5;
+      color: inherit;
+    }
+  }
+</style>

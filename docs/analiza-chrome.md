@@ -170,6 +170,22 @@ NIETKNIĘTY) — wymieniam wyłącznie markup i skin.
   samego NIP-u; adres zostaje w JSON-LD (węzły wchodzą w Etapie 6).
 - Rycina sheeta ładowana lazy (nakładka startuje `[hidden]`).
 
+## 4b. Korekty z Etapu 4.2 (2026-08-24, decyzje Mateusza)
+
+- **Pas dolny stopki**: przycisk „NA GÓRĘ ↑" WYCIĘTY (razem z JS
+  i kontraktem e2e); „REALIZACJA: HADRIANM" przeszła na jego miejsce —
+  prawa strona, wyrównana do LINII „POLITYKA PRYWATNOŚCI" (flex-end).
+- **Pasmo brandowe**: „DOLNY ŚLĄSK · CAŁA POLSKA" → samo „DOLNY ŚLĄSK"
+  (klient obsługuje okolice Jeleniej Góry, ok. godzina drogi).
+
+- **Glow mobile (C11) WYCIĘTY** po testach na telefonie: poświata pod
+  paskiem nie podobała się wizualnie — pasek mobilny używa odtąd tego
+  samego stanu `data-solid` co desktop (papierowe tło + twarda dolna
+  krawędź 1 px + miękki cień, fade 0.3 s; próg `heroH − 40` / fallback
+  8 px, wszystkie trasy). Stałe `NAV_GLOW_*` usunięte z nav-config;
+  auto-hide pozostaje desktop-only. Kontrakt e2e w home.spec
+  (opacity `.hdr-bg` na obu progach).
+
 ## 5. Niejasności — rozstrzygnięte przez Mateusza (2026-08-23)
 
 1. **Linia „Realizacja: hadrianm"** — ZOSTAJE, dyskretnie w pasie dolnym
