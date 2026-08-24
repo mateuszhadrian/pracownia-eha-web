@@ -378,6 +378,74 @@ zostają, widoki budowane od nowa wg `docs/design/` — patrz
     zmieniła); obserwować blendy desktopowych rycin innych tras
     przy otwartym detalu na starym WebKit (lista wariantów alfa
     w analiza-home §2a).
+- **Etap 4.4 cz. 1 (/ekipa-eha/) — WYKONANY** (2026-08-24, kod+testy;
+  mini-analiza i decyzje portu: `docs/analiza-ekipa.md`):
+  - Widok wg eksportu: hero z CIEMNYM zdjęciem (`eha-o-nas2`,
+    luminosity na #362B20, maska wygasza w papier; mobile 420 px,
+    desktop 70vh, h1 przy dole, `[data-navref]`), intro motto+akapit,
+    pas `maciek-pod-sufitem`, biogramy Łukasz/Maciek (mobile karta
+    portretu + h2 obok, desktop h2 z kreskowanym podkreśleniem + tekst
+    2-kolumnowy `column-count`), 3 płyty tytułowe (house-old1 /
+    technical-ryc / ekipa-budowlana1 z mgłą), CTA `ekipa-budowlana2`
+    - stopka 4.1. Tło = wspólny `PaperBackdrop` (`.eka` isolation +
+      `--bg-cream`, dryf desktop `PAPER_BG_SPEED`, kontrakt e2e).
+      Jeden markup na oba progi (grid-areas/order); świadome duplikacje
+      dOnly/mOnly: akapit „Tam, gdzie inni…" (s2) i rycina
+      technical-elements (s3) — wzorzec stopki 4.1.
+  - **Navbar dostał wariant `tone="dark"`** (NOWOŚĆ chrome — eksport
+    obu drzew: pasek kremowy #F5EFE3 nad ciemnym hero, atrament po
+    stanie solid): prop → `data-tone="dark"` na `.hdr`, czysty CSS
+    (`:not([data-solid]):not([data-open])` — otwarty sheet wraca do
+    atramentu), transition 0.3 s; mechanika progów/auto-hide
+    NIETKNIĘTA, pozostałe trasy bez propa = zero zmian (baseline'y
+    chrome-\* na /realizacje/ nietknięte).
+  - **Zwijane akapity = WSPÓLNY moduł dla 4.4**
+    (`sections/CollapsibleText.astro` + `collapsible.ts`): SSR pełny
+    tekst + przycisk `hidden` (PE jak paginacja E5; ładowany ZAWSZE,
+    działa przy reduce), `initCollapsibles()` zwija (`[data-collapsed]`
+    na hoście, `aria-expanded`/`aria-controls`, etykiety „Czytaj
+    dalej →"/„Zwiń ↑" przełącza CSS po aria); zwinięcie TYLKO mobile
+    (@media w komponencie, para `CONTENT_DESKTOP_MIN_PX`
+    z `content-config.ts`), wysokość per instancja przez `--clp-max`
+    (ekipa 98/112 px; kompetencje podadzą 132/128). Bez animacji
+    wysokości (eksport 1:1); „Zwiń" trzyma przycisk pod palcem
+    (scrollBy o deltę — kontrakt e2e ±2 px).
+  - **Ruch wspólnym modułem `sections/content-motion.ts`** (wzorzec
+    work-motion + desktopowe `[data-rycsb]` i `[data-plx]` z 4.2;
+    stałe z home-config): reveale/rysowanie mobile, rysowanie desktop
+    (linia 60 %), parallaxy ±15 px / ±9 % kadru, dryf tła; kaskada
+    rzędu domków w s2 przez nth-child animation-delay (0/.35/.7 s).
+    Część 2 (kompetencje) importuje ten sam moduł.
+  - Assety: 6 nowych fotografii WebP 1456 px q42–50 (eha-o-nas2 55 KB
+    — LCP eager+fetchpriority, maciek-pod-sufitem, house-old1,
+    technical-ryc, ekipa-budowlana1/2) + 2 ryciny Z ALFĄ (lekcja 4.2
+    §2a — widoczne na mobile): `technical-elements-ryc` 6 KB
+    i `eha-kolek-ryc-m` 560 px 42 KB (desktop zostaje na spłaszczonym
+    kolek); portrety/plan/warsztat/domki reużyte z repo. Korekta a11y:
+    podpisy portretów rgba .55→.65 (ratchet axe od pustej allowlisty).
+    JS widoku: skrypt strony 0,9 KB + content-motion 2,2 KB (raw).
+  - Testy: e2e `ekipa.spec.ts` (SSR bez JS z PEŁNYMI akapitami
+    i ukrytymi przyciskami, zwijanie mobile z kontraktem braku skoku,
+    desktop bez zwijania, navbar tone krem↔atrament z progami
+    nav-config, CTA, reveal, dryf tła, strażnik scrolla, breakpoint
+    flip); visual `ekipa.spec.ts` na `usePreviewGuard` (widok nie
+    czyta kolekcji): ekipa-top / ekipa-full (zwinięte) /
+    ekipa-full-open (rozwinięte, TYLKO mobile); trasa wycięta ze
+    `skeleton.spec.ts` z baseline'ami `skeleton-ekipa-eha-*`
+    (24 pliki). Bramki 2026-08-24: format/lint/typecheck/unit(80)/
+    build/e2e(284)/visual `--ignore-snapshots`(90) zielone.
+  - UWAGA: baseline'y `ekipa-*` NIE istnieją — komplety linux+darwin
+    generuje Mateusz w PR (workflow → darwin).
+  - UWAGI dla 4.4 cz. 2 (kompetencje): konsumować `CollapsibleText`
+    (collapsedMax 132/128 px z eksportu; przycisk bywa w osobnym
+    kontenerze — stylować z poziomu strony) + `content-motion.ts` +
+    `content-config.ts`; wzorzec strony = ekipa-eha.astro (tokeny
+    `.eka` → własny prefiks, PaperBackdrop wg eksportu kompetencji —
+    rozstrzygnąć w mini-analizie); jeśli hero kompetencji też ciemne →
+    `<Navbar tone="dark" />` już gotowy; ciemny blok „świadome
+    granice" = nowość (wzorzec HomeKontakt/wk-cta); ocenić na
+    telefonie, czy ryciny ekipy nie są za blade (ewent. token
+    `--ryc-vis` jak na `/` — analiza §4).
 
 ## Dokumentacja
 
