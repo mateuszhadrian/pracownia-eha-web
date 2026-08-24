@@ -176,7 +176,8 @@ zostają, widoki budowane od nowa wg `docs/design/` — patrz
     +48 px, schowanie zamyka dropdown; stałe w `nav-config.ts`, importują
     je testy); stan `data-solid` (papier+cień) od `[data-navref]`-40 px
     (hero 4.2), fallback 8 px; mobile — bez auto-hide (wzorzec 8/8
-    eksportów), glow czytelności rAF-lerp, burger 2 kreski→X. Skin nav
+    eksportów), glow czytelności rAF-lerp (WYCIĘTY w korekcie 4.2 —
+    mobile używa odtąd stanu solid jak desktop), burger 2 kreski→X. Skin nav
     delung (fala liter, halo) wycięty. `--hdr-h` w :root global.css
     (92/72 px) + pomiar JS; SkeletonPage odsuwa treść pod fixed pasek.
   - Menu mobilne: sheet przeskórowany na papier (mechanika overlay.ts
@@ -187,7 +188,8 @@ zostają, widoki budowane od nowa wg `docs/design/` — patrz
     (znaczek+motto+rycina koparki) + 3 kolumny O NAS/OFERTA/KONTAKT,
     mobile tabela etykieta/wartość (STRONY zamiast OFERTA — tak
     w eksporcie; kolejność wierszy 1:1, OBSZAR zduplikowany dOnly/mOnly);
-    „NA GÓRĘ ↑" = `<button data-totop>` (smooth, reduce=skok); decyzje
+    „NA GÓRĘ ↑" = `<button data-totop>` (smooth, reduce=skok — WYCIĘTY
+    w korekcie 4.2, kredyt hadrianm przeszedł na jego miejsce); decyzje
     Mateusza: kredyt hadrianm zostaje w pasie dolnym, dane = tylko
     NIP/REGON/godziny (adres wyłącznie w JSON-LD — kontrakt
     `jsonld.test.ts` zaktualizowany), sociale finalne. Znaczek logo =
@@ -209,6 +211,80 @@ zostają, widoki budowane od nowa wg `docs/design/` — patrz
     desktop ładuje 9 plików fontów (doszły italiki Garamonda przez motto
     stopki i mono-600 przez etykiety) — budżet „fonty ≤ 8" da WARN na
     desktopie, progów nie ruszano (audyt fontów = Etap 6).
+- **Etap 4.2 (strona główna) — WYKONANY** (2026-08-24, kod+testy;
+  mini-analiza i decyzje portu: `docs/analiza-home.md`):
+  - `/` wg eksportu: hero z `[data-navref]` (pasek solid od
+    `heroH − 40 px`; hero = pierwszy ekran pod paskiem —
+    `100svh − --hdr-h`, ŚWIADOMIE svh, nie dvh: dvh szarpie treścią przy
+    zwijaniu paska Safari) + 6 zajawek (`sections/home/Home*.astro`,
+    wspólna czwórka nagłówkowa `HomeSectionHead`) + stopka 4.1.
+  - **Zajawka 02 CZYTA KOLEKCJĘ CMS** (pierwsze 3 wpisy po `order` przez
+    `viewProject`, okładki `imgAt`; licznik mobile „JESZCZE N" tylko przy
+    N > 0; pusta kolekcja = zajawka bez kart). Kap =
+    `HOME_REALIZACJE_MAX` w `home-config.ts` (importują komponent
+    i testy).
+  - Ruch za bramką `html.js-motion` (inline przed paintem) +
+    `home-motion.ts` ładowany dynamicznie przy no-preference: reveale
+    `[data-rev]` (IO .3, mobile), rysowanie rycin maską `[data-ryc]`
+    (mobile) / `[data-rycsb]` (desktop, IO z rootMargin −40% = linia
+    60% viewportu; maska SCHODZI po animationend — lekcja D-Q1),
+    `[data-kolek]`, parallaxy `[data-plxr]` ±15 px / `[data-plx]`
+    ±9% kadru (zapas top −9%/height 118% w CSS — D-U1) jedną pętlą rAF.
+    Bez JS/reduce strona kompletna i statyczna.
+  - Assety: ~30 WebP w `src/assets/` — RYCINY SPŁASZCZONE na biel
+    (alfa WebP jest bezstratna i ważyła 10×; w markupie multiply,
+    a na ciemnym panelu 06 invert+screen); `--g` przeniesiony do
+    global.css (`:root` ≥1024), Navbar/Footer przełączone na token.
+  - Tło `/` = `HomeBackdrop` (korekta Mateusza): prawdziwy skan
+    `paper-background.webp` na bazie `--bg-cream` (`.home` z isolation,
+    tekstura z-index −1; kafelek body zostaje pod innymi trasami).
+    Mobile cover 1:1 z treścią; desktop repeat-y + DRYF 0.85× tempa
+    treści (`PAPER_BG_SPEED`) — element fixed przesuwany transformem
+    modulo okres w home-motion.ts (kompozytor, bez przemalowań — D-Q1),
+    pod bramką js-motion; kontrakt w e2e.
+  - Korekty po testach Mateusza na telefonach (wszystkie z kontraktami
+    e2e; szczegóły analiza §2a): karuzela 02 mobile z CSS scroll-snap
+    (`x mandatory` + `scroll-snap-stop: always` — kontrakt sections.md);
+    hero mobile ZAWSZE mieści się w pierwszym ekranie — logo kurczy się
+    budżetem wysokości (podłoga 80 px), desktop bez zmian; reveale
+    tekstów w tempie delung (przejścia 0.7/0.8 s, 22 px, IO −10 % —
+    eksportowe 0.68 s odbierane jako migotanie); **D-Q2 przeniesione na
+    eha** — `home-viewport.ts` (ładowany zawsze) z sondą 100svh mrozi
+    `--svh` dopiero, gdy pasek URL rusza webview (Galaxy S20 FE), sekcje
+    i parallaxy liczą z var(--svh)/vpH(); `theme-color` → #f5efe3
+    (biały pas Androida przy zwijaniu paska URL); **glow mobile z 4.1
+    wycięty** — pasek mobilny dostaje ten sam stan `data-solid`
+    (papier + twarda krawędź 1 px, fade 0.3 s) co desktop, ten sam próg
+    `heroH − 40`/fallback 8 px, wszystkie trasy; stałe `NAV_GLOW_*`
+    usunięte, auto-hide dalej desktop-only; **ryciny widoczne na mobile
+    wróciły do WebP z alfą** (iPhone SE 2020: `body{position:fixed}`
+    sheeta gubi w starym WebKicie mix-blend-mode i spłaszczone na biel
+    ryciny świeciły białym kontenerem; alfa degraduje się niewidocznie
+    — desktopowe zostają spłaszczone, ⚠️ przy overlayu 4.3 może
+    dotknąć desktopu, uwaga w analizie §2a); ryciny hero mobile rysują
+    się SEKWENCYJNIE po wejściu (lewa 0 s → prawa górna 1 s → dolne
+    2 s; `[data-ryc-auto]` + animation-delay, autostart bez IO).
+  - Testy: e2e `home.spec.ts` (SSR bez JS, navref/solid, hero = pierwszy
+    ekran, CTA + linki zajawek, zajawka z kolekcji odporna na liczbę
+    wpisów, sloty 06, reveal po dojechaniu, strażnik natywnego scrolla,
+    `expectBreakpointFlip(1024)`); visual `index.spec.ts`
+    (`useHomeVisualFixtureGuard` — NOWY strażnik liczący karty zajawki,
+    bo `<template data-work-detail>` wejdzie z 4.3; index-top +
+    index-full po przejeździe rewealującym — szybki przelot gubi wpisy
+    IO); trasa `/` wycięta ze `skeleton.spec.ts` z baseline'ami.
+  - Bramki 2026-08-24: format/lint/typecheck/unit(80)/build/e2e(169)/
+    visual `--ignore-snapshots`(66) zielone. LHCI lokalnie (CI = ratchet):
+    mobile perf 0.79\*/LCP 4811 ms (element = h1; \*lokalny mnożnik CPU,
+    skeleton w CI miał 0.95/2862), total 962 KB, obrazy 470 KB,
+    JS 7 KB; desktop perf 0.99/LCP 956 ms, total 1028 KB. Fontów 12
+    (doszły italiki + ext) → WARN budżetu „≤ 8" oczekiwany (audyt Etap 6).
+  - UWAGI dla 4.3: baseline'y `index-*` generuje Mateusz (workflow →
+    darwin); przy widoku `/realizacje/` przełączyć `index.spec.ts`
+    z `useHomeVisualFixtureGuard` na wspólny `useVisualFixtureGuard`
+    (albo zostawić oba — decyzja przy porcie); karty 02 linkują płasko na
+    `/realizacje/` — ewentualne deep-linki do detalu rozstrzygnąć w 4.3;
+    po merge'u odczytać LCP mobile `/` z runa CI (kandydat na
+    zacieśnienie osobnym commitem).
 
 ## Dokumentacja
 
