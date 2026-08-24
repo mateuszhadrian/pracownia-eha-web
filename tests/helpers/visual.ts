@@ -82,7 +82,19 @@ export async function revealSweep(page: Page): Promise<void> {
   for (let pass = 0; pass < 3 && (await armed.count()) > 0; pass++) {
     for (const el of await armed.all()) {
       if (!(await el.isVisible().catch(() => false))) continue;
-      await el.scrollIntoViewIfNeeded().catch(() => {});
+      // TYLKO scroll dokumentu — scrollIntoViewIfNeeded przewija też
+      // przewijalne KONTENERY po drodze (pudełka overflow:hidden są
+      // przewijalne programowo) i rozjeżdżał okna zwiniętych akapitów
+      // (incydent webkit-CI 2026-08-25).
+      await el
+        .evaluate((node) => {
+          const r = node.getBoundingClientRect();
+          window.scrollTo(
+            0,
+            Math.max(0, r.top + window.scrollY - window.innerHeight / 2),
+          );
+        })
+        .catch(() => {});
       await settle(page, 200);
     }
   }

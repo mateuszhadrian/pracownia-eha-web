@@ -49,7 +49,16 @@ const { id, collapsedMax, class: className } = Astro.props;
   @media (max-width: 1023.98px) {
     .clp[data-collapsed] .clp-body {
       max-height: var(--clp-max);
+      /* clip, nie hidden: pudełko z overflow:hidden da się przewinąć
+         PROGRAMOWO (scrollIntoView, fokus w schowanej treści,
+         szukajka przeglądarki) i zwinięte okno pokazywało wtedy środek
+         sekcji zamiast początku (incydent webkit-CI 2026-08-25 —
+         pętla dociskająca sweepa przewijała kontener). clip w ogóle
+         nie tworzy scrollera; hidden zostaje jako fallback starszych
+         silników (kaskada: późniejsza deklaracja wygrywa, nieznana
+         jest ignorowana). */
       overflow: hidden;
+      overflow: clip;
       -webkit-mask-image: linear-gradient(#000 45%, rgba(0, 0, 0, 0) 100%);
       mask-image: linear-gradient(#000 45%, rgba(0, 0, 0, 0) 100%);
     }

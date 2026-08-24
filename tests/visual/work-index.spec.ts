@@ -55,6 +55,13 @@ test("realizacje: pełna strona vs baseline", async ({ page }) => {
   await expect(page).toHaveScreenshot("work-index-full.png", {
     fullPage: true,
     mask,
+    // Tolerancja per-shot (decyzja Mateusza, 2026-08-25): maszyny
+    // runnerów różnią się deterministycznie glifem 404-obrazka kafla
+    // preview i szumem AA zdjęcia CTA (pomiar CI: 730 px przy globalnym
+    // budżecie 0.0005 ≈ 395 px). 1185 px zapasu to wciąż ułamek realnej
+    // regresji układu (stanowe rozjazdy = tysiące px); globalny próg
+    // w playwright.config.ts zostaje 0.0005.
+    maxDiffPixelRatio: 0.0015,
   });
 });
 
