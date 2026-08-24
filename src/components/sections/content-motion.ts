@@ -167,7 +167,18 @@ function tick() {
 
 if (rycs.length || photos.length || paperTex) {
   window.addEventListener("scroll", tick, { passive: true });
-  window.addEventListener("resize", tick);
+  // Repaint na resize TYLKO przy zmianie szerokości (duch D-Q2):
+  // zmiana samej wysokości to chowany pasek URL telefonu (parallax nie
+  // może szarpać w jego rytm) ALBO chwilowe rozciągnięcie viewportu,
+  // którym WebKit Playwrighta robi zrzut fullPage — repaint z vh równym
+  // wysokości CAŁEJ strony ścigał się tam ze zrzutem i przestawiał
+  // transformy losowo względem baseline'u (flake webkit-CI 2026-08-24).
+  let lastW = window.innerWidth;
+  window.addEventListener("resize", () => {
+    if (window.innerWidth === lastW) return;
+    lastW = window.innerWidth;
+    tick();
+  });
   desktopMQ.addEventListener("change", tick);
   paint();
 }
