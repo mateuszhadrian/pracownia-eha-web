@@ -436,6 +436,21 @@ zostają, widoki budowane od nowa wg `docs/design/` — patrz
     build/e2e(284)/visual `--ignore-snapshots`(90) zielone.
   - UWAGA: baseline'y `ekipa-*` NIE istnieją — komplety linux+darwin
     generuje Mateusz w PR (workflow → darwin).
+  - **Lekcja webkit-CI (domknięcie PR-a)**: trzy race'y determinizmu
+    zrzutów — (1) `.in` PO wstrzyknięciu freeze.css nie startuje
+    animacji rysowania → zero zdarzeń → maska zostawała w stanie
+    startowym: `drop()` w content-motion domyka stan od ręki, gdy
+    `animation-name: none`; (2) wolny WebKit gubi zdarzenie scroll po
+    programowym skoku → parallaxy z transformami ze środka przejazdu;
+    (3) IO nie zdąża policzyć przecięć dołu strony w 140 ms pauzy →
+    reveale ostatniej sekcji przepadały. (2)+(3) łata WSPÓLNY
+    `revealSweep` w tests/helpers/visual.ts (pełne settle na dole +
+    wymuszony przemalunek rAF po powrocie) — używają go specy ekipa
+    i work-index; `index.spec.ts` ma STARY lokalny sweep (kandydat na
+    przełączenie przy okazji — może wyleczyć „graniczny" baseline
+    index-full webkit; wymaga decyzji, bo dotyka baseline'ów `/`).
+    Do tego `expect.poll` na kolory paska (transition 0.3 s) i budżet
+    20 s na fullPage (najcięższe blendy + software raster runnera).
   - UWAGI dla 4.4 cz. 2 (kompetencje): konsumować `CollapsibleText`
     (collapsedMax 132/128 px z eksportu; przycisk bywa w osobnym
     kontenerze — stylować z poziomu strony) + `content-motion.ts` +
