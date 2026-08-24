@@ -18,25 +18,11 @@ import { expect, test, type Page } from "@playwright/test";
 import { EKIPA_PATH } from "../../src/lib/routes";
 import { usePreviewGuard } from "../helpers/guards";
 import { scrollPageTo, settle } from "../helpers/scroll";
-import { prepareSweep } from "../helpers/visual";
+import { prepareSweep, revealSweep } from "../helpers/visual";
 
 usePreviewGuard();
 
 const PATH = EKIPA_PATH;
-
-/** Przejazd przez całą stronę (odpala IO revealów), powrót na górę. */
-async function revealSweep(page: Page): Promise<void> {
-  const total = await page.evaluate(
-    () => document.body.scrollHeight - window.innerHeight,
-  );
-  const step = await page.evaluate(() => Math.round(window.innerHeight * 0.7));
-  for (let y = step; y < total + step; y += step) {
-    await page.evaluate((top) => window.scrollTo(0, top), Math.min(y, total));
-    await page.waitForTimeout(140);
-  }
-  await scrollPageTo(page, 0);
-  await settle(page, 400);
-}
 
 // Maska wideo = kontrakt speców visual (na tej trasie wideo nie ma;
 // zostaje, żeby przyszła zmiana treści nie musiała jej „pamiętać").

@@ -2,7 +2,7 @@
 // sweepa.
 import { fileURLToPath } from "node:url";
 import { type Page } from "@playwright/test";
-import { gotoReady } from "./scroll";
+import { gotoReady, scrollPageTo, settle } from "./scroll";
 
 /** Arkusz zerujący czasowe animacje CSS — determinizm klatek. */
 const FREEZE = fileURLToPath(new URL("./freeze.css", import.meta.url));
@@ -45,4 +45,30 @@ export async function prepareSweep(page: Page, path = "/"): Promise<void> {
   await page.addStyleTag({ path: FREEZE });
   await page.waitForTimeout(FREEZE_REPAINT_MS);
   await settleImages(page);
+}
+
+/**
+ * Przejazd przez całą stronę (odpala IO revealów), powrót na górę.
+ * Utwardzony po flake'u webkit-CI (2026-08-24, PR /ekipa-eha/):
+ * (1) dół strony dostaje PEŁNE settle — na wolnym WebKit
+ * IntersectionObserver nie zdąża policzyć przecięć w pauzie kroku
+ * (140 ms) i reveale ostatniej sekcji PRZEPADAŁY po skoku na górę
+ * (CTA bez tekstu na zrzucie); (2) po powrocie na górę wymuszamy
+ * przemalunek pętli rAF modułów ruchu zdarzeniem scroll — WebKit
+ * potrafi nie dostarczyć zdarzenia po programowym skoku i parallaxy
+ * zostawały z transformami ze środka przejazdu.
+ */
+export async function revealSweep(page: Page): Promise<void> {
+  const total = await page.evaluate(
+    () => document.body.scrollHeight - window.innerHeight,
+  );
+  const step = await page.evaluate(() => Math.round(window.innerHeight * 0.7));
+  for (let y = step; y < total + step; y += step) {
+    await page.evaluate((top) => window.scrollTo(0, top), Math.min(y, total));
+    await page.waitForTimeout(140);
+  }
+  await settle(page, 400);
+  await scrollPageTo(page, 0);
+  await page.evaluate(() => window.dispatchEvent(new Event("scroll")));
+  await settle(page, 400);
 }
