@@ -18,28 +18,20 @@
 // Transformy parallaxu liczy pętla rAF przy każdej pozycji przejazdu —
 // stała lista kroków ⇒ ten sam stan końcowy w każdym przebiegu.
 // NIE emulujemy prefers-reduced-motion (bramka js-motion = martwa strona).
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { useVisualFixtureGuard } from "../helpers/guards";
 import { scrollPageTo, settle } from "../helpers/scroll";
-import { prepareSweep } from "../helpers/visual";
+// revealSweep WSPÓLNY (utwardzony w PR /ekipa-eha/ — pełne settle na
+// dole, dociśnięcie maruderów IO scrollem WYŁĄCZNIE dokumentu,
+// wymuszony przemalunek rAF po powrocie): lokalna kopia bez tych
+// zabezpieczeń przegrywała loterię IntersectionObservera na wolnym
+// webkit-CI (index-full 10–42k px różnicy przy nieodpalonych
+// revealach — incydent 2026-08-25).
+import { prepareSweep, revealSweep } from "../helpers/visual";
 
 useVisualFixtureGuard();
 
 const PATH = "/";
-
-/** Przejazd przez całą stronę (odpala IO revealów), powrót na górę. */
-async function revealSweep(page: Page): Promise<void> {
-  const total = await page.evaluate(
-    () => document.body.scrollHeight - window.innerHeight,
-  );
-  const step = await page.evaluate(() => Math.round(window.innerHeight * 0.7));
-  for (let y = step; y < total + step; y += step) {
-    await page.evaluate((top) => window.scrollTo(0, top), Math.min(y, total));
-    await page.waitForTimeout(140);
-  }
-  await scrollPageTo(page, 0);
-  await settle(page, 400);
-}
 
 test("strona główna: widok startowy (hero + pasek) vs baseline", async ({
   page,
