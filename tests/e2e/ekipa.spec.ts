@@ -88,7 +88,11 @@ test("navbar: kremowy nad ciemnym hero, atramentowy po zjechaniu za próg", asyn
   await gotoReady(page, PATH);
   const hdr = page.locator("[data-nav]");
   // burger (mobile) i linki (desktop) dziedziczą --hdr-ink z .hdr —
-  // wystarczy zmierzyć kolor burgera (jest w DOM na obu progach)
+  // wystarczy zmierzyć kolor burgera (jest w DOM na obu progach).
+  // Odczyt przez expect.poll: krem↔atrament ma transition 0.3 s,
+  // a WebKit na wolnym runnerze zdejmuje data-solid z opóźnieniem —
+  // jednorazowy odczyt łapał kolor w POŁOWIE tranzycji (incydent CI
+  // 2026-08-24: rgb(192, 186, 176) zamiast kremu).
   const inkOf = () =>
     page.evaluate(() =>
       getComputedStyle(document.querySelector(".mbtn")!).getPropertyValue(
@@ -97,7 +101,7 @@ test("navbar: kremowy nad ciemnym hero, atramentowy po zjechaniu za próg", asyn
     );
   await expect(hdr).toHaveAttribute("data-tone", "dark");
   await expect(hdr).not.toHaveAttribute("data-solid");
-  expect(await inkOf()).toBe("rgb(245, 239, 227)");
+  await expect.poll(inkOf).toBe("rgb(245, 239, 227)");
 
   const h = await heroH(page);
   // tuż PRZED progiem (heroH - pad) — wciąż przezroczysty krem
@@ -107,11 +111,11 @@ test("navbar: kremowy nad ciemnym hero, atramentowy po zjechaniu za próg", asyn
   await scrollPageTo(page, h - NAV_SOLID_HERO_PAD_PX + 24);
   await expect(hdr).toHaveAttribute("data-solid");
   await expect(page.locator(".hdr-bg")).toHaveCSS("opacity", "1");
-  expect(await inkOf()).toBe("rgb(33, 29, 24)");
+  await expect.poll(inkOf).toBe("rgb(33, 29, 24)");
   // powrót na górę przywraca krem
   await scrollPageTo(page, 0);
   await expect(hdr).not.toHaveAttribute("data-solid");
-  expect(await inkOf()).toBe("rgb(245, 239, 227)");
+  await expect.poll(inkOf).toBe("rgb(245, 239, 227)");
 });
 
 // ── zwijane akapity (mobile) ──
