@@ -408,7 +408,7 @@ test("reveal nagłówka sekcji odpala po dojechaniu scrollem", async ({
   await expect(eyebrow).toHaveCSS("opacity", "1");
 });
 
-// ── dryf tła papieru (HomeBackdrop): tekstura płynie w 0.85 tempa
+// ── dryf tła papieru (PaperBackdrop): tekstura płynie w 0.85 tempa
 // treści (eksport: +0.15·scroll na background-position elementu jadącego
 // z treścią). Port = transform na elemencie fixed, modulo okres. ──
 test("tło papieru dryfuje wolniej niż treść (desktop)", async ({

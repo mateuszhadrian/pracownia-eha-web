@@ -50,8 +50,9 @@ zostają, widoki budowane od nowa wg `docs/design/` — patrz
   w Etapie 0.
 - **Mechanizm detalu realizacji zostaje z szablonu 1:1**
   (`src/scripts/overlay.ts`, `sections/work/**`: `open-detail.ts`,
-  `WorkDetailOverlay`, lightbox, wideo) — skin i model danych do adaptacji
-  w Etapie 4.3 (lightbox `contain` + klawiatura ←/→ — E7).
+  `WorkDetailOverlay`, lightbox, wideo) — skin zaadaptowany w Etapie 4.3
+  (lightbox `contain` na czerni + klawiatura ←/→ — E7; jedyna zmiana
+  mechanizmu = listener strzałek w `open-detail.ts`).
 - **Navbar docelowo Z auto-hide** (E11 — nowość względem szablonu) oraz
   dropdown „O nas"; wchodzi w Etapie 4.1. Scroll NATYWNY na dokumencie
   (`.claude/rules/scroll.md`).
@@ -285,6 +286,91 @@ zostają, widoki budowane od nowa wg `docs/design/` — patrz
     `/realizacje/` — ewentualne deep-linki do detalu rozstrzygnąć w 4.3;
     po merge'u odczytać LCP mobile `/` z runa CI (kandydat na
     zacieśnienie osobnym commitem).
+- **Etap 4.3 (/realizacje/) — WYKONANY** (2026-08-24, kod+testy;
+  mini-analiza i decyzje portu: `docs/analiza-realizacje.md`):
+  - Widok wg eksportu: nagłówek (kicker/h1/lead; desktop grid 1fr 1fr
+    do dołu, rycina house8 — mobile rysowana `[data-ryc]` + parallax
+    `[data-plxr]`), siatka kafli 4:3 (gradient, lupa narożnikowa,
+    meta MIEJSCE · ROK + tytuł serif; desktop hover: przyciemnienie +
+    pill „ZOBACZ REALIZACJĘ"; kafel = `<button>`), CTA `#241E17`
+    z `plac-budowy-photo3` + stopka 4.1. **Drugi próg 700 px**
+    (`WORK_GRID_TWO_COL_MIN_PX`): siatka 1→2 kolumny. Tło = wzorzec
+    strony głównej (korekta Mateusza): `HomeBackdrop` awansował do
+    WSPÓLNEGO `src/components/PaperBackdrop.astro` (`/` + `/realizacje/`,
+    `.wk` z isolation + `--bg-cream`), dryf desktop w work-motion.ts
+    (stała `PAPER_BG_SPEED` z home-config, kontrakt e2e na obu trasach).
+  - **Paginacja E5 = czysty progressive enhancement**: SSR renderuje
+    WSZYSTKIE kafle i template'y detalu; kontrolki w SSR z `hidden`,
+    odsłania JS i tylko przy nadwyżce wpisów (desktop: strony po
+    `WORK_PAGE_SIZE=4`, zmiana strony przewija do początku siatki;
+    mobile: „Pokaż więcej" po `WORK_MOBILE_STEP=4`, dokłada bez skoku;
+    przejście przez próg 1024 resetuje stan). **4 zamiast eksportowych
+    6 = świadome odstępstwo (korekta Mateusza)** — przy 6 wpisach
+    produkcji kontrolki są widoczne od ręki. Bez JS = pełna lista.
+    **Projnav/licznik detalu = kontekst PEŁNEJ listy** (nie strony).
+  - **Skin detalu na nietkniętym mechanizmie**: modal
+    `min(1260px, max(720px, 100vw−180px)) × 86vh`, 57 % kadr / 43 %
+    treść na papierze (paper-tile), licznik kadru lewy dolny róg +
+    kwadratowe strzałki 52 px (dashes desktop schowane — design),
+    tabela PARAMETRY z kropkowanym wypełniaczem, blok „CHCESZ WIĘCEJ
+    INFORMACJI?" (bez `dt-more` delung); sheet 90 % z grabberem, meta+
+    tytuł, karuzela 4:3 (`flex 0 0 300px`, gap 10 = stała JS
+    `offsetWidth+10`, `scroll-snap-stop: always`), kreski-wskaźniki +
+    licznik, stopka CTA `position: sticky` w strumieniu scrolla
+    (GOTCHA: bloki treści w dt-body MUSZĄ mieć `flex: none` — flex
+    column z overflow:hidden zgniata `.dt-txt` do paddingu). Papier
+    w panelu = skan przez `background-attachment: local` na `.dt-body`
+    (pod CAŁĄ scrollowaną treścią; eksportowa warstwa absolute kryła
+    tylko pierwszy ekran — wada makiety, korekta Mateusza; „opacity"
+    tekstury robi półprzezroczysta warstwa kremu); te same warstwy
+    statycznie na panelu `.dt` (pas grabbera) i sticky stopce CTA
+    (zamiast `#F1ECE0`, bez border-top — separację robi cień). Kamera
+    na kadrze wideo desktop = 160 px (korekty Mateusza: 8× → 4×
+    mobilnych 40 px, które zostają). Kreski-wskaźniki karuzeli:
+    `onTrackScroll` maluje też `.on` (nie tylko licznik — w delung
+    kreski były na mobile schowane, więc scroll ich nie dotykał)
+    i renderują się TYLKO przy galerii ≤ `WORK_GALLERY_DASHES_MAX`
+    (15) — dłuższy rząd by się nie mieścił, zostaje licznik.
+    Miniatura wideo NIE renderuje się lokalnie (znany artefakt
+    /cdn-cgi/media; prod zweryfikowany GET-em — HEAD zwraca 404,
+    nie sugerować się nim).
+    Rycina house1 w treści detalu STATYCZNA (świadome uproszczenie)
+    i Z ALFĄ (lekcja blendów 4.2 §2a — `body{position:fixed}`).
+  - **Lightbox E7**: kadr `object-fit: contain` na czystej czerni
+    (`.lb-media` inset:0, bez ramy 330/412; wideo też contain), licznik
+    mobile na stałym dolnym pasie; **klawiatura ←/→** w podglądzie
+    ORAZ w galerii detalu na desktopie (jedyna zmiana open-detail.ts;
+    bez zapętlenia — krańce jak disabled). Esc-hierarchia bez zmian.
+    **Wideo E8** 1:1 (preload=none, playsinline, bez controls, poster
+    dwiema drogami, badge „STUKNIJ/KLIKNIJ, ABY OBEJRZEĆ" z tłem wg
+    designu — uppercase robi CSS, asercje e2e wersalikami).
+  - Ruch za bramką `js-motion`: `work-motion.ts` rozszerzony o
+    `[data-ryc]`/`[data-plxr]` (wzorce 4.2); reveale mobile w tempie
+    delung; desktop statyczny. Bez nowych assetów (house8/house1/
+    plac-budowy-photo3 już w repo). JS widoku: bundle strony 10,1 KB +
+    work-motion 2,0 KB (mechanizm work w delung ≈ 20 KB).
+  - Testy: e2e `work-index.spec.ts` (SSR bez JS, paginacja/„pokaż
+    więcej" odporne na liczbę wpisów — przy 6 wpisach i stronie 4
+    biegają warianty pozytywne; detal/projnav po pełnej liście,
+    lightbox z klawiaturą
+    i kontraktem contain-na-czerni, wideo funkcjonalnie, gesty CDP,
+    collectPageIssues, strażnik scrolla, progi 1024 i 700); visual
+    `work-index.spec.ts` na `useVisualFixtureGuard` (top, full po
+    przejeździe, detal sheet/modal, lightbox, kadr wideo; wideo +
+    `.dt-poster` POD MASKĄ); `index.spec.ts` przełączony na wspólny
+    strażnik (`useHomeVisualFixtureGuard` usunięty z guards.ts); trasa
+    `/realizacje/` wycięta ze `skeleton.spec.ts` z baseline'ami
+    `skeleton-realizacje-*` (oba komplety, 24 pliki).
+  - UWAGA: baseline'y `work-index-*`/`work-detail-*` NIE istnieją,
+    a `chrome-*` ROZJADĄ się zamierzenie (zrzuty chrome'u robione na
+    /realizacje/ — treść pod paskiem/za sheetem inna) — komplety
+    linux+darwin generuje Mateusz w PR (workflow → darwin).
+  - UWAGI dla 4.4: wzorzec bramki js-motion + work-motion gotowy do
+    reużycia w widokach treściowych; deep-linki home→detal ŚWIADOMIE
+    nie weszły (analiza §2 pkt 4 — ~10 linii, gdyby decyzja się
+    zmieniła); obserwować blendy desktopowych rycin innych tras
+    przy otwartym detalu na starym WebKit (lista wariantów alfa
+    w analiza-home §2a).
 
 ## Dokumentacja
 
