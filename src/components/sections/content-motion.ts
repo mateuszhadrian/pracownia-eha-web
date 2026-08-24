@@ -29,11 +29,21 @@ const qa = <T extends HTMLElement = HTMLElement>(s: string) =>
 // klatkę), a maska na przesuwanej warstwie to drogi wzorzec przemalowań
 // (D-Q1). animationcancel: freeze.css testów wizualnych anuluje bieg —
 // bez tej gałęzi rycina zostałaby w połowie zamaskowana na zrzutach.
+// Wołać PO nadaniu klasy .in: gdy animacja w ogóle nie wystartowała
+// (animation-name: none — freeze.css zdążył PRZED .in), nie będzie
+// żadnego zdarzenia do złapania, więc stan końcowy domykamy od ręki —
+// bez tej gałęzi rycina zostawała w ZAMASKOWANYM stanie startowym
+// zależnie od wyścigu ładowania modułu z freeze.css (flake webkit-CI
+// na zrzutach ekipa-top, 2026-08-24).
 function drop(el: HTMLElement, attr: string) {
   const done = () => {
     el.removeAttribute(attr);
     el.classList.remove("in");
   };
+  if (getComputedStyle(el).animationName === "none") {
+    done();
+    return;
+  }
   el.addEventListener("animationend", done, { once: true });
   el.addEventListener("animationcancel", done, { once: true });
 }
@@ -65,8 +75,8 @@ const rycIO = new IntersectionObserver(
       if (!e.isIntersecting) continue;
       const el = e.target as HTMLElement;
       rycIO.unobserve(el);
-      drop(el, "data-ryc");
       el.classList.add("in");
+      drop(el, "data-ryc");
     }
   },
   { threshold: 0.3 },
@@ -81,8 +91,8 @@ const drawIO = new IntersectionObserver(
       if (!e.isIntersecting) continue;
       const el = e.target as HTMLElement;
       drawIO.unobserve(el);
-      drop(el, "data-rycsb");
       el.classList.add("in");
+      drop(el, "data-rycsb");
     }
   },
   { rootMargin: "0px 0px -40% 0px" },
