@@ -272,6 +272,20 @@ WorkDetailOverlay / WorkDetail) — PORT SKINU, architektura bez zmian.
   (przy pauzie nakładała się na chevron wyjścia w lewym górnym);
   desktop bez zmian (chevrona nie ma, X jest po prawej). Kontrakt e2e
   (dolna połowa ekranu + zero przecięcia z chevronem).
+- **Miniatura wciąż „rozciągnięta" po fixie postera = wadliwy PLIK,
+  nie kod**: klip testowy `20251024_120816_conv.mp4` był ANAMORFICZNY
+  (zakodowany 1920×1080 + SAR 81:256 → display 9:16 pion). Przeglądarki
+  honorują SAR przy odtwarzaniu (film OK), ale `/cdn-cgi/media` tnie
+  klatkę z zakodowanych wymiarów (zweryfikowane wariantami parametrów:
+  height=960 → 1706×960; fit=cover tylko kadruje zgnieciony obraz) —
+  JPEG jest zdeformowany u źródła. Naprawa: reenkod do kwadratowych
+  pikseli (608×1080, SAR 1:1, 13,4 MB) + upload pod NOWĄ nazwą
+  i edycja pozycji wideo w panelu — podmiana pod tą samą nazwą
+  odpada, bo cache klatek `/cdn-cgi/media` (20 dni) okazał się ODPORNY
+  na purge strefy (Purge Everything nie ruszył klatki; świeży klucz
+  cache oddał poprawną — pomiar 2026-08-24). Reguła SAR 1:1 + zakaz
+  podmiany pod tą samą nazwą dopisane do cms-realizacje.md; preset
+  HandBrake uzupełniony o `Anamorphic: None` (Część C.2 instrukcji).
 
 ## 3. Czego świadomie NIE przenosimy
 

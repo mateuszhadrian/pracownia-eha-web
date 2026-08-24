@@ -91,7 +91,22 @@ paths:
   **Miniatura to klatka
   z tego samego filmu** (Media Transformations, JPEG, cache 20 dni). Limity
   pliku: H.264+AAC, 1080p, ≤ ~30 MB/klip (preset HandBrake „Pracownia
-  EH/A – strona www", Część C instrukcji).
+  EH/A – strona www", Część C instrukcji). **Plik MUSI mieć kwadratowe
+  piksele (SAR 1:1)** — ekstraktor klatek `/cdn-cgi/media` IGNORUJE flagę
+  proporcji piksela i tnie klatkę z zakodowanych wymiarów, więc plik
+  anamorficzny (np. pion zapisany jako 1920×1080 + SAR 81:256 — incydent
+  z klipem testowym, 2026-08-24) odtwarza się dobrze, ale daje ZGNIECIONĄ
+  miniaturę, której żaden `object-fit` nie naprawi. Diagnoza:
+  `ffprobe -show_entries stream=sample_aspect_ratio`; naprawa:
+  `ffmpeg -vf "scale=iw*sar:ih,setsar=1"` (preset HandBrake i tak
+  produkuje SAR 1:1). **Wadliwego wideo NIE podmieniaj pod tą samą
+  nazwą**: cache klatek `/cdn-cgi/media` (20 dni) jest ODPORNY na purge
+  strefy — zweryfikowane 2026-08-24: Purge Everything nie ruszył
+  zbuforowanej klatki (`cf-cache-status: HIT` z tym samym `age`),
+  a świeży klucz cache (inna szerokość w URL-u) oddał od ręki poprawną.
+  Naprawa = NOWA nazwa pliku + edycja pozycji wideo we wpisach w panelu
+  (nowy URL → nowy klucz cache); stary plik potem sprzątnąć z R2
+  (sierota).
 - Oba endpointy `/cdn-cgi/` (`image` i `media`) istnieją **wyłącznie na
   produkcji** — lokalnie 404. `imgAt()` oddaje wtedy oryginał, `videoFrameAt()`
   nie zwraca postera; kolektor problemów w testach (`tests/helpers/guards.ts`)
