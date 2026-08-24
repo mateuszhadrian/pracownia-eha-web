@@ -1,0 +1,390 @@
+---
+// Zajawka 03 — Kompetencje i technologie (analiza §1): mobile siatka 2×2
+// kart-ramek ze zdjęciami + notka + pasek CTA; desktop lewy panel FOTO na
+// całą wysokość + lista 4 pozycji + notka + CTA obrysowe. Jedna lista
+// źródłowa ITEMS — dwa warianty markupu (układy realnie się rozjeżdżają).
+import ceglaImg from "@/assets/cegla-i-kamien2.webp";
+import instalacjeImg from "@/assets/instalacje.webp";
+import kompetencjeHero from "@/assets/kompetencje-hero.webp";
+import murImg from "@/assets/mur-szachulcowy.webp";
+import narzedzia from "@/assets/narzedzia-ryc1.webp";
+import house6 from "@/assets/dom-ryc-house6.webp";
+import sklepienieImg from "@/assets/sklepienie-zagliste.webp";
+import zuraw from "@/assets/zuraw-rycina1.webp";
+import { KOMPETENCJE_PATH } from "@/lib/routes";
+import HomeSectionHead from "./HomeSectionHead.astro";
+
+const ITEMS = [
+  {
+    title: "Ciesielstwo",
+    sub: "KONSTRUKCJE DREWNIANE OD PODSTAW",
+    img: murImg,
+    alt: "Mur szachulcowy",
+    pos: "34% 44%",
+    filter: "sepia(.2) saturate(.85)",
+  },
+  {
+    title: "Murarstwo",
+    sub: "KAMIEŃ, STARA CEGŁA, WAPNO",
+    img: ceglaImg,
+    alt: "Mur z kamienia i cegły",
+    pos: "50% 42%",
+    filter: "sepia(.22) saturate(.6) brightness(1.08)",
+  },
+  {
+    title: "Sklepienia",
+    sub: "KOLEBKI, ŻAGLE, KOPUŁY",
+    img: sklepienieImg,
+    alt: "Sklepienia żagliste",
+    pos: "50% 48%",
+    filter: "sepia(.18) saturate(.85) brightness(1.05)",
+  },
+  {
+    title: "Instalacje",
+    sub: "ELEKTRYKA I HYDRAULIKA",
+    img: instalacjeImg,
+    alt: "Instalacje w historycznym budynku",
+    // kadr przycięty do proporcji karty już w assecie (analiza — plan assetów)
+    pos: "50% 50%",
+    filter: "sepia(.4) saturate(.9)",
+  },
+];
+---
+
+<section class="sec km">
+  <img
+    class="mOnly km-ryc"
+    data-ryc="r"
+    data-plxr
+    src={house6.src}
+    width={house6.width}
+    height={house6.height}
+    alt=""
+    loading="lazy"
+    decoding="async"
+  />
+
+  {/* desktop: lewy panel foto + ryciny */}
+  <div class="dOnly km-panel">
+    <img
+      src={kompetencjeHero.src}
+      width={kompetencjeHero.width}
+      height={kompetencjeHero.height}
+      alt="Rysunek techniczny konstrukcji i fotografia wnętrza stodoły"
+      loading="lazy"
+      decoding="async"
+    />
+  </div>
+  <img
+    class="dOnly km-narzedzia"
+    data-rycsb="r"
+    src={narzedzia.src}
+    width={narzedzia.width}
+    height={narzedzia.height}
+    alt=""
+    loading="lazy"
+    decoding="async"
+  />
+  <img
+    class="dOnly km-zuraw"
+    src={zuraw.src}
+    width={zuraw.width}
+    height={zuraw.height}
+    alt=""
+    loading="lazy"
+    decoding="async"
+  />
+
+  <div class="km-in">
+    <HomeSectionHead
+      num="03"
+      label="KOMPETENCJE I TECHNOLOGIE"
+      title="Kompetencje i technologie."
+      lead="Inżynieria tradycji."
+    >
+      Stare domy trzymają się dzięki technologiom sprawdzonym przez stulecia — i
+      takich używamy. Drewniane ściany i więźby łączymy tradycyjnymi złączami
+      ciesielskimi i kołkami, bez śrub. Mury z kamienia i starej cegły spinamy
+      zaprawą wapienną. Bierzemy też to, czego inni nie chcą: sklepienia i
+      kopuły. Elektrykę i hydraulikę prowadzimy tak, by nie naruszyć zabytkowej
+      tkanki.
+    </HomeSectionHead>
+
+    {
+      /* mobile: siatka kart ze zdjęciami — ŻYWE obrazki, nie linki
+         (korekta Mateusza; do podstrony prowadzi pasek CTA sekcji) */
+    }
+    <div class="mOnly km-grid">
+      {
+        ITEMS.map((it) => (
+          <figure class="km-card">
+            <img
+              src={it.img.src}
+              width={it.img.width}
+              height={it.img.height}
+              alt={it.alt}
+              style={`object-position:${it.pos};filter:${it.filter}`}
+              loading="lazy"
+              decoding="async"
+            />
+            <figcaption class="km-cap">
+              <span class="km-t">{it.title}</span>
+              <span class="km-s">{it.sub}</span>
+            </figcaption>
+          </figure>
+        ))
+      }
+    </div>
+
+    {/* desktop: lista wierszy */}
+    <div class="dOnly km-list">
+      {
+        ITEMS.map((it) => (
+          <a class="km-row" href={KOMPETENCJE_PATH}>
+            <span class="km-rowin">
+              <span class="km-t">{it.title}</span>
+              <span class="km-s">{it.sub}</span>
+            </span>
+            <svg width="15" height="10" viewBox="0 0 16 10" aria-hidden="true">
+              <path
+                d="M0 5h14M10.4 1.2L14.2 5l-3.8 3.8"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+              />
+            </svg>
+          </a>
+        ))
+      }
+    </div>
+
+    <p class="km-note">
+      Prowadzimy budowę do <em>stanu surowego zamkniętego +</em>. Glazurę i
+      malowanie zostawiamy innym — my odpowiadamy za konstrukcję.
+    </p>
+
+    <a class="zaj-out dOnly" href={KOMPETENCJE_PATH}>
+      Poznaj nasze kompetencje
+      <svg width="15" height="10" viewBox="0 0 16 10" aria-hidden="true"
+        ><path
+          d="M0 5h14M10.4 1.2L14.2 5l-3.8 3.8"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"></path></svg
+      >
+    </a>
+  </div>
+
+  <a class="zaj-bar mOnly" href={KOMPETENCJE_PATH}>
+    <span>Poznaj nasze kompetencje</span>
+    <span class="zaj-arr" aria-hidden="true">
+      <svg width="16" height="12" viewBox="0 0 16 12"
+        ><path
+          d="M1 6h13M9.5 1.5L14 6l-4.5 4.5"
+          stroke="currentColor"
+          stroke-width="1.4"
+          fill="none"></path></svg
+      >
+    </span>
+  </a>
+</section>
+
+<style>
+  .km-ryc {
+    position: absolute;
+    right: -30px;
+    top: 36px;
+    width: clamp(132px, 18.8vw, 172px);
+    max-width: none;
+    height: auto;
+    opacity: calc(0.16 * var(--ryc-vis));
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+  .km-in {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: var(--smax);
+    margin-inline: auto;
+    padding: 74px var(--sp) clamp(30px, 4vw, 44px);
+    box-sizing: border-box;
+  }
+  .km-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(14px, 2vw, 20px);
+    margin-top: clamp(24px, 3.4vw, 38px);
+  }
+  .km-card {
+    margin: 0;
+    background: var(--bg-card);
+    border: 1px solid rgba(33, 29, 24, 0.18);
+    box-shadow: 0 1px 3px rgba(33, 29, 24, 0.08);
+    padding: 7px 7px 9px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    color: inherit;
+  }
+  .km-card img {
+    display: block;
+    width: 100%;
+    height: clamp(112px, 16vw, 152px);
+    object-fit: cover;
+    border: 1px solid rgba(33, 29, 24, 0.25);
+  }
+  .km-cap {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0 3px;
+  }
+  .km-t {
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: clamp(20px, 2.8vw, 24px);
+    line-height: 1.14;
+    color: var(--ink);
+  }
+  .km-s {
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: var(--monos);
+    letter-spacing: 0.13em;
+    /* zieleń akcentu ma na papierze AA dopiero w ciemniejszym tonie (H10) */
+    color: var(--accent-ink);
+  }
+  .km-note {
+    margin: clamp(18px, 2.6vw, 28px) 0 0;
+    padding-top: 14px;
+    border-top: 1px dashed rgba(33, 29, 24, 0.3);
+    font-family: var(--font-body), sans-serif;
+    font-size: clamp(13.5px, 1.9vw, 16px);
+    line-height: 1.65;
+    color: var(--faint);
+  }
+  .km-note em {
+    font-family: var(--font-serif), serif;
+    font-style: italic;
+    font-weight: 600;
+    font-size: clamp(15px, 2.1vw, 17.5px);
+    color: var(--sepia);
+  }
+
+  /* ════ DESKTOP ≥1024 (para: HOME_DESKTOP_MIN_PX) ════ */
+  @media (min-width: 1024px) {
+    .km {
+      overflow: hidden;
+      justify-content: center;
+    }
+    .km-panel {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 46.67vw;
+      background: var(--bg-dark);
+      overflow: hidden;
+    }
+    .km-panel img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 38% 46%;
+      filter: sepia(0.5) saturate(0.67) brightness(1.04) contrast(1.03);
+    }
+    .km-narzedzia {
+      position: absolute;
+      left: 79%;
+      top: 24%;
+      width: 360px;
+      max-width: none;
+      height: auto;
+      transform: translate(-50%, -50%);
+      opacity: 0.28;
+      mix-blend-mode: multiply;
+      pointer-events: none;
+    }
+    .km-zuraw {
+      position: absolute;
+      right: -6.7vw;
+      bottom: -2.4vw;
+      width: clamp(240px, 22.9vw, 366px);
+      max-width: none;
+      height: auto;
+      opacity: calc(0.18 * var(--ryc-vis));
+      mix-blend-mode: multiply;
+      pointer-events: none;
+    }
+    .km-in {
+      max-width: none;
+      width: var(--col-w);
+      margin: 0 var(--g) 0 auto;
+      padding: clamp(56px, 8vh, 96px) 0;
+      justify-content: center;
+      gap: 0;
+    }
+    .km-list {
+      display: flex;
+      flex-direction: column;
+      margin-top: 8px;
+    }
+    .km-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 20px;
+      padding: clamp(9px, 0.83vw, 13px) 0;
+      border-top: 1px dashed rgba(33, 29, 24, 0.3);
+      text-decoration: none;
+      color: var(--ink);
+      transition: color 0.2s ease;
+    }
+    .km-row:last-child {
+      border-bottom: 1px dashed rgba(33, 29, 24, 0.3);
+    }
+    .km-row:hover {
+      color: var(--accent-ink);
+    }
+    .km-rowin {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .km-row .km-t {
+      font-size: var(--item);
+      line-height: 1.05;
+      color: inherit;
+    }
+    .km-row .km-s {
+      letter-spacing: 0.18em;
+    }
+    .km-row svg {
+      flex: none;
+      margin-bottom: 7px;
+      color: var(--accent);
+    }
+    .km-note {
+      margin-top: 14px;
+      padding-top: 0;
+      border-top: none;
+      font-size: clamp(12.5px, 0.97vw, 15.5px);
+      line-height: 1.7;
+      text-wrap: pretty;
+    }
+    .km-note em {
+      font-size: var(--body);
+    }
+    .km-in .zaj-out {
+      align-self: flex-start;
+      margin-top: clamp(14px, 1.4vw, 22px);
+    }
+  }
+</style>

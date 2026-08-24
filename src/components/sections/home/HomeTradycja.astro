@@ -1,0 +1,385 @@
+---
+// Zajawka 05 — Tradycja i ekologia (analiza §1): wspólne trzy wiersze
+// technologii + cytat. Mobile: zdjęcie z maską pionową i parallaxem
+// [data-plx], wiersze NA zdjęciu (krem), rycina liścia jak koparka w 04;
+// desktop: prawy panel foto, wiersze w kolumnie tekstu, cytat + CTA pod
+// panelem, kołek EH/A statycznie w lewym dolnym rogu (mobile'owy kołek
+// WYCIĘTY w korekcie — chowało go zdjęcie).
+import ekologia from "@/assets/ekologia-techno.webp";
+import kolek from "@/assets/eha-kolek-ryc.webp";
+// Liść z podstrony Tradycja i ekologia (eksport, góra strony) — na mobile
+// osadzony i animowany 1:1 jak koparka w sekcji 04 (korekta Mateusza);
+// z alfą, jak wszystkie ryciny widoczne na mobile (WebKit + sheet).
+import lisc from "@/assets/lisc-rycina1.webp";
+import szkielet from "@/assets/szkielet-domu-ryc1.webp";
+import wnetrze2 from "@/assets/wnetrze-domu-ryc2.webp";
+import { TRADYCJA_PATH } from "@/lib/routes";
+import HomeSectionHead from "./HomeSectionHead.astro";
+
+const ROWS = [
+  { t: "Wełna drzewna i wapno", s: "ŚCIANA PRZYJMUJE I ODDAJE WILGOĆ" },
+  { t: "Materiał z drugiego życia", s: "STARA CEGŁA, BELKI, CAŁE ZRĘBY" },
+  { t: "Złącza ciesielskie", s: "DREWNIANE KOŁKI, BEZ ŚRUB" },
+];
+const QUOTE =
+  "Najbardziej ekologiczny dom to ten, którego nie trzeba budować drugi raz.";
+---
+
+<section class="sec td">
+  <img
+    class="mOnly td-lisc"
+    data-ryc="r"
+    data-plxr
+    src={lisc.src}
+    width={lisc.width}
+    height={lisc.height}
+    alt=""
+    loading="lazy"
+    decoding="async"
+  />
+  <img
+    class="dOnly td-szkielet"
+    data-rycsb="l"
+    src={szkielet.src}
+    width={szkielet.width}
+    height={szkielet.height}
+    alt=""
+    loading="lazy"
+    decoding="async"
+  />
+  <img
+    class="dOnly td-wnetrze"
+    data-rycsb="r"
+    src={wnetrze2.src}
+    width={wnetrze2.width}
+    height={wnetrze2.height}
+    alt=""
+    loading="lazy"
+    decoding="async"
+  />
+  <img
+    class="dOnly td-kolek-d"
+    src={kolek.src}
+    width={kolek.width}
+    height={kolek.height}
+    alt=""
+    loading="lazy"
+    decoding="async"
+  />
+
+  {/* desktop: prawy panel foto */}
+  <div class="dOnly td-panel">
+    <img
+      src={ekologia.src}
+      width={ekologia.width}
+      height={ekologia.height}
+      alt="Wapień, wełna drzewna i stare drewno"
+      loading="lazy"
+      decoding="async"
+    />
+  </div>
+
+  <div class="td-txt">
+    <HomeSectionHead
+      num="05"
+      label="TRADYCJA I EKOLOGIA"
+      title="Tradycja i ekologia."
+      lead="Dom, który oddycha."
+    >
+      Ekologia to dla nas fizyka, nie slogan. Zamiast zamykać stary dom w
+      szczelnym termosie ze styropianu i folii, ocieplamy go wełną drzewną i
+      tynkiem wapiennym. Taka ściana przyjmuje i oddaje wilgoć. Ratujemy
+      materiał, który już istnieje: starą cegłę, belki, całe zręby. Konstrukcję
+      spinamy kołkami i złączami ciesielskimi, bez śrub, które korodują.
+    </HomeSectionHead>
+
+    {/* desktop: wiersze w kolumnie tekstu */}
+    <div class="dOnly td-rows">
+      {
+        ROWS.map((row) => (
+          <div class="td-row">
+            <span class="td-t">{row.t}</span>
+            <span class="td-s">{row.s}</span>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+
+  {/* mobile: zdjęcie z wierszami na kadrze */}
+  <div class="mOnly td-flow">
+    <div class="td-photo">
+      <div class="td-mask" aria-hidden="true">
+        <img
+          data-plx
+          src={ekologia.src}
+          width={ekologia.width}
+          height={ekologia.height}
+          alt=""
+          loading="lazy"
+          decoding="async"
+        />
+        <span class="td-veil"></span>
+      </div>
+      <div class="td-onimg">
+        {
+          ROWS.map((row) => (
+            <div class="td-row">
+              <span class="td-t">{row.t}</span>
+              <span class="td-s">{row.s}</span>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+    <p class="td-quote">{QUOTE}</p>
+  </div>
+
+  <div class="dOnly td-side">
+    <p class="td-quote">{QUOTE}</p>
+    <a class="zaj-out" href={TRADYCJA_PATH}>
+      Zobacz, jak rozumiemy ekologię
+      <svg width="15" height="10" viewBox="0 0 16 10" aria-hidden="true"
+        ><path
+          d="M0 5h14M10.4 1.2L14.2 5l-3.8 3.8"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"></path></svg
+      >
+    </a>
+  </div>
+
+  <a class="zaj-bar mOnly" href={TRADYCJA_PATH}>
+    <span>Zobacz, jak rozumiemy ekologię</span>
+    <span class="zaj-arr" aria-hidden="true">
+      <svg width="16" height="12" viewBox="0 0 16 12"
+        ><path
+          d="M1 6h13M9.5 1.5L14 6l-4.5 4.5"
+          stroke="currentColor"
+          stroke-width="1.4"
+          fill="none"></path></svg
+      >
+    </span>
+  </a>
+</section>
+
+<style>
+  /* osadzenie 1:1 jak koparka w 04 (.ob-ryc) — rysowanie + parallax */
+  .td-lisc {
+    position: absolute;
+    right: -72px;
+    top: 26px;
+    width: clamp(190px, 27vw, 246px);
+    max-width: none;
+    height: auto;
+    opacity: calc(0.16 * var(--ryc-vis));
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+  .td-txt {
+    position: relative;
+    flex: none;
+    width: 100%;
+    max-width: var(--smax);
+    margin-inline: auto;
+    padding: 74px var(--sp) 0;
+    box-sizing: border-box;
+  }
+  .td-flow {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: clamp(18px, 2.6vw, 30px);
+    padding: clamp(20px, 2.8vw, 32px) 0 clamp(30px, 4vw, 44px);
+  }
+  .td-photo {
+    position: relative;
+    overflow: hidden;
+    /* wysokość z TREŚCI (korekta Mateusza: odstęp tekstu od górnej
+       krawędzi kadru = taki sam jak od dolnej; eksport miał sztywne
+       clamp(300px, 42vw, 400px) i tekst dobity do dołu) */
+  }
+  .td-mask {
+    position: absolute;
+    inset: 0;
+    /* bez maski pionowej z eksportu — twarde krawędzie kadru
+       (korekta Mateusza) */
+  }
+  .td-mask img {
+    position: absolute;
+    left: 0;
+    right: 0;
+    /* zapas kadru = ruch parallaxu (PLX_AMT w home-config — D-U1) */
+    top: -9%;
+    width: 100%;
+    height: 118%;
+    object-fit: cover;
+    object-position: 50% 52%;
+    filter: sepia(0.14) saturate(0.9);
+    will-change: transform;
+  }
+  .td-veil {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(rgba(20, 16, 11, 0.18), rgba(20, 16, 11, 0.62));
+  }
+  .td-onimg {
+    position: relative;
+    width: 100%;
+    max-width: var(--smax);
+    margin-inline: auto;
+    /* symetryczny odstęp góra/dół (korekta Mateusza) */
+    padding: clamp(22px, 3vw, 30px) var(--sp);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(10px, 1.5vw, 16px);
+  }
+  .td-onimg .td-row {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-bottom: clamp(10px, 1.5vw, 16px);
+    border-bottom: 1px solid rgba(245, 239, 227, 0.28);
+  }
+  .td-onimg .td-row:last-child {
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+  .td-t {
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: clamp(21px, 2.95vw, 25px);
+    line-height: 1.14;
+    color: #f5efe3;
+  }
+  .td-s {
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: var(--monos);
+    letter-spacing: 0.12em;
+    /* design .72 na gradiencie — zostaje (AA na ciemnym tle kadru) */
+    color: rgba(245, 239, 227, 0.78);
+  }
+  .td-flow .td-quote {
+    width: 100%;
+    max-width: var(--smax);
+    margin-inline: auto;
+    padding-inline: var(--sp);
+    box-sizing: border-box;
+  }
+  .td-quote {
+    margin: 0;
+    font-family: var(--font-serif), serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: clamp(17px, 2.4vw, 20px);
+    line-height: 1.5;
+    color: var(--sepia);
+    text-wrap: pretty;
+  }
+
+  /* ════ DESKTOP ≥1024 (para: HOME_DESKTOP_MIN_PX) ════ */
+  @media (min-width: 1024px) {
+    .td {
+      overflow: hidden;
+    }
+    .td-szkielet {
+      position: absolute;
+      left: 30%;
+      top: 56%;
+      width: 420px;
+      max-width: none;
+      height: auto;
+      transform: translate(-50%, -50%);
+      opacity: calc(0.13 * var(--ryc-vis));
+      mix-blend-mode: multiply;
+      pointer-events: none;
+    }
+    .td-wnetrze {
+      position: absolute;
+      left: 88%;
+      top: 81%;
+      width: 280px;
+      max-width: none;
+      height: auto;
+      transform: translate(-50%, -50%);
+      opacity: calc(0.12 * var(--ryc-vis));
+      mix-blend-mode: multiply;
+      pointer-events: none;
+    }
+    .td-kolek-d {
+      position: absolute;
+      left: -6.4vw;
+      bottom: -3.9vw;
+      width: clamp(310px, 29.9vw, 478px);
+      max-width: none;
+      height: auto;
+      opacity: calc(0.18 * var(--ryc-vis));
+      mix-blend-mode: multiply;
+      pointer-events: none;
+    }
+    .td-panel {
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 44.44vw;
+      height: 59.1%;
+      background: var(--bg-dark);
+      overflow: hidden;
+    }
+    .td-panel img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 46%;
+      filter: sepia(0.5) saturate(0.67) brightness(1.04) contrast(1.03);
+    }
+    .td-txt {
+      max-width: none;
+      width: var(--col-w);
+      margin: 0;
+      padding: max(84px, 14vh) 0 max(64px, 10vh) var(--g);
+      box-sizing: content-box;
+    }
+    .td-rows {
+      display: flex;
+      flex-direction: column;
+      margin-top: clamp(8px, 0.97vw, 16px);
+    }
+    .td-rows .td-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: clamp(10px, 0.97vw, 16px) 0;
+      border-top: 1px dashed rgba(33, 29, 24, 0.3);
+    }
+    .td-rows .td-row:last-child {
+      border-bottom: 1px dashed rgba(33, 29, 24, 0.3);
+    }
+    .td-rows .td-t {
+      font-size: var(--item);
+      line-height: 1.05;
+      color: var(--ink);
+    }
+    .td-rows .td-s {
+      letter-spacing: 0.18em;
+      color: var(--accent-ink);
+    }
+    .td-side {
+      position: absolute;
+      left: 55.6%;
+      right: var(--g);
+      top: calc(59.1% + clamp(36px, 5vh, 64px));
+      display: flex;
+      flex-direction: column;
+      gap: clamp(16px, 1.67vw, 27px);
+      align-items: flex-start;
+    }
+  }
+</style>

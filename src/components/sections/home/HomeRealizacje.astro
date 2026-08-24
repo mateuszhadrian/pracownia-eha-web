@@ -1,0 +1,448 @@
+---
+// Zajawka 02 — Realizacje (analiza §2 H1): treść CZYTA KOLEKCJĘ CMS —
+// pierwsze HOME_REALIZACJE_MAX wpisów po `order` (kafel = pierwsza pozycja
+// galerii przez viewProject; okładki przez imgAt — R2 + Cloudflare Image
+// Transformations, na dev/preview znany 404). Mobile: karuzela kart 4:5 +
+// karta-licznik „JESZCZE N" (tylko gdy N > 0) + pasek CTA; desktop: kolumna
+// tekstu + 3 polaroidy z rotacjami + CTA obrysowe (bez licznika — design).
+// Pusta kolekcja = sekcja bez kart (tekst + CTA zostają; stan dopuszczalny).
+import { getCollection } from "astro:content";
+import domRemont from "@/assets/dom-remont-ryc1.webp";
+import house8 from "@/assets/dom-ryc-house8.webp";
+import { imgAt } from "@/lib/img";
+import { WORK_INDEX_PATH } from "@/lib/routes";
+import { viewProject, type WorkProject } from "../work/work-data";
+import { HOME_REALIZACJE_MAX } from "./home-config";
+import HomeSectionHead from "./HomeSectionHead.astro";
+
+const entries = (await getCollection("realizacje"))
+  .map((entry) => entry.data as WorkProject)
+  .sort((a, b) => a.order - b.order);
+const shown = entries.slice(0, HOME_REALIZACJE_MAX).map(viewProject);
+const more = entries.length - shown.length;
+
+/** Rotacje/pozycje polaroidów desktop (eksport; indeks = kolejność karty). */
+const DESKTOP_CARDS = [
+  { left: "51.9%", top: "11.2%", rot: "-2.4deg" },
+  { left: "72.4%", top: "40.9%", rot: "1.9deg" },
+  { left: "50.1%", top: "60.5%", rot: "1.2deg" },
+];
+---
+
+<section class="sec re">
+  <img
+    class="mOnly re-ryc"
+    data-ryc="r"
+    data-plxr
+    src={house8.src}
+    width={house8.width}
+    height={house8.height}
+    alt=""
+    loading="lazy"
+    decoding="async"
+  />
+  <img
+    class="dOnly re-remont"
+    data-rycsb="l"
+    src={domRemont.src}
+    width={domRemont.width}
+    height={domRemont.height}
+    alt=""
+    loading="lazy"
+    decoding="async"
+  />
+  <img
+    class="dOnly re-house"
+    src={house8.src}
+    width={house8.width}
+    height={house8.height}
+    alt=""
+    loading="lazy"
+    decoding="async"
+  />
+
+  <div class="re-txt">
+    <HomeSectionHead
+      num="02"
+      label="REALIZACJE"
+      title="Realizacje."
+      lead="Nie jesteśmy odtwórcami — jesteśmy technologami tradycji."
+    >
+      Każda realizacja zaczyna się od rozpoznania, z czego dom naprawdę jest
+      zbudowany — jakiego drewna, jakiej zaprawy, jakiego gruntu. Dopiero potem
+      dobieramy technologię: ciesielskie złącza, tynk wapienny, wełnę drzewną.
+      Poniżej domy, przy których pracowaliśmy na Dolnym Śląsku. Zdjęcia są z
+      placu, nie z katalogu.
+    </HomeSectionHead>
+    <a class="zaj-out dOnly" href={WORK_INDEX_PATH}>
+      Zobacz wszystkie realizacje
+      <svg width="15" height="10" viewBox="0 0 16 10" aria-hidden="true"
+        ><path
+          d="M0 5h14M10.4 1.2L14.2 5l-3.8 3.8"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"></path></svg
+      >
+    </a>
+  </div>
+
+  {/* mobile: karuzela */}
+  <div class="mOnly re-roll">
+    <div class="re-track" data-re-track>
+      {
+        shown.map((p) => (
+          <a class="re-card" href={WORK_INDEX_PATH}>
+            <img
+              src={imgAt(p.cover.image, "mobile")}
+              alt={p.title}
+              style={
+                p.cover.position
+                  ? `object-position:${p.cover.position}`
+                  : undefined
+              }
+              loading="lazy"
+              decoding="async"
+            />
+            <span class="re-grad" aria-hidden="true" />
+            <span class="re-lens" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 16 16">
+                <circle
+                  cx="6.6"
+                  cy="6.6"
+                  r="4.9"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.4"
+                />
+                <path
+                  d="M10.4 10.4L14.4 14.4"
+                  stroke="currentColor"
+                  stroke-width="1.4"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </span>
+            <span class="re-meta">
+              <span class="re-place">
+                {p.place} · {p.year}
+              </span>
+              <h3>{p.title}</h3>
+            </span>
+          </a>
+        ))
+      }
+      {
+        more > 0 && (
+          <a class="re-card re-morecard" href={WORK_INDEX_PATH} data-re-more>
+            <span class="re-count">JESZCZE {more}</span>
+            <span class="re-morein">
+              <span>Zobacz więcej realizacji</span>
+              <span class="zaj-arr" aria-hidden="true">
+                <svg width="16" height="12" viewBox="0 0 16 12">
+                  <path
+                    d="M1 6h13M9.5 1.5L14 6l-4.5 4.5"
+                    stroke="currentColor"
+                    stroke-width="1.4"
+                    fill="none"
+                  />
+                </svg>
+              </span>
+            </span>
+          </a>
+        )
+      }
+    </div>
+  </div>
+
+  {/* desktop: polaroidy */}
+  {
+    shown.map((p, i) => (
+      <a
+        class="dOnly re-pol"
+        href={WORK_INDEX_PATH}
+        style={`left:${DESKTOP_CARDS[i].left};top:${DESKTOP_CARDS[i].top};--rot:${DESKTOP_CARDS[i].rot}`}
+      >
+        <img
+          src={imgAt(p.cover.image, "full")}
+          alt={p.title}
+          style={
+            p.cover.position ? `object-position:${p.cover.position}` : undefined
+          }
+          loading="lazy"
+          decoding="async"
+        />
+        <span class="re-polmeta">
+          <span class="re-place">
+            {p.place} · {p.year}
+          </span>
+          <span class="re-poltitle">{p.title}</span>
+        </span>
+      </a>
+    ))
+  }
+
+  <a class="zaj-bar mOnly" href={WORK_INDEX_PATH}>
+    <span>Zobacz wszystkie realizacje</span>
+    <span class="zaj-arr" aria-hidden="true">
+      <svg width="16" height="12" viewBox="0 0 16 12"
+        ><path
+          d="M1 6h13M9.5 1.5L14 6l-4.5 4.5"
+          stroke="currentColor"
+          stroke-width="1.4"
+          fill="none"></path></svg
+      >
+    </span>
+  </a>
+</section>
+
+<style>
+  .re-ryc {
+    position: absolute;
+    right: 10px;
+    top: 44px;
+    width: clamp(140px, 20vw, 182px);
+    max-width: none;
+    height: auto;
+    opacity: calc(0.16 * var(--ryc-vis));
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+  .re-txt {
+    position: relative;
+    flex: none;
+    width: 100%;
+    max-width: var(--smax);
+    margin-inline: auto;
+    padding: 74px var(--sp) 0;
+    box-sizing: border-box;
+  }
+  .re-roll {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: clamp(26px, 3.6vw, 40px) 0 clamp(30px, 4vw, 44px);
+  }
+  .re-track {
+    display: flex;
+    gap: clamp(14px, 2vw, 20px);
+    overflow-x: auto;
+    /* tor dobija do osi kolumny 660 px na szerszych ekranach */
+    padding: 0 max(var(--sp), calc((100vw - var(--smax)) / 2 + var(--sp))) 4px;
+    scrollbar-width: none;
+    /* karuzela przyciąga kafle do lewej krawędzi kolumny (korekta
+       Mateusza po testach — brak snapa to niedoróbka eksportu) */
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: max(
+      var(--sp),
+      calc((100vw - var(--smax)) / 2 + var(--sp))
+    );
+  }
+  .re-track::-webkit-scrollbar {
+    display: none;
+  }
+  .re-track .re-card {
+    scroll-snap-align: start;
+    /* kontrakt karuzel projektu (sections.md): szybki swipe nie może
+       przeskakiwać kilku kafli naraz */
+    scroll-snap-stop: always;
+  }
+  .re-card {
+    position: relative;
+    flex: none;
+    width: clamp(250px, 36vw, 300px);
+    aspect-ratio: 4 / 5;
+    display: block;
+    overflow: hidden;
+    text-decoration: none;
+    color: #f5efe3;
+    background: var(--bg-dark);
+  }
+  .re-card > img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: sepia(0.16) saturate(0.88);
+  }
+  .re-grad {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      rgba(24, 19, 14, 0.12) 0,
+      rgba(24, 19, 14, 0) 30%,
+      rgba(24, 19, 14, 0.55) 66%,
+      rgba(24, 19, 14, 0.9) 100%
+    );
+  }
+  /* lupa jak na kaflach podstrony /realizacje/ w designie (korekta
+     Mateusza): kremowa lupa w „narożnikach kadru" (8 gradientów 11×1 px)
+     z drop-shadow — bez wypełnionego kółka z eksportu strony głównej */
+  .re-lens {
+    position: absolute;
+    right: 14px;
+    top: 14px;
+    width: 38px;
+    height: 38px;
+    color: #f5efe3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+      linear-gradient(#f5efe3, #f5efe3) 0 0 / 11px 1px no-repeat,
+      linear-gradient(#f5efe3, #f5efe3) 0 0 / 1px 11px no-repeat,
+      linear-gradient(#f5efe3, #f5efe3) 100% 0 / 11px 1px no-repeat,
+      linear-gradient(#f5efe3, #f5efe3) 100% 0 / 1px 11px no-repeat,
+      linear-gradient(#f5efe3, #f5efe3) 0 100% / 11px 1px no-repeat,
+      linear-gradient(#f5efe3, #f5efe3) 0 100% / 1px 11px no-repeat,
+      linear-gradient(#f5efe3, #f5efe3) 100% 100% / 11px 1px no-repeat,
+      linear-gradient(#f5efe3, #f5efe3) 100% 100% / 1px 11px no-repeat;
+    filter: drop-shadow(0 1px 4px rgba(18, 13, 9, 0.55));
+  }
+  .re-meta {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 0 16px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .re-place {
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: clamp(10px, 1.32vw, 11px);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(245, 239, 227, 0.86);
+  }
+  .re-meta h3 {
+    margin: 0;
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: clamp(22px, 3.1vw, 26px);
+    line-height: 1.16;
+    text-wrap: pretty;
+  }
+  .re-morecard {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 22px 20px;
+    background: #3a3428;
+    box-sizing: border-box;
+  }
+  .re-morecard:hover {
+    background: #2e2920;
+  }
+  .re-count {
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: clamp(10px, 1.32vw, 11px);
+    letter-spacing: 0.18em;
+    /* design .6 → AA na ciemnym (H10) */
+    color: rgba(245, 239, 227, 0.72);
+  }
+  .re-morein {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .re-morein > span:first-child {
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: clamp(24px, 3.4vw, 29px);
+    line-height: 1.2;
+  }
+
+  /* ════ DESKTOP ≥1024 (para: HOME_DESKTOP_MIN_PX) ════ */
+  @media (min-width: 1024px) {
+    .re {
+      overflow: hidden;
+    }
+    .re-remont {
+      position: absolute;
+      left: 31%;
+      top: 80%;
+      width: 520px;
+      max-width: none;
+      height: auto;
+      transform: translate(-50%, -50%);
+      opacity: calc(0.13 * var(--ryc-vis));
+      mix-blend-mode: multiply;
+      pointer-events: none;
+    }
+    .re-house {
+      position: absolute;
+      left: -4.3vw;
+      bottom: -1.8vw;
+      width: clamp(180px, 17.4vw, 278px);
+      max-width: none;
+      height: auto;
+      opacity: calc(0.18 * var(--ryc-vis));
+      mix-blend-mode: multiply;
+      pointer-events: none;
+    }
+    .re-txt {
+      max-width: none;
+      width: var(--col-w);
+      margin: 0;
+      padding: max(96px, 17vh) 0 max(72px, 12vh) var(--g);
+      box-sizing: content-box;
+    }
+    .re-txt .zaj-out {
+      margin-top: 12px;
+    }
+
+    .re-pol {
+      position: absolute;
+      width: clamp(235px, 22.64vw, 362px);
+      transform: rotate(var(--rot));
+      background: var(--bg-card);
+      border: 1px solid rgba(33, 29, 24, 0.18);
+      padding: clamp(7px, 0.7vw, 11px) clamp(7px, 0.7vw, 11px)
+        clamp(6px, 0.62vw, 10px);
+      box-shadow: 0 3px 9px rgba(33, 29, 24, 0.12);
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      text-decoration: none;
+      color: inherit;
+      box-sizing: border-box;
+      transition: box-shadow 0.25s ease;
+    }
+    .re-pol:hover {
+      box-shadow: 0 6px 18px rgba(33, 29, 24, 0.18);
+    }
+    .re-pol img {
+      display: block;
+      width: 100%;
+      aspect-ratio: 306 / 230;
+      object-fit: cover;
+      border: 1px solid rgba(33, 29, 24, 0.25);
+      filter: sepia(0.22) saturate(0.88);
+    }
+    .re-polmeta {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 0 3px 2px;
+    }
+    .re-pol .re-place {
+      font-size: var(--monos);
+      letter-spacing: 0.18em;
+      color: rgba(33, 29, 24, 0.64);
+    }
+    .re-poltitle {
+      font-family: var(--font-serif), serif;
+      font-weight: 500;
+      font-size: clamp(17px, 1.46vw, 23px);
+      line-height: 1.18;
+      color: var(--ink);
+    }
+  }
+</style>

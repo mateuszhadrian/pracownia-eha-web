@@ -1,0 +1,21 @@
+---
+// Czwórka nagłówkowa sekcji strony głównej (wspólny wzorzec eksportu):
+// eyebrow mono „NN · TYTUŁ" → h2 Garamond → lead italik → akapit.
+// Style klas .s-* są GLOBALNE (index.astro) — komponent tylko składa
+// markup; [data-rev] + kaskada [data-rev-d] to reveale mobile
+// (home-motion.ts za bramką js-motion; desktop statyczny jak w eksporcie).
+interface Props {
+  num: string;
+  label: string;
+  title: string;
+  lead: string;
+}
+const { num, label, title, lead } = Astro.props;
+---
+
+<div class="shead">
+  <div class="s-eyebrow" data-rev>{num} · {label}</div>
+  <h2 class="s-title" data-rev data-rev-d="1">{title}</h2>
+  <p class="s-lead" data-rev data-rev-d="2">{lead}</p>
+  <p class="s-body" data-rev data-rev-d="3"><slot /></p>
+</div>

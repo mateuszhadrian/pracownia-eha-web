@@ -1,0 +1,312 @@
+---
+// Zajawka 01 — Ekipa EH/A (analiza §1): mobile dwa rzędy portretów
+// w ramkach + pasek CTA; desktop kolumna tekstu + kolaż polaroidów
+// z rotacjami i link inline. Ryciny: house8 (mobile, rysowana + parallax),
+// warsztat (desktop, rysowana), koparka (desktop, statyczna — reuse 4.1).
+import house8 from "@/assets/dom-ryc-house8.webp";
+import koparka from "@/assets/koparka-rycina1.webp";
+import lukasz from "@/assets/lukasz-portrait.webp";
+import maciek from "@/assets/maciek2.webp";
+import warsztat from "@/assets/warsztat-ryc1.webp";
+import { EKIPA_PATH } from "@/lib/routes";
+import HomeSectionHead from "./HomeSectionHead.astro";
+---
+
+<section class="sec ek">
+  <img
+    class="mOnly ek-ryc"
+    data-ryc="l"
+    data-plxr
+    src={house8.src}
+    width={house8.width}
+    height={house8.height}
+    alt=""
+    loading="lazy"
+    decoding="async"
+  />
+  <img
+    class="dOnly ek-warsztat"
+    data-rycsb="l"
+    src={warsztat.src}
+    width={warsztat.width}
+    height={warsztat.height}
+    alt=""
+    loading="lazy"
+    decoding="async"
+  />
+  <img
+    class="dOnly ek-koparka"
+    src={koparka.src}
+    width={koparka.width}
+    height={koparka.height}
+    alt=""
+    loading="lazy"
+    decoding="async"
+  />
+
+  <div class="ek-in">
+    <div class="ek-txt">
+      <HomeSectionHead
+        num="01"
+        label="EKIPA EH/A"
+        title="Ekipa EH/A."
+        lead="Dwa umysły, jedna rzemieślnicza pasja."
+      >
+        Nie jesteśmy typową firmą budowlaną. Pracownia EH/A zrodziła się z
+        szacunku do historycznej tkanki architektonicznej i z fascynacji
+        technologiami, które przetrwały próbę czasu. Za naszymi realizacjami
+        stoją dwa różne umysły — analityczny i badawczy — które połączyły siły,
+        by przywracać do życia to, co inni uznali za niemożliwe do uratowania.
+      </HomeSectionHead>
+      <a class="cta-line dOnly ek-more" href={EKIPA_PATH}>Poznaj Ekipę EH/A →</a
+      >
+    </div>
+
+    <div class="ek-duo">
+      <figure class="ek-card ek-f1">
+        <span class="ek-frame">
+          <img
+            src={lukasz.src}
+            width={lukasz.width}
+            height={lukasz.height}
+            alt="Łukasz"
+            loading="lazy"
+            decoding="async"
+          />
+        </span>
+        <figcaption>
+          <b>Łukasz</b>
+          <span>Od sieci korporacyjnych do sieci słupowo-ryglowych.</span>
+        </figcaption>
+      </figure>
+      <figure class="ek-card ek-f2">
+        <span class="ek-frame">
+          <img
+            src={maciek.src}
+            width={maciek.width}
+            height={maciek.height}
+            alt="Maciek"
+            loading="lazy"
+            decoding="async"
+          />
+        </span>
+        <figcaption>
+          <b>Maciek</b>
+          <span>Geologiczna precyzja i zrozumienie materii.</span>
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <a class="zaj-bar mOnly" href={EKIPA_PATH}>
+    <span>Poznaj Ekipę EH/A</span>
+    <span class="zaj-arr" aria-hidden="true">
+      <svg width="16" height="12" viewBox="0 0 16 12"
+        ><path
+          d="M1 6h13M9.5 1.5L14 6l-4.5 4.5"
+          stroke="currentColor"
+          stroke-width="1.4"
+          fill="none"></path></svg
+      >
+    </span>
+  </a>
+</section>
+
+<style>
+  .ek-ryc {
+    position: absolute;
+    left: -52px;
+    top: 250px;
+    width: clamp(150px, 21.4vw, 196px);
+    max-width: none;
+    height: auto;
+    opacity: calc(0.16 * var(--ryc-vis));
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+
+  .ek-in {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .ek-txt {
+    flex: none;
+    width: 100%;
+    max-width: var(--smax);
+    margin-inline: auto;
+    padding: 74px var(--sp) 0;
+    box-sizing: border-box;
+  }
+
+  .ek-duo {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: clamp(14px, 2.4vw, 26px);
+    width: 100%;
+    max-width: var(--smax);
+    margin-inline: auto;
+    padding: clamp(26px, 3.6vw, 40px) var(--sp) clamp(30px, 4vw, 44px);
+    box-sizing: border-box;
+  }
+  .ek-card {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: clamp(14px, 2.2vw, 24px);
+  }
+  .ek-f2 {
+    flex-direction: row-reverse;
+    text-align: right;
+  }
+  .ek-frame {
+    flex: none;
+    display: block;
+    padding: 6px 6px 5px;
+    background: var(--bg-card);
+    border: 1px solid rgba(33, 29, 24, 0.18);
+    box-shadow: 0 1px 3px rgba(33, 29, 24, 0.08);
+  }
+  .ek-card img {
+    display: block;
+    width: clamp(88px, 12.6vw, 116px);
+    height: clamp(106px, 15.2vw, 140px);
+    object-fit: cover;
+    object-position: center 12%;
+    border: 1px solid rgba(33, 29, 24, 0.25);
+    filter: sepia(0.22) saturate(0.88);
+  }
+  .ek-f2 img {
+    object-position: center 10%;
+  }
+  .ek-card figcaption {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .ek-f2 figcaption {
+    align-items: flex-end;
+  }
+  .ek-card b {
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: var(--monos);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    /* design .55 → AA na papierze (C9/H10) */
+    color: rgba(33, 29, 24, 0.64);
+  }
+  .ek-card span {
+    font-family: var(--font-body), sans-serif;
+    font-size: clamp(13.5px, 1.9vw, 16px);
+    line-height: 1.55;
+    color: var(--faint);
+  }
+
+  /* ════ DESKTOP ≥1024 (para: HOME_DESKTOP_MIN_PX) ════ */
+  @media (min-width: 1024px) {
+    .ek-warsztat {
+      position: absolute;
+      left: 33%;
+      top: 89%;
+      width: 490px;
+      max-width: none;
+      height: auto;
+      transform: translate(-50%, -50%);
+      opacity: 0.28;
+      mix-blend-mode: multiply;
+      pointer-events: none;
+    }
+    .ek-koparka {
+      position: absolute;
+      right: -5.1vw;
+      bottom: -2.1vw;
+      width: clamp(180px, 17.4vw, 278px);
+      max-width: none;
+      height: auto;
+      opacity: calc(0.18 * var(--ryc-vis));
+      mix-blend-mode: multiply;
+      pointer-events: none;
+    }
+    .ek-in {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: clamp(40px, 5.56vw, 89px);
+      width: calc(100% - 2 * var(--g));
+      max-width: 1600px;
+      margin-inline: auto;
+      padding: clamp(48px, 6vh, 96px) 0;
+    }
+    .ek-txt {
+      max-width: clamp(430px, 41.7vw, 666px);
+      margin: 0;
+      padding: 0;
+    }
+    .ek-more {
+      display: inline-block;
+      margin-top: 16px;
+    }
+
+    /* kolaż polaroidów (box 440/460, rotacje z eksportu) */
+    .ek-duo {
+      flex: none;
+      display: block;
+      width: clamp(316px, 30.6vw, 489px);
+      aspect-ratio: 440 / 460;
+      margin: 0;
+      padding: 0;
+    }
+    .ek-card {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 7px;
+      width: 43.2%;
+      padding: clamp(6px, 0.62vw, 10px) clamp(6px, 0.62vw, 10px)
+        clamp(5px, 0.55vw, 9px);
+      background: var(--bg-card);
+      border: 1px solid rgba(33, 29, 24, 0.18);
+      box-shadow: 0 3px 8px rgba(33, 29, 24, 0.12);
+      box-sizing: border-box;
+      text-align: left;
+    }
+    .ek-f1 {
+      left: 0;
+      top: 1.3%;
+      transform: rotate(-2.2deg);
+    }
+    .ek-f2 {
+      left: 49.1%;
+      top: 26%;
+      transform: rotate(1.6deg);
+    }
+    .ek-frame {
+      padding: 0;
+      background: none;
+      border: none;
+      box-shadow: none;
+    }
+    .ek-card img {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 190 / 232;
+    }
+    .ek-card figcaption {
+      gap: 3px;
+      padding: 0 2px 2px;
+    }
+    .ek-f2 figcaption {
+      align-items: flex-start;
+    }
+    .ek-card span {
+      font-size: clamp(11.5px, 0.9vw, 14.5px);
+      line-height: 1.5;
+    }
+  }
+</style>

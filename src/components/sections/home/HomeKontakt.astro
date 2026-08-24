@@ -1,0 +1,441 @@
+---
+// Zajawka 06 — Kontakt (analiza §1, H13): telefony MACIEK/ŁUKASZ i mail
+// WYŁĄCZNIE przez sloty a[data-tel]/a[data-mail] (antyscraping D-CH5 —
+// eksport miał pełne numery w markupie, kontrakt navigation.spec sprawdza
+// surowy HTML `/`). Etykiety osób w SSR, numery składa fillContactSlots()
+// ze skryptu Navbara; bez JS sloty zostają ukryte. Mobile: karta na
+// papierze z ryciną telefonu (draw) + CTA z marginesem; desktop: lewy
+// ciemny panel z telefonami + prawa kolumna tekstu + pas obszaru.
+import kalamaz from "@/assets/kalamaz-rycina1.webp";
+import house4 from "@/assets/dom-ryc-house4.webp";
+// Rycina telefonu w DWÓCH wariantach: desktop spłaszczony na biel
+// (invert+screen na ciemnym panelu), mobile Z ALFĄ — przy otwartym
+// sheecie starszy WebKit gubi mix-blend-mode (body{position:fixed}
+// z overlay.ts) i spłaszczona wersja świeciła białym kontenerem;
+// alfa degraduje się niewidocznie (analiza §2a).
+import telefon from "@/assets/telefon-rycina1.webp";
+import telefonM from "@/assets/telefon-rycina1-m.webp";
+import wnetrze1 from "@/assets/wnetrze-domu-ryc1.webp";
+import { CONTACT_PATH } from "@/lib/routes";
+import HomeSectionHead from "./HomeSectionHead.astro";
+
+const HOURS = "KONTAKT 7 DNI W TYGODNIU · BUDOWA PN–PT 8–16";
+---
+
+<section class="sec kt">
+  <img
+    class="mOnly kt-ryc"
+    data-ryc="l"
+    data-plxr
+    src={house4.src}
+    width={house4.width}
+    height={house4.height}
+    alt=""
+    loading="lazy"
+    decoding="async"
+  />
+  <img
+    class="dOnly kt-wnetrze"
+    data-rycsb="r"
+    src={wnetrze1.src}
+    width={wnetrze1.width}
+    height={wnetrze1.height}
+    alt=""
+    loading="lazy"
+    decoding="async"
+  />
+  <img
+    class="dOnly kt-kalamaz"
+    src={kalamaz.src}
+    width={kalamaz.width}
+    height={kalamaz.height}
+    alt=""
+    loading="lazy"
+    decoding="async"
+  />
+
+  {
+    /* wrapper wiersza desktop (panel | kolumna tekstu) — własny element
+       zamiast nadpisywania flex-direction sekcji: globalne .home .sec
+       wygrywa specyficznością ze scoped stylem komponentu */
+  }
+  <div class="kt-row">
+    {/* desktop: ciemny panel z telefonami */}
+    <div class="dOnly kt-panel">
+      <img
+        class="kt-telryc-d"
+        src={telefon.src}
+        width={telefon.width}
+        height={telefon.height}
+        alt=""
+        aria-hidden="true"
+        loading="lazy"
+        decoding="async"
+      />
+      <div class="kt-panelin">
+        <div class="kt-call-label">ZADZWOŃ</div>
+        <a data-tel="maciek" href={CONTACT_PATH} hidden>
+          <b>Maciek</b>
+          <span data-slot>Telefon</span>
+        </a>
+        <a data-tel="lukasz" href={CONTACT_PATH} hidden>
+          <b>Łukasz</b>
+          <span data-slot>Telefon</span>
+        </a>
+        <a class="kt-mail" data-mail href={CONTACT_PATH} hidden>
+          <span data-slot>E-mail</span>
+        </a>
+        <div class="kt-hours">{HOURS}</div>
+      </div>
+    </div>
+
+    <div class="kt-txt">
+      <HomeSectionHead
+        num="06"
+        label="KONTAKT"
+        title="Kontakt."
+        lead="Skontaktuj się z nami."
+      >
+        Najlepiej zacznij od telefonu — w kilka minut ustalimy, co trzeba zrobić
+        najpierw. Jeśli wolisz pisać, napisz, gdzie stoi dom, z jakiego jest
+        roku i w jakiej technologii go postawiono: przysłup, szachulec, zrąb czy
+        mur.
+      </HomeSectionHead>
+      <a class="zaj-out dOnly" href={CONTACT_PATH}>
+        Napisz lub zadzwoń
+        <svg width="15" height="10" viewBox="0 0 16 10" aria-hidden="true"
+          ><path
+            d="M0 5h14M10.4 1.2L14.2 5l-3.8 3.8"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"></path></svg
+        >
+      </a>
+    </div>
+  </div>
+
+  {/* mobile: karta „ZADZWOŃ" na papierze */}
+  <div class="mOnly kt-flow">
+    <div class="kt-card">
+      <img
+        class="kt-telryc"
+        data-ryc="r"
+        src={telefonM.src}
+        width={telefonM.width}
+        height={telefonM.height}
+        alt=""
+        aria-hidden="true"
+        loading="lazy"
+        decoding="async"
+      />
+      <div class="kt-call-label">ZADZWOŃ</div>
+      <div class="kt-phones">
+        <a data-tel="maciek" href={CONTACT_PATH} hidden>
+          <b>Maciek</b>
+          <span data-slot>Telefon</span>
+        </a>
+        <a data-tel="lukasz" href={CONTACT_PATH} hidden>
+          <b>Łukasz</b>
+          <span data-slot>Telefon</span>
+        </a>
+      </div>
+      <div class="kt-mailrow">
+        <a class="kt-mail" data-mail href={CONTACT_PATH} hidden>
+          <span data-slot>E-mail</span>
+        </a>
+        <div class="kt-hours">{HOURS}</div>
+      </div>
+    </div>
+  </div>
+
+  {/* bez „CAŁA POLSKA" — spójnie ze stopką (korekta Mateusza 4.2) */}
+  <div class="dOnly kt-area">DOLNY ŚLĄSK</div>
+
+  <a class="zaj-bar kt-bar mOnly" href={CONTACT_PATH}>
+    <span>Napisz lub zadzwoń</span>
+    <span class="zaj-arr" aria-hidden="true">
+      <svg width="16" height="12" viewBox="0 0 16 12"
+        ><path
+          d="M1 6h13M9.5 1.5L14 6l-4.5 4.5"
+          stroke="currentColor"
+          stroke-width="1.4"
+          fill="none"></path></svg
+      >
+    </span>
+  </a>
+</section>
+
+<style>
+  .kt-ryc {
+    position: absolute;
+    left: -30px;
+    top: 26px;
+    width: clamp(158px, 22.5vw, 204px);
+    max-width: none;
+    height: auto;
+    opacity: calc(0.16 * var(--ryc-vis));
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+  .kt-row {
+    /* mobile: wrapper przezroczysty dla układu kolumny sekcji */
+    display: contents;
+  }
+  .kt-txt {
+    position: relative;
+    flex: none;
+    width: 100%;
+    max-width: var(--smax);
+    margin-inline: auto;
+    padding: 74px var(--sp) 0;
+    box-sizing: border-box;
+  }
+  .kt-flow {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+    max-width: var(--smax);
+    margin-inline: auto;
+    padding: clamp(24px, 3.4vw, 38px) var(--sp) clamp(26px, 3.6vw, 38px);
+    box-sizing: border-box;
+  }
+  .kt-card {
+    position: relative;
+    padding: clamp(22px, 3vw, 30px) clamp(24px, 3.2vw, 32px)
+      clamp(24px, 3.2vw, 32px);
+    border: 1px solid rgba(33, 29, 24, 0.22);
+    background: var(--bg-card);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(16px, 2.2vw, 22px);
+  }
+  .kt-telryc {
+    position: absolute;
+    right: -56px;
+    bottom: -26px;
+    width: clamp(190px, 27vw, 246px);
+    max-width: none;
+    height: auto;
+    opacity: 0.28;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+  .kt-call-label {
+    position: relative;
+    font-family: var(--font-mono), monospace;
+    font-weight: 600;
+    font-size: clamp(10px, 1.4vw, 11.5px);
+    letter-spacing: 0.18em;
+    color: var(--accent-ink);
+  }
+  .kt-phones {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(14px, 2vw, 20px);
+  }
+  .kt-phones a {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    text-decoration: none;
+    color: var(--ink);
+  }
+  .kt-phones a[hidden],
+  .kt-mail[hidden] {
+    display: none;
+  }
+  .kt-phones b {
+    font-family: var(--font-mono), monospace;
+    font-weight: 600;
+    font-size: clamp(10px, 1.32vw, 11px);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    /* design .55 → AA na papierze (H10) */
+    color: rgba(33, 29, 24, 0.64);
+  }
+  .kt-phones span[data-slot] {
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: clamp(27px, 3.8vw, 33px);
+    line-height: 1.1;
+  }
+  .kt-mailrow {
+    position: relative;
+    padding-top: clamp(16px, 2.2vw, 22px);
+    border-top: 1px dashed rgba(33, 29, 24, 0.32);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .kt-mail {
+    align-self: flex-start;
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: clamp(20px, 2.8vw, 24px);
+    color: var(--ink);
+    text-decoration: none;
+    border-bottom: 1px dashed rgba(76, 59, 43, 0.55);
+    padding-bottom: 2px;
+  }
+  .kt-hours {
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: clamp(10px, 1.4vw, 11.5px);
+    letter-spacing: 0.14em;
+    color: rgba(33, 29, 24, 0.64);
+  }
+  .kt-bar {
+    margin: 0 var(--sp) 40px;
+  }
+
+  /* ════ DESKTOP ≥1024 (para: HOME_DESKTOP_MIN_PX) ════ */
+  @media (min-width: 1024px) {
+    .kt {
+      overflow: hidden;
+    }
+    .kt-row {
+      display: flex;
+      align-items: stretch;
+      flex: 1;
+    }
+    .kt-wnetrze {
+      position: absolute;
+      left: 81%;
+      top: 21%;
+      width: 390px;
+      max-width: none;
+      height: auto;
+      transform: translate(-50%, -50%);
+      opacity: calc(0.13 * var(--ryc-vis));
+      mix-blend-mode: multiply;
+      pointer-events: none;
+    }
+    .kt-kalamaz {
+      position: absolute;
+      right: -6vw;
+      bottom: -3.9vw;
+      width: clamp(290px, 27.8vw, 444px);
+      max-width: none;
+      height: auto;
+      opacity: calc(0.18 * var(--ryc-vis));
+      mix-blend-mode: multiply;
+      pointer-events: none;
+    }
+    .kt-panel {
+      position: relative;
+      flex: none;
+      width: 38.9vw;
+      background: var(--bg-dark);
+      overflow: hidden;
+    }
+    .kt-telryc-d {
+      position: absolute;
+      left: -4.9vw;
+      bottom: -2.8vw;
+      width: clamp(300px, 29.2vw, 467px);
+      max-width: none;
+      height: auto;
+      opacity: 0.3;
+      /* rycina spłaszczona na biel: invert + screen neutralizuje tło
+         na ciemnym panelu (analiza — plan assetów) */
+      filter: invert(1) sepia(0.3);
+      mix-blend-mode: screen;
+      pointer-events: none;
+    }
+    .kt-panelin {
+      position: absolute;
+      left: var(--g);
+      right: clamp(30px, 4.86vw, 80px);
+      top: 19.8%;
+      display: flex;
+      flex-direction: column;
+    }
+    .kt-panel .kt-call-label {
+      font-size: var(--eyebrow);
+      letter-spacing: 0.2em;
+      color: #9fad8c;
+      margin-bottom: clamp(12px, 1.11vw, 18px);
+    }
+    .kt-panel a[data-tel] {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      text-decoration: none;
+      color: #f5efe3;
+      padding: clamp(13px, 1.25vw, 20px) 0;
+      border-top: 1px dashed rgba(245, 239, 227, 0.28);
+      transition: color 0.2s ease;
+    }
+    .kt-panel a[data-tel]:last-of-type {
+      border-bottom: 1px dashed rgba(245, 239, 227, 0.28);
+    }
+    .kt-panel a[data-tel]:hover {
+      color: #e4dcc8;
+    }
+    .kt-panel a[data-tel][hidden],
+    .kt-panel .kt-mail[hidden] {
+      display: none;
+    }
+    .kt-panel a[data-tel] b {
+      font-family: var(--font-mono), monospace;
+      font-weight: 600;
+      font-size: var(--monos);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      /* design .6 → AA na ciemnym (H10) */
+      color: rgba(245, 239, 227, 0.72);
+    }
+    .kt-panel a[data-tel] span[data-slot] {
+      font-family: var(--font-serif), serif;
+      font-weight: 500;
+      font-size: clamp(26px, 2.36vw, 38px);
+      line-height: 1.05;
+    }
+    .kt-panel .kt-mail {
+      margin-top: clamp(18px, 2vw, 26px);
+      align-self: flex-start;
+      font-size: clamp(18px, 1.53vw, 24px);
+      color: #f5efe3;
+      border-bottom-color: rgba(245, 239, 227, 0.45);
+      padding-bottom: 3px;
+    }
+    .kt-panel .kt-hours {
+      margin-top: clamp(12px, 0.97vw, 18px);
+      font-size: var(--monos);
+      letter-spacing: 0.2em;
+      color: rgba(245, 239, 227, 0.72);
+    }
+
+    .kt-txt {
+      max-width: none;
+      width: var(--col-w);
+      margin: auto 0;
+      padding: clamp(56px, 8vh, 96px) 0 clamp(56px, 8vh, 96px)
+        clamp(34px, 4.86vw, 78px);
+      box-sizing: content-box;
+    }
+    .kt-txt .zaj-out {
+      display: inline-flex;
+      margin-top: 16px;
+    }
+    .kt-area {
+      position: absolute;
+      left: calc(38.9vw + clamp(34px, 4.86vw, 78px));
+      right: var(--g);
+      bottom: max(56px, 11vh);
+      padding-top: 16px;
+      border-top: 1px dashed rgba(33, 29, 24, 0.3);
+      font-family: var(--font-mono), monospace;
+      font-weight: 500;
+      font-size: var(--monos);
+      letter-spacing: 0.2em;
+      color: rgba(33, 29, 24, 0.64);
+    }
+  }
+</style>
