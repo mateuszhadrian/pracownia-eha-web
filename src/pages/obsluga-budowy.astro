@@ -1,9 +1,1223 @@
 ---
-import SkeletonPage from "@/components/SkeletonPage.astro";
+// Podstrona /obsluga-budowy/ (Etap 4.5, część 2) — port
+// docs/design/export/obsluga-budowy.html; decyzje: docs/analiza-obsluga.md.
+// NAJLŻEJSZY widok serwisu i jedyny bez zwijanych akapitów (skrypt
+// eksportu nie ma funkcji cv() — analiza §1c), więc CollapsibleText
+// i collapsible.ts NIE wchodzą. Zero nowych mechanik: konsumuje
+// content-motion.ts (reveale/rysowanie/parallaxy/dryf tła za bramką
+// js-motion), Navbar tone="dark", PaperBackdrop i stopkę 4.1.
+// tradycja-motion.ts jest widoko-specyficzny (diagram + kolek) — tu
+// nieimportowany.
+//
+// Sekcje 03–05 mają na obu progach realnie różne KOMPOZYCJE, ale tę samą
+// TREŚĆ, więc zamiast duplikatów dOnly/mOnly idą jednym markupem przez
+// grid-overlap (wzorzec hero kompetencji): kadr i nagłówek dzielą komórkę
+// gridu na mobile, a na desktopie kadr przechodzi w position:absolute
+// (pas 34 % / całe tło sekcji) i wypada z flow. Świadome duplikaty to
+// wyłącznie motto (hero dOnly / czoło wstępu mOnly — stała MOTTO),
+// mono-tag hero, rycina wstępu, pas domykający i kreskowane linie.
+import czasNaTwojRuch from "@/assets/czas-na-twoj-ruch-naglowek.webp";
+import house1 from "@/assets/dom-ryc-house1.webp";
+import house4 from "@/assets/dom-ryc-house4.webp";
+import hero from "@/assets/ekipa-budowlana1.webp";
+import koparka from "@/assets/koparka-rycina1.webp";
+import maciekKroi from "@/assets/maciek-kroi.webp";
+import plac2 from "@/assets/plac-budowy-photo2.webp";
+import plac3 from "@/assets/plac-budowy-photo3.webp";
+import zuraw from "@/assets/zuraw-rycina1.webp";
+import zurawM from "@/assets/zuraw-rycina1-m.webp";
+import Footer from "@/components/Footer.astro";
+import Navbar from "@/components/navbar/Navbar.astro";
+import PaperBackdrop from "@/components/PaperBackdrop.astro";
+import { ui } from "@/i18n/ui";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { CONTACT_PATH } from "@/lib/routes";
+
+// Jedyna treść powtórzona na obu progach (hero dOnly / wstęp mOnly) —
+// jedno źródło, żeby kopie nie mogły się rozjechać.
+const MOTTO = "Twój święty spokój.";
 ---
 
-<SkeletonPage
-  title="Obsługa budowy — Pracownia EH/A"
-  heading="Obsługa budowy"
-  description="Obsługa budowy z jednym punktem kontaktu — pełna kontrola remontu z dystansu. Pracownia EH/A."
-/>
+<BaseLayout
+  title={ui.pl["obslugaPage.title"]}
+  description={ui.pl["obslugaPage.description"]}
+>
+  <script is:inline slot="head">
+    // PRZED paintem: motion OK → html.js-motion (uzbraja stany startowe
+    // revealów i rysowania rycin; reszta w content-motion.ts niżej).
+    if (window.matchMedia("(prefers-reduced-motion: no-preference)").matches) {
+      document.documentElement.classList.add("js-motion");
+    }
+  </script>
+
+  <Navbar tone="dark" />
+
+  <main class="obs">
+    <PaperBackdrop />
+
+    {
+      /* ── hero + wstęp: na desktopie DOKŁADNIE jeden ekran (screenH
+        eksportu przy nakładkowym pasku); na mobile zwykły stos ── */
+    }
+    <div class="obs-top">
+      <header class="obs-hero" data-navref>
+        <div class="obs-hero-ph">
+          <img
+            data-plx
+            src={hero.src}
+            width={hero.width}
+            height={hero.height}
+            alt="Ekipa EH/A na placu budowy o zachodzie słońca"
+            loading="eager"
+            fetchpriority="high"
+            decoding="async"
+          />
+          <span class="obs-hero-top" aria-hidden="true"></span>
+          <span class="obs-hero-bot" aria-hidden="true"></span>
+        </div>
+        <div class="obs-hero-tt">
+          <h1>Obsługa budowy.</h1>
+          <div class="obs-hero-row dOnly">
+            <p class="obs-hero-motto">{MOTTO}</p>
+            <span class="obs-hero-tag"
+              >PRACOWNIA EH/A<br />REMONTY DOMÓW Z HISTORIĄ</span
+            >
+          </div>
+        </div>
+      </header>
+
+      <section class="obs-intro">
+        <img
+          class="obs-ryc int-ryc mOnly"
+          data-ryc="r"
+          data-plxr
+          src={house4.src}
+          width={house4.width}
+          height={house4.height}
+          alt=""
+          loading="lazy"
+          decoding="async"
+        />
+        <p class="obs-lead mOnly">{MOTTO}</p>
+        <p class="obs-p int-p">
+          Decyzja o ucieczce z miasta i remoncie starego domu na prowincji to
+          spełnienie marzeń, które w dzisiejszych realiach nazbyt często
+          zamienia się w logistyczny koszmar. Setki telefonów, opóźnienia,
+          niedowiezione materiały i konieczność ciągłego gaszenia pożarów na
+          placu boju. W Pracowni EH/A doskonale to rozumiemy. Dlatego
+          stworzyliśmy model współpracy, w którym naszą najważniejszą usługą –
+          obok tradycyjnego rzemiosła – jest Twój absolutny spokój umysłu.
+        </p>
+      </section>
+    </div>
+
+    {
+      /* ── 03 jeden punkt kontaktu (kadr: mobile nad nagłówkiem,
+        desktop pas 34 % po LEWEJ) ── */
+    }
+    <section class="obs-sec obs-s1">
+      <div class="obs-ph s1-ph">
+        <img
+          data-plx
+          src={plac2.src}
+          width={plac2.width}
+          height={plac2.height}
+          alt="Inwestor z rysunkiem przed szachulcowym domem w budowie"
+          loading="lazy"
+          decoding="async"
+        />
+        <span class="obs-ph-veil" aria-hidden="true"></span>
+      </div>
+      <div class="obs-head s1-head">
+        <p class="obs-kick" data-rev>JEDEN PUNKT KONTAKTU</p>
+        <h2 data-rev data-rev-d="1">
+          Jeden punkt kontaktu. My przejmujemy chaos
+        </h2>
+      </div>
+      <div class="obs-body s1-body">
+        <img
+          class="obs-ryc s1-ryc mOnly"
+          data-ryc="r"
+          data-plxr
+          src={koparka.src}
+          width={koparka.width}
+          height={koparka.height}
+          alt=""
+          loading="lazy"
+          decoding="async"
+        />
+        <img
+          class="obs-ryc s1-rycd dOnly"
+          data-rycsb="r"
+          src={koparka.src}
+          width={koparka.width}
+          height={koparka.height}
+          alt=""
+          loading="lazy"
+          decoding="async"
+        />
+        <p class="obs-p">
+          Jako inwestor nie masz potrzeby zgrywania ekip, nadzorowania
+          poszczególnych fachowców ani negocjowania z dostawcami. <em
+            >Maciek i Łukasz to jedyny punkt kontaktu, jakiego potrzebujesz.</em
+          >
+        </p>
+        <p class="obs-p">
+          Cała logistyka, zamawianie materiałów, pilnowanie dostaw wełny
+          drzewnej czy koordynowanie ciężkiego sprzętu to wyłącznie nasz
+          problem. Bierzemy na siebie pełną odpowiedzialność za inwestycję od
+          wykopów fundamentowych aż po doprowadzenie budynku do stanu surowego
+          zamkniętego +.
+        </p>
+      </div>
+    </section>
+
+    {/* ── 04 pełna kontrola z dystansu (lustro 03: pas po PRAWEJ) ── */}
+    <section class="obs-sec obs-s2">
+      <div class="obs-ph s2-ph">
+        <img
+          data-plx
+          src={plac3.src}
+          width={plac3.width}
+          height={plac3.height}
+          alt="Murarze przy elewacji szachulcowej na rusztowaniu"
+          loading="lazy"
+          decoding="async"
+        />
+        <span class="obs-ph-veil" aria-hidden="true"></span>
+      </div>
+      <div class="obs-head s2-head">
+        <p class="obs-kick" data-rev>PEŁNA KONTROLA Z DYSTANSU</p>
+        <h2 data-rev data-rev-d="1">Przyjeżdżasz i patrzysz.</h2>
+      </div>
+      <div class="obs-body s2-body">
+        <img
+          class="obs-ryc s2-ryc mOnly"
+          data-ryc="r"
+          src={zurawM.src}
+          width={zurawM.width}
+          height={zurawM.height}
+          alt=""
+          loading="lazy"
+          decoding="async"
+        />
+        <img
+          class="obs-ryc s2-rycd dOnly"
+          data-rycsb="l"
+          src={zuraw.src}
+          width={zuraw.width}
+          height={zuraw.height}
+          alt=""
+          loading="lazy"
+          decoding="async"
+        />
+        {
+          /* kolejność bez duplikatu: mobile p1 → motto → p2 (order),
+            desktop motto → linia → grid akapitów (grid-areas) */
+        }
+        <p class="obs-lead s2-lead">
+          Dajemy Ci wolność od pyłu, błota i stresu budowlanego, jednocześnie
+          nigdy nie trzymając Cię w niewiedzy.
+        </p>
+        <span class="obs-rule s2-rule dOnly" aria-hidden="true"></span>
+        <p class="obs-p s2-p1">
+          Nasza filozofia obsługi budowy sprowadza się do jednej, odważnej
+          obietnicy: przyjeżdżasz na miejsce inwestycji tylko po to, by patrzeć
+          i cieszyć się postępami prac.
+        </p>
+        <p class="obs-p s2-p2">
+          Nie musisz jednak bywać tam codziennie, by czuć pełną kontrolę.
+          Zapewniamy proaktywny przepływ informacji, regularne raportowanie
+          postępów i przejrzystą komunikację z placu boju.
+        </p>
+      </div>
+    </section>
+
+    {
+      /* ── 05 podsumowanie + CTA (mobile: pudło pod kadrem; desktop:
+        prawa kolumna gridu, kadr pod całą sekcją) ── */
+    }
+    <section class="obs-sec obs-s3">
+      <div class="obs-ph s3-ph">
+        <img
+          data-plx
+          src={czasNaTwojRuch.src}
+          width={czasNaTwojRuch.width}
+          height={czasNaTwojRuch.height}
+          alt="Dom na skale we mgle o świcie"
+          loading="lazy"
+          decoding="async"
+        />
+        <span class="obs-ph-veil" aria-hidden="true"></span>
+      </div>
+      <div class="obs-txt s3-txt">
+        <p class="obs-kick" data-rev>PODSUMOWANIE</p>
+        <h2 data-rev data-rev-d="1">Czas na Twój ruch</h2>
+        <span class="obs-rule s3-rule dOnly" aria-hidden="true"></span>
+        <p class="obs-p s3-p1" data-rev data-rev-d="2">
+          Twój czas jest zbyt cenny, by marnować go na nerwy i logistykę, na
+          której nie musisz się znać.
+        </p>
+        <p class="obs-p s3-p2">
+          Oddaj swój dom w ręce pasjonatów, którzy z równym zaangażowaniem
+          podchodzą do <em>ratowania historycznej cegły</em>, co do żelaznego
+          pilnowania harmonogramów inwestycji.
+        </p>
+      </div>
+      <div class="obs-cta">
+        <img
+          class="obs-ryc cta-ryc mOnly"
+          data-ryc="r"
+          src={house1.src}
+          width={house1.width}
+          height={house1.height}
+          alt=""
+          loading="lazy"
+          decoding="async"
+        />
+        <img
+          class="obs-ryc cta-rycd dOnly"
+          data-rycsb="r"
+          src={house1.src}
+          width={house1.width}
+          height={house1.height}
+          alt=""
+          loading="lazy"
+          decoding="async"
+        />
+        <p class="obs-lead cta-lead">
+          Jesteś gotów na budowę bez stresu? Skontaktuj się z nami i
+          porozmawiajmy o Twoim domu.
+        </p>
+        <a class="cta-btn" href={CONTACT_PATH}>Skontaktuj się z nami →</a>
+      </div>
+    </section>
+
+    {/* ── pas domykający (mobile; desktop kończy się sekcją 05) ── */}
+    <div class="obs-band mOnly" aria-hidden="true">
+      <div class="obs-band-msk">
+        <img
+          data-plx
+          src={maciekKroi.src}
+          width={maciekKroi.width}
+          height={maciekKroi.height}
+          alt=""
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</BaseLayout>
+
+<style is:global>
+  /* ── Tokeny widoku (odczyty z eksportu — analiza §1). Mobile w bazie,
+     desktop w @media 1024 (para: CONTENT_DESKTOP_MIN_PX). Tokeny
+     typograficzne desktop identyczne z .trd/.kmp/.eka (te same formuły
+     eksportów). ── */
+  .obs {
+    /* kontener mobile eksportu: 700/30 */
+    --wmax: 700px;
+    /* ryciny wystają za krawędź — clip bez tworzenia scrollera */
+    overflow-x: clip;
+    /* tło jak pozostałe trasy treściowe: baza kremowa + skan papieru
+       (PaperBackdrop, z-index -1 — stąd isolation) */
+    position: relative;
+    isolation: isolate;
+    background: var(--bg-cream);
+  }
+  @media (min-width: 1024px) {
+    .obs {
+      --wmax: 1600px;
+      --body: clamp(13.5px, 1.08vw, 17px);
+      --lhb: 1.72;
+      --mono: clamp(10px, 0.76vw, 12px);
+      --monos: clamp(9px, 0.66vw, 10.5px);
+      --h2: clamp(31px, 2.78vw, 44px);
+      --lead: clamp(17px, 1.46vw, 23px);
+      --cta: clamp(13px, 1.01vw, 16px);
+      /* paddingi sekcji z eksportu (§1b) */
+      --pad-t: clamp(66px, 6.6vw, 106px);
+      --pad-b: clamp(72px, 7.2vw, 115px);
+      /* wcięcie treści sekcji 03/04 pod pas zdjęcia (34 %) */
+      --strip: 34%;
+      --inset: 25%;
+    }
+  }
+
+  /* warianty per breakpoint (wzorzec dOnly/mOnly z 4.1–4.5) */
+  @media (max-width: 1023.98px) {
+    .obs .dOnly {
+      display: none !important;
+    }
+  }
+  @media (min-width: 1024px) {
+    .obs .mOnly {
+      display: none !important;
+    }
+  }
+
+  /* ── wspólne klocki typograficzne ── */
+  .obs-kick {
+    margin: 0;
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: rgba(87, 101, 74, 0.95);
+  }
+  .obs h2 {
+    margin: 0;
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: 28px;
+    line-height: 1.2;
+    color: var(--ink);
+    text-wrap: pretty;
+  }
+  .obs-p {
+    margin: 0;
+    font-family: var(--font-body), sans-serif;
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+  .obs-p em {
+    font-family: var(--font-serif), serif;
+    font-style: italic;
+    font-weight: 600;
+    font-size: 15.5px;
+    color: var(--sepia);
+  }
+  .obs-lead {
+    margin: 0;
+    font-family: var(--font-serif), serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 19px;
+    line-height: 1.35;
+    color: var(--sepia);
+  }
+  /* ryciny: wspólny szkielet (pozycje per instancja niżej) */
+  .obs-ryc {
+    position: absolute;
+    max-width: none;
+    height: auto;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+
+  /* ── hero ── */
+  .obs-hero {
+    position: relative;
+    height: 430px;
+  }
+  .obs-hero-ph {
+    position: absolute;
+    inset: 0;
+    overflow: clip;
+    background: #2a241c;
+  }
+  /* zapas kadru = ruch parallaxu [data-plx] (D-U1; PLX_AMT 0.18) */
+  .obs-hero-ph > img {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -9%;
+    width: 100%;
+    height: 118%;
+    max-width: none;
+    object-fit: cover;
+    object-position: 55% 42%;
+    filter: sepia(0.6) saturate(0.85);
+  }
+  /* gradient czytelności kremowego paska (tone="dark") */
+  .obs-hero-top {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 130px;
+    background: linear-gradient(rgba(20, 16, 11, 0.55), rgba(20, 16, 11, 0));
+  }
+  .obs-hero-bot {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 62%;
+    background: linear-gradient(rgba(20, 16, 11, 0), rgba(20, 16, 11, 0.85));
+  }
+  .obs-hero-tt {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-width: var(--wmax);
+    margin-inline: auto;
+    box-sizing: border-box;
+    padding: 0 30px 22px;
+  }
+  .obs-hero-tt h1 {
+    margin: 0;
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: 42px;
+    line-height: 1.1;
+    color: #f5efe3;
+    text-shadow: 0 1px 24px rgba(20, 16, 11, 0.45);
+  }
+
+  /* ── wstęp ── */
+  .obs-intro {
+    position: relative;
+    max-width: var(--wmax);
+    margin-inline: auto;
+    box-sizing: border-box;
+    padding: 26px 30px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .int-ryc {
+    right: -70px;
+    top: 96px;
+    width: 136px;
+    opacity: 0.26;
+  }
+  .int-p {
+    position: relative;
+  }
+
+  /* ── sekcje 03/04: kadr + nagłówek + treść ── */
+  .obs-sec {
+    position: relative;
+  }
+  .obs-s1,
+  .obs-s2 {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "head"
+      "body";
+  }
+  .obs-ph {
+    position: relative;
+    overflow: clip;
+    background: #2a241c;
+  }
+  .obs-ph > img {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -9%;
+    width: 100%;
+    height: 118%;
+    max-width: none;
+    object-fit: cover;
+  }
+  .obs-ph-veil {
+    position: absolute;
+    inset: 0;
+  }
+  .s1-ph,
+  .s2-ph {
+    grid-area: head;
+    /* kadr wygasa w papier ku dołowi */
+    -webkit-mask-image: linear-gradient(#000 42%, rgba(0, 0, 0, 0) 100%);
+    mask-image: linear-gradient(#000 42%, rgba(0, 0, 0, 0) 100%);
+  }
+  .s2-ph {
+    -webkit-mask-image: linear-gradient(#000 44%, rgba(0, 0, 0, 0) 100%);
+    mask-image: linear-gradient(#000 44%, rgba(0, 0, 0, 0) 100%);
+  }
+  .s1-ph > img {
+    object-position: 56% 42%;
+    filter: sepia(0.16) saturate(0.9);
+  }
+  .s2-ph > img {
+    object-position: 64% 48%;
+    filter: sepia(0.3) saturate(0.9);
+  }
+  .s1-ph .obs-ph-veil {
+    background: rgba(250, 247, 241, 0.62);
+  }
+  .s2-ph .obs-ph-veil {
+    background: rgba(250, 247, 241, 0.5);
+  }
+  .obs-head {
+    grid-area: head;
+    position: relative;
+    justify-self: center;
+    width: 100%;
+    max-width: var(--wmax);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .s1-head {
+    padding: 150px 30px 18px;
+  }
+  .s2-head {
+    padding: 154px 30px 18px;
+  }
+  .s2-head h2 {
+    font-size: 30px;
+    line-height: 1.16;
+  }
+  .obs-body {
+    grid-area: body;
+    position: relative;
+    justify-self: center;
+    width: 100%;
+    max-width: var(--wmax);
+    box-sizing: border-box;
+    padding: 8px 30px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .obs-body > .obs-p,
+  .obs-body > .obs-lead {
+    position: relative;
+  }
+  .s1-ryc {
+    right: -84px;
+    top: 34px;
+    width: 180px;
+    opacity: 0.24;
+  }
+  /* eksport przycina rycinę żurawia do pudła treści */
+  .s2-body {
+    overflow: clip;
+  }
+  .s2-ryc {
+    right: -96px;
+    top: 0;
+    width: 230px;
+    opacity: 0.24;
+  }
+  /* mobile: akapit → motto → akapit (desktop układa grid-areas) */
+  .s2-p1 {
+    order: 1;
+  }
+  .s2-lead {
+    order: 2;
+    line-height: 1.4;
+  }
+  .s2-p2 {
+    order: 3;
+  }
+
+  /* ── 05 podsumowanie + CTA ── */
+  .obs-s3 {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "txt"
+      "cta";
+  }
+  .s3-ph {
+    grid-area: txt;
+    -webkit-mask-image: linear-gradient(#000 62%, rgba(0, 0, 0, 0) 100%);
+    mask-image: linear-gradient(#000 62%, rgba(0, 0, 0, 0) 100%);
+  }
+  .s3-ph > img {
+    object-position: 72% 40%;
+    filter: sepia(0.34) saturate(0.75) contrast(1.02);
+  }
+  .s3-ph .obs-ph-veil {
+    background: linear-gradient(
+      rgba(250, 247, 241, 0.34),
+      rgba(250, 247, 241, 0.78) 46%,
+      rgba(250, 247, 241, 0.9)
+    );
+  }
+  .s3-txt {
+    grid-area: txt;
+    position: relative;
+    justify-self: center;
+    width: 100%;
+    max-width: var(--wmax);
+    box-sizing: border-box;
+    padding: 210px 30px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .s3-txt h2 {
+    font-size: 34px;
+    line-height: 1.14;
+  }
+  .s3-p1 {
+    margin-top: 8px;
+  }
+  .obs-cta {
+    grid-area: cta;
+    position: relative;
+    overflow: clip;
+    margin: 26px auto 0;
+    max-width: 644px;
+    width: calc(100% - 52px);
+    box-sizing: border-box;
+    padding: 26px 24px;
+    border: 1px solid rgba(33, 29, 24, 0.22);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .cta-ryc {
+    right: -46px;
+    bottom: -30px;
+    width: 150px;
+    opacity: 0.22;
+  }
+  .cta-lead {
+    position: relative;
+    font-size: 18px;
+    line-height: 1.5;
+  }
+  .cta-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: var(--accent);
+    color: #f5efe3;
+    text-decoration: none;
+    font-family: var(--font-body), sans-serif;
+    font-weight: 500;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    padding: 17px 28px;
+    border-radius: 2px;
+    transition: background 0.2s ease;
+  }
+  .cta-btn:hover {
+    background: var(--accent-ink);
+    color: #f5efe3;
+  }
+
+  /* ── pas domykający (mobile) ── */
+  .obs-band {
+    position: relative;
+    margin-top: 28px;
+    height: 300px;
+    overflow: clip;
+  }
+  .obs-band-msk {
+    position: absolute;
+    inset: 0;
+    background: #362b20;
+    -webkit-mask-image: linear-gradient(
+      rgba(0, 0, 0, 0) 0,
+      rgba(0, 0, 0, 0.4) 18%,
+      #000 46%
+    );
+    mask-image: linear-gradient(
+      rgba(0, 0, 0, 0) 0,
+      rgba(0, 0, 0, 0.4) 18%,
+      #000 46%
+    );
+  }
+  .obs-band-msk > img {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -9%;
+    width: 100%;
+    height: 118%;
+    max-width: none;
+    object-fit: cover;
+    object-position: 46% 62%;
+    filter: grayscale(1) contrast(1.06);
+    mix-blend-mode: luminosity;
+    opacity: 0.9;
+  }
+
+  /* ── odstępy sekcji (mobile) ── */
+  @media (max-width: 1023.98px) {
+    .obs-s1 {
+      margin-top: 0;
+    }
+    .obs-s2 {
+      margin-top: 34px;
+    }
+    .obs-s3 {
+      margin-top: 34px;
+    }
+  }
+
+  /* ════ DESKTOP ≥1024 (para: CONTENT_DESKTOP_MIN_PX) ════ */
+  @media (min-width: 1024px) {
+    /* hero + wstęp = dokładnie jeden ekran (screenH eksportu) */
+    .obs-top {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: clip;
+    }
+    .obs-hero {
+      flex: 1;
+      min-height: 0;
+      height: auto;
+    }
+    .obs-hero-ph > img {
+      top: 0;
+      height: 100%;
+      object-position: 55% 42%;
+    }
+    .obs-hero-top {
+      height: clamp(150px, 15.5vw, 250px);
+      background: linear-gradient(
+        rgba(20, 16, 11, 0.8) 0,
+        rgba(20, 16, 11, 0.6) 40%,
+        rgba(20, 16, 11, 0) 100%
+      );
+    }
+    .obs-hero-bot {
+      height: 66%;
+      background: linear-gradient(rgba(20, 16, 11, 0), rgba(20, 16, 11, 0.86));
+    }
+    .obs-hero-tt {
+      padding: 0 var(--g) clamp(34px, 3.4vw, 54px);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(14px, 1.4vw, 22px);
+    }
+    .obs-hero-tt h1 {
+      font-size: clamp(40px, 4.4vw, 70px);
+      line-height: 1.02;
+      text-wrap: pretty;
+      text-shadow: none;
+    }
+    .obs-hero-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 40px;
+      border-top: 1px solid rgba(245, 239, 227, 0.28);
+      padding-top: clamp(14px, 1.4vw, 22px);
+    }
+    .obs-hero-motto {
+      margin: 0;
+      font-family: var(--font-serif), serif;
+      font-style: italic;
+      font-weight: 500;
+      font-size: calc(var(--lead) * 1.24);
+      line-height: 1.3;
+      color: #ede3ce;
+    }
+    .obs-hero-tag {
+      flex: none;
+      white-space: nowrap;
+      padding-bottom: 6px;
+      font-family: var(--font-mono), monospace;
+      font-weight: 500;
+      font-size: var(--monos);
+      letter-spacing: 0.18em;
+      color: rgba(245, 239, 227, 0.72);
+      text-align: right;
+    }
+
+    /* wstęp: kreskowana linia + akapit w dwóch łamach */
+    .obs-intro {
+      flex: none;
+      max-width: var(--wmax);
+      padding: max(24px, 4.5vh) var(--g);
+      display: block;
+    }
+    .int-p {
+      column-count: 2;
+      column-gap: clamp(40px, 4.6vw, 74px);
+      border-top: 1px dashed rgba(33, 29, 24, 0.28);
+      padding-top: clamp(14px, 1.4vw, 22px);
+    }
+
+    /* typografia sekcji */
+    .obs-kick {
+      font-size: var(--mono);
+    }
+    .obs h2 {
+      font-size: var(--h2);
+      line-height: 1.12;
+    }
+    .obs-p {
+      font-size: var(--body);
+      line-height: var(--lhb);
+      text-align: justify;
+      hyphens: auto;
+    }
+    .obs-p em {
+      font-size: calc(var(--body) * 1.14);
+    }
+    .obs-lead {
+      font-size: var(--lead);
+    }
+    .obs-rule {
+      display: block;
+      border-top: 1px dashed rgba(33, 29, 24, 0.28);
+    }
+
+    /* ── sekcje 03/04: pas zdjęcia + karta + grid akapitów ── */
+    .obs-s1,
+    .obs-s2 {
+      display: block;
+      overflow: clip;
+      padding: var(--pad-t) var(--g) var(--pad-b) var(--inset);
+    }
+    .obs-s2 {
+      padding: var(--pad-t) var(--inset) var(--pad-b) var(--g);
+    }
+    .s1-ph,
+    .s2-ph {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: var(--strip);
+      -webkit-mask-image: none;
+      mask-image: none;
+    }
+    .s1-ph {
+      left: 0;
+    }
+    .s2-ph {
+      right: 0;
+    }
+    .s1-ph > img,
+    .s2-ph > img,
+    .s3-ph > img {
+      inset: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .s1-ph > img {
+      object-position: 60% 46%;
+    }
+    .s2-ph > img {
+      object-position: 44% 48%;
+      filter: sepia(0.18) saturate(0.9);
+    }
+    .s1-ph .obs-ph-veil,
+    .s2-ph .obs-ph-veil {
+      display: none;
+    }
+    /* karta nagłówka na papierze — NACHODZI na pas zdjęcia */
+    .obs-head {
+      justify-self: auto;
+      max-width: none;
+      padding: clamp(28px, 2.8vw, 45px) clamp(32px, 3.2vw, 51px);
+      margin-bottom: clamp(24px, 2.4vw, 38px);
+      background: var(--bg-cream);
+      border: 1px solid rgba(33, 29, 24, 0.2);
+      box-shadow: 0 2px 10px rgba(33, 29, 24, 0.1);
+      gap: clamp(12px, 1.2vw, 19px);
+    }
+    .s2-head h2 {
+      font-size: var(--h2);
+      line-height: 1.12;
+    }
+    .obs-body {
+      justify-self: auto;
+      max-width: none;
+      padding: 0;
+    }
+    .s1-body {
+      padding-left: clamp(140px, 13.9vw, 222px);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(36px, 3.8vw, 61px);
+      align-items: start;
+    }
+    .s1-rycd {
+      right: calc(-1 * clamp(50px, 5vw, 80px));
+      bottom: calc(-1 * clamp(34px, 3.4vw, 54px));
+      width: clamp(240px, 22vw, 352px);
+      opacity: 0.19;
+    }
+    .s2-body {
+      overflow: visible;
+      padding-right: clamp(140px, 13.9vw, 222px);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      column-gap: clamp(36px, 3.8vw, 61px);
+      row-gap: clamp(22px, 2.2vw, 35px);
+      align-items: start;
+      grid-template-areas:
+        "lead lead"
+        "rule rule"
+        "p1 p2";
+    }
+    .s2-lead {
+      grid-area: lead;
+      max-width: 88%;
+      font-size: calc(var(--lead) * 1.1);
+      line-height: 1.34;
+    }
+    .s2-rule {
+      grid-area: rule;
+      margin-top: calc(-1 * clamp(2px, 0.2vw, 3px));
+    }
+    .s2-p1 {
+      grid-area: p1;
+    }
+    .s2-p2 {
+      grid-area: p2;
+    }
+    .s2-rycd {
+      left: calc(-1 * clamp(56px, 5.6vw, 90px));
+      bottom: calc(-1 * clamp(40px, 4vw, 64px));
+      width: clamp(250px, 23vw, 368px);
+      opacity: 0.19;
+    }
+
+    /* ── 05 podsumowanie: kadr pod całą sekcją + karta CTA obok ── */
+    .obs-s3 {
+      overflow: clip;
+      grid-template-columns: 1.05fr 0.8fr;
+      grid-template-areas: "txt cta";
+      gap: clamp(52px, 5.2vw, 83px);
+      align-items: start;
+      padding: clamp(84px, 8.4vw, 134px) var(--g) clamp(74px, 7.4vw, 118px);
+    }
+    .s3-ph {
+      /* grid-area: auto jest WARUNKIEM pełnego bleedu — absolutne dziecko
+         kontenera gridu z JAWNYM grid-area ma za blok zawierający swoją
+         KOMÓRKĘ, nie padding-box sekcji (CSS Grid §9.2); z „txt" kadr
+         zostawał wielkości lewej kolumny */
+      grid-area: auto;
+      position: absolute;
+      inset: 0;
+      -webkit-mask-image: linear-gradient(#000 46%, rgba(0, 0, 0, 0) 96%);
+      mask-image: linear-gradient(#000 46%, rgba(0, 0, 0, 0) 96%);
+    }
+    .s3-ph > img {
+      object-position: 70% 42%;
+      filter: sepia(0.3) saturate(0.78) contrast(1.02);
+    }
+    .s3-ph .obs-ph-veil {
+      background: linear-gradient(
+        rgba(250, 247, 241, 0.42),
+        rgba(250, 247, 241, 0.8) 52%,
+        rgba(250, 247, 241, 0.94)
+      );
+    }
+    .s3-txt {
+      justify-self: auto;
+      max-width: none;
+      padding: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      column-gap: clamp(32px, 3.2vw, 51px);
+      row-gap: clamp(16px, 1.6vw, 26px);
+      align-items: start;
+      grid-template-areas:
+        "kick kick"
+        "h2 h2"
+        "rule rule"
+        "p1 p2";
+    }
+    .s3-txt > .obs-kick {
+      grid-area: kick;
+    }
+    .s3-txt h2 {
+      grid-area: h2;
+      font-size: calc(var(--h2) * 1.16);
+      line-height: 1.1;
+    }
+    .s3-rule {
+      grid-area: rule;
+      margin-top: clamp(8px, 0.8vw, 13px);
+    }
+    .s3-p1 {
+      grid-area: p1;
+      margin-top: 0;
+    }
+    .s3-p2 {
+      grid-area: p2;
+    }
+    .obs-cta {
+      grid-area: cta;
+      margin: 0;
+      max-width: none;
+      width: auto;
+      padding: clamp(30px, 3vw, 48px) clamp(32px, 3.2vw, 51px);
+      background: var(--bg-cream);
+      box-shadow: 0 2px 10px rgba(33, 29, 24, 0.1);
+      gap: clamp(22px, 2.2vw, 35px);
+    }
+    .cta-lead {
+      font-size: var(--lead);
+      line-height: 1.42;
+    }
+    .cta-rycd {
+      right: calc(-1 * clamp(34px, 3.4vw, 54px));
+      bottom: calc(-1 * clamp(26px, 2.6vw, 42px));
+      width: clamp(180px, 16vw, 256px);
+      opacity: 0.2;
+    }
+    .cta-btn {
+      font-size: var(--cta);
+      padding: clamp(16px, 1.6vw, 26px) clamp(26px, 2.6vw, 42px);
+    }
+  }
+
+  /* ═══ RUCH (bramka js-motion; bez JS / przy reduce brak stanów
+     startowych = strona statyczna i kompletna). Mobile: reveale +
+     rysowanie rycin maską + parallaxy; desktop: rysowanie [data-rycsb]
+     + dryf tła. Wzorce i wartości 1:1 z 4.2–4.5. ═══ */
+  @media (max-width: 1023.98px) {
+    html.js-motion .obs [data-rev] {
+      opacity: 0;
+      transform: translateY(22px);
+      transition:
+        opacity 0.7s ease,
+        transform 0.8s cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+    html.js-motion .obs [data-rev].in {
+      opacity: 1;
+      transform: none;
+    }
+    html.js-motion .obs [data-rev][data-rev-d="1"] {
+      transition-delay: 0.09s;
+    }
+    html.js-motion .obs [data-rev][data-rev-d="2"] {
+      transition-delay: 0.18s;
+    }
+    html.js-motion .obs [data-ryc] {
+      -webkit-mask-repeat: no-repeat, no-repeat;
+      mask-repeat: no-repeat, no-repeat;
+      -webkit-mask-size:
+        280% 100%,
+        240% 100%;
+      mask-size:
+        280% 100%,
+        240% 100%;
+    }
+    html.js-motion .obs [data-ryc="r"] {
+      -webkit-mask-image: var(--ryc-wedge-r), var(--ryc-lines-r);
+      mask-image: var(--ryc-wedge-r), var(--ryc-lines-r);
+      -webkit-mask-position:
+        0 0,
+        0 0;
+      mask-position:
+        0 0,
+        0 0;
+    }
+    html.js-motion .obs [data-ryc="r"].in {
+      animation: obsRycR 2.8s cubic-bezier(0.3, 0.05, 0.25, 1) both;
+    }
+  }
+  @media (min-width: 1024px) {
+    html.js-motion .obs [data-rycsb] {
+      -webkit-mask-repeat: no-repeat, no-repeat;
+      mask-repeat: no-repeat, no-repeat;
+      -webkit-mask-size:
+        280% 100%,
+        240% 100%;
+      mask-size:
+        280% 100%,
+        240% 100%;
+    }
+    html.js-motion .obs [data-rycsb="l"] {
+      -webkit-mask-image: var(--ryc-wedge-l), var(--ryc-lines-l);
+      mask-image: var(--ryc-wedge-l), var(--ryc-lines-l);
+      -webkit-mask-position:
+        100% 0,
+        100% 0;
+      mask-position:
+        100% 0,
+        100% 0;
+    }
+    html.js-motion .obs [data-rycsb="r"] {
+      -webkit-mask-image: var(--ryc-wedge-r), var(--ryc-lines-r);
+      mask-image: var(--ryc-wedge-r), var(--ryc-lines-r);
+      -webkit-mask-position:
+        0 0,
+        0 0;
+      mask-position:
+        0 0,
+        0 0;
+    }
+    html.js-motion .obs [data-rycsb="l"].in {
+      animation: obsRycL 2s cubic-bezier(0.3, 0.05, 0.25, 1) both;
+    }
+    html.js-motion .obs [data-rycsb="r"].in {
+      animation: obsRycR 2s cubic-bezier(0.3, 0.05, 0.25, 1) both;
+    }
+  }
+
+  /* gradienty masek „rysowania" (eksport: klin 105°/255° + smugi) */
+  .obs {
+    --ryc-wedge-l: linear-gradient(105deg, #000 40%, rgba(0, 0, 0, 0) 52%);
+    --ryc-wedge-r: linear-gradient(255deg, #000 40%, rgba(0, 0, 0, 0) 52%);
+    --ryc-lines-l: linear-gradient(
+      105deg,
+      rgba(0, 0, 0, 0) 0 34%,
+      rgba(0, 0, 0, 0.85) 34% 36.5%,
+      rgba(0, 0, 0, 0) 36.5% 40%,
+      rgba(0, 0, 0, 0.85) 40% 42.5%,
+      rgba(0, 0, 0, 0) 42.5% 46.5%,
+      rgba(0, 0, 0, 0.85) 46.5% 49%,
+      rgba(0, 0, 0, 0) 49% 100%
+    );
+    --ryc-lines-r: linear-gradient(
+      255deg,
+      rgba(0, 0, 0, 0) 0 34%,
+      rgba(0, 0, 0, 0.85) 34% 36.5%,
+      rgba(0, 0, 0, 0) 36.5% 40%,
+      rgba(0, 0, 0, 0.85) 40% 42.5%,
+      rgba(0, 0, 0, 0) 42.5% 46.5%,
+      rgba(0, 0, 0, 0.85) 46.5% 49%,
+      rgba(0, 0, 0, 0) 49% 100%
+    );
+  }
+  @keyframes obsRycL {
+    0% {
+      filter: opacity(0.55);
+    }
+    75% {
+      filter: opacity(0.85);
+    }
+    100% {
+      -webkit-mask-position:
+        0 0,
+        0 0;
+      mask-position:
+        0 0,
+        0 0;
+      filter: opacity(1);
+    }
+  }
+  @keyframes obsRycR {
+    0% {
+      filter: opacity(0.55);
+    }
+    75% {
+      filter: opacity(0.85);
+    }
+    100% {
+      -webkit-mask-position:
+        100% 0,
+        100% 0;
+      mask-position:
+        100% 0,
+        100% 0;
+      filter: opacity(1);
+    }
+  }
+</style>
+
+<script>
+  // Ruch — dynamicznie, tylko przy motion OK (sections.md). Widok nie ma
+  // zwijanych akapitów (analiza §1c), więc collapsible.ts nie wchodzi;
+  // tradycja-motion.ts jest widoko-specyficzny i też nie.
+  if (matchMedia("(prefers-reduced-motion: no-preference)").matches) {
+    import("@/components/sections/content-motion");
+  }
+</script>
