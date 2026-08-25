@@ -721,6 +721,126 @@ drewno-ai1`, `cegla-rozbiorkowa`; grid-overlap hero z kompetencji
     prefiks, PaperBackdrop wg eksportu, tone navbara z `navColor`);
     strona jest statyczna i tekstowa, więc `content-motion` może się
     okazać zbędny — rozstrzygnąć w mini-analizie.
+- **Etap 4.6 (/polityka-prywatnosci/) — WYKONANY** (2026-08-25,
+  kod+testy; mini-analiza i decyzje portu: `docs/analiza-polityka.md`):
+  - Jedyny DOKUMENT PRAWNY serwisu, prefiks `.pp` (NARZUCONY przez
+    uśpiony kontrakt Etapu 3), ZERO nowych mechanik: konsumuje
+    `content-motion.ts`, `content-config.ts`, `PaperBackdrop` (dryf
+    `PAPER_BG_SPEED`, kontrakt e2e) i stopkę 4.1. Bez zwijanych
+    akapitów (`grep -c 'cv(' = 0` jak w obsłudze) ⇒ CollapsibleText/
+    `collapsible.ts` NIE wchodzą i nie ma zrzutu `*-full-open`.
+  - **Navbar DOMYŚLNY** (eksport nie ma `navColor`/`logoCol`) i —
+    PIERWSZA taka trasa widokowa — **BEZ `[data-navref]`**: strona nie
+    ma hero, więc stan solid wchodzi na fallbacku
+    `NAV_SOLID_FALLBACK_PX` (8 px) z 4.1. Kontrakt w e2e.
+  - Struktura: nagłówek (mobile `--hdr-h + 4px` = eksportowe 96 px;
+    desktop `--hdr-h + clamp(48,4.8vw,78)` — eksport mierzył od DOŁU
+    paska w flow, nasz jest fixed), pasmo daty `#3A3428`, dokument
+    (wstęp + spis + 9 sekcji), pas „PYTANIA O DANE" `#F1EBDD`.
+    **Treść obu drzew eksportu jest identyczna co do znaku** (diff
+    tekstu gałęzi `sc-if`) — różni się TYLKO miejsce akapitu wstępnego,
+    więc idzie JEDEN markup na `grid-template-areas: "toc lead" "toc
+secs"` (mobile: kolumna w kolejności DOM). Jedyna duplikacja
+    dOnly/mOnly wynika z PLIKU, nie z treści: rycina gołębia.
+  - **Spis treści = czyste kotwice** `<a href="#pp-NN">` +
+    `scroll-margin-top: calc(var(--hdr-h) + 18px)` (bez tego nagłówek
+    ląduje POD fixed paskiem — kontrakt e2e mierzy pozycję po
+    kliknięciu na obu progach). Desktop: `position: sticky` z
+    `top: calc(var(--hdr-h) + clamp(28px,2.8vw,44px))` i
+    `align-self: start` (rozciągnięty grid-item nie ma po czym jechać).
+    Eksportowy `jump()` skakał JS-em — port działa BEZ JS.
+    **Świadome odstępstwo: bez `scroll-behavior: smooth`** — `smooth`
+    na `html` przechwytuje każde programowe `window.scrollTo` (także
+    w `scrollPageTo`/`revealSweep`), a długi płynny przejazd przechodzi
+    przez heurystykę auto-hide paska. Przywrócenie = jedna reguła CSS
+    - `scroll-behavior: auto !important` w `freeze.css`; baseline'ów
+      nie rusza.
+  - **Sloty antyscrapingowe z CZYTELNYM fallbackiem SSR** (decyzja
+    Mateusza — odstępstwo od chrome'u): kotwice `a[data-tel]`/
+    `a[data-mail]` w `.pp` NIE startują `hidden`, tylko z etykietą
+    zastępczą („e-mail", „numer Maćka") i `href="/kontakt/"`;
+    `fillContactSlots()` podmienia tekst i href. Pełnych ciągów w HTML
+    dalej NIE MA (D-CH5 nienaruszony), a bez JS dokument prawny
+    pozostaje spójny. Administrator jest w SSR zidentyfikowany nazwą,
+    adresem, NIP-em i REGON-em.
+  - **Treść 1:1 z designu**, uzupełniona o 4 decyzje Mateusza
+    (placeholdery eksportu były świadomie puste): `[DOMENA]` →
+    `pracownia-eha.pl`; **OBOWIĄZUJE OD 01.09.2026 / WERSJA 1.0**
+    (ta sama data w chipie sekcji 09 — jedna stała);
+    `[DOSTAWCA POCZTY E-MAIL]` → **The Camels**, serwery w Polsce
+    (EOG), bez transferu poza EOG; retencja **5 lat / 12 miesięcy**.
+    Plus jedna dopisana klauzula: karta Resend mówi „potwierdzenie…,
+    jeśli podasz adres e-mail" (E9 = telefon LUB e-mail). Weryfikacja
+    z kodem: `functions/api/kontakt.ts` nic nie utrwala (KV = licznik
+    `quota:YYYY-MM-DD`), IP idzie do Turnstile jako `remoteip`,
+    Web Analytics wchodzi w Etapie 6 — data 01.09.2026 tego nie
+    wyprzedza.
+  - Assety: **2 warianty jednego nowego pliku, ZERO fotografii** —
+    `golab-poczt-rycina1-m.webp` (320 px, alfa q42/aq45, 40 KB, mOnly,
+    `data-ryc="r"` + `data-plxr`) i `golab-poczt-rycina1.webp` (560 px,
+    spłaszczona q45, 22 KB, dOnly, statyczna). Wzorzec `zuraw-rycina1`
+    z 4.5 cz. 2; jeden wspólny plik z alfą ważyłby 98 KB.
+    Korekta a11y (klasa 4.4/4.5, axe ZŁAPAŁ ją realnie): numery spisu
+    `rgba(87,101,74,.9)` na pudle `#F3EDE1` dawały 4,34:1 przy mono
+    11 px → pełny `var(--accent)` = 5,35:1 (ten sam token dostały
+    numery listy praw); `WERSJA 1.0` `rgba(228,220,200,.6)` → `.72`;
+    `SPIS TREŚCI` i `OSTATNIA AKTUALIZACJA` `.55` → `.65`.
+    Allowlista axe dalej **PUSTA**.
+  - JS widoku: skrypt strony **0,32 KB** + content-motion 2,2 KB
+    ≈ **2,5 KB raw ponad chrome** — remis z obsługą o najlżejszy widok.
+  - **LHCI: ten widok JEST bramkowany** (jeden z dwóch mierzonych
+    URL-i). Pomiar lokalny (mediana z 3, main vs PR na tej samej
+    maszynie): mobile perf 0,92 → **0,79** (budżet ≥ 0,80), LCP
+    3305 → **4816 ms** (budżet 5000), total 470 → 611 KB, script 8 KB,
+    TBT 0, CLS 0; desktop perf **0,99**/LCP 939 ms — wszystko
+    z zapasem. **Cała różnica to FONTY, nie treść**: Lighthouse nie
+    pobiera ŻADNEJ z rycin (obie `lazy`, pod zgięciem), a doszło
+    5 plików (+188 KB): italik Garamonda latin+ext (134 KB — jeden
+    cytat w sekcji 02), mono-500 latin+ext, mono-ext-600. Pozostałe
+    trasy treściowe ładują te same 12 plików od 4.2; polityka po
+    prostu jest MIERZONA. W tym samym przebiegu lokalnym `/` wypada
+    GORZEJ (0,74/LCP 6025) i w CI przechodzi ⇒ polityka też powinna.
+    **Progów NIE ruszano** — kandydat pozostaje ten sam co od Etapu 3:
+    audyt subsetów (same `latin-ext` Garamonda = 199 KB na trzy polskie
+    znaki), Etap 6.
+  - Testy: `policy.spec.ts` (Etap 3, jeden profil desktop) — **uśpiony
+    kontrakt 9 sekcji AKTYWNY** (skip przestał wchodzić), dołożone
+    kontrakty treści niezależne od profilu: spis treści opisuje
+    dokładnie te sekcje, które są (kotwica → istniejące `id`, etykieta
+    = `h2`), pasmo daty wypełnione, **strażnik „zero placeholderów
+    `[...]`"**. Nowy `polityka.spec.ts` (6 profili) — SSR bez JS
+    (9 sekcji, karty 3+3, prawa 6, spis jako kotwice, sloty z
+    fallbackiem), skok ze spisu pod paskiem, sticky + układ gridu
+    desktop, brak `[data-navref]`/`[data-clp]`/`[data-plx]`/
+    `[data-rycsb]`, sloty po JS, D-CH5 na surowym HTML, CTA, reveal,
+    dryf tła, collectPageIssues, strażnik scrolla, breakpoint flip.
+    Visual `polityka.spec.ts` na `usePreviewGuard` + wspólnym
+    `revealSweep` (polityka-top / -full; fullPage timeout 20 s +
+    per-shot 0.001). Trasa wycięta ze `skeleton.spec.ts` z baseline'ami
+    `skeleton-polityka-prywatnosci-*` (24 pliki) — **w `ROUTES`
+    została JEDNA trasa `/kontakt/`; plik znika w Etapie 5**.
+    Bramki 2026-08-25: format/lint/typecheck/unit(80)/build/e2e(470)/
+    visual `--ignore-snapshots`(120) zielone.
+  - UWAGA: baseline'y `polityka-*` NIE istnieją — komplety
+    linux+darwin generuje Mateusz (workflow z kontrolą intruzów →
+    darwin na końcu; znani intruzi bot-commitów: `ekipa-top` SE,
+    `index-full` SE/14, `work-index-full` SE — przywracać
+    `git checkout <sha-przed-botem> -- <plik>`). **Pułapka złapana
+    w tej sesji: `pnpm test:visual -- --ignore-snapshots` NIE przekazuje
+    flagi**, więc Playwright DOPISAŁ 12 brakujących baseline'ów darwin
+    (usunięte; żadne istniejące nie zostało ruszone). Filtrować
+    wyłącznie przez `npx playwright test …`.
+  - UWAGI dla Etapu 5 (/kontakt/): formularz E9 — 4 pola wszędzie
+    (5. pole desktopu eksportu = pomyłka), walidacja alternatywna
+    telefon LUB e-mail po OBU stronach, honeypot `readonly`, Turnstile
+    leniwie (pierwszy `focusin`), podłoga `font-size: 16px` na mobile,
+    `contact-ui.ts` ładowany ZAWSZE (funkcja, nie dekoracja);
+    `functions/api/kontakt.ts` jest DZIŚ wersją odziedziczoną z delung
+    (zawsze wysyła potwierdzenie na `data.email`) — przepisać pod E9,
+    inaczej rozjedzie się z kartą Resend w polityce; sloty
+    antyscrapingowe wg wzorca `.pp` (fallback czytelny) albo chrome'u
+    (`hidden`) — rozstrzygnąć w mini-analizie kontaktu; po tym PR-ze
+    `skeleton.spec.ts` znika razem z baseline'ami `skeleton-kontakt-*`.
 
 ## Dokumentacja
 
