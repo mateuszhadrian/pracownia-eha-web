@@ -864,6 +864,63 @@ secs"` (mobile: kolumna w kolejności DOM). Jedyna duplikacja
     antyscrapingowe wg wzorca `.pp` (fallback czytelny) albo chrome'u
     (`hidden`) — rozstrzygnąć w mini-analizie kontaktu; po tym PR-ze
     `skeleton.spec.ts` znika razem z baseline'ami `skeleton-kontakt-*`.
+- **Poprawki wizualne po 4.6 — WYKONANE** (2026-08-25, zgłoszenie
+  Mateusza z telefonów; branch `feat/poprawki-wizualne`). Trzy korekty,
+  ZERO nowych mechanik; dwie z nich UNIEWAŻNIAJĄ wcześniejsze
+  rozstrzygnięcia opisane wyżej:
+  - **Hero mobile: logo mierzone, nie szacowane** (zastępuje zapis
+    z 4.2 „logo kurczy się budżetem wysokości"). Stary model liczył
+    szerokość logo z formuły `(--svh − --hdr-h − 1208px + 190vw)`, czyli
+    SZACOWAŁ wysokość reszty treści modelem liniowym wykalibrowanym na
+    390 i 375 px; górny cap `clamp(234px, 33vw, 300px)` przy
+    szerokościach telefonów redukował się do PŁASKICH 234 px. Każde
+    urządzenie spoza kalibracji dostawało ZARAZEM za małe logo i pustkę
+    pod CTA (zgłoszone z iPhone'a 15 Pro; Android był OK). Teraz
+    `.hero-in` ma na mobile `justify-content: flex-end` (CTA kotwiczy
+    się przy dolnym marginesie 44 px), a `.hero-logo` jest JEDYNYM
+    rosnącym elementem kolumny (`flex: 1 1 0` + `aspect-ratio` z SVG,
+    `min-height: 80px`, `max-height: min(248px, 63vw)`) — dostaje
+    dokładnie tyle, ile przeglądarka naprawdę zmierzy. Cap dobrany
+    pomiarem sepii logotypu na zrzutach Mateusza: stan docelowy = znak
+    49,4 % szerokości ekranu ⇒ element ≈ 227 px przy 393 px (stan przed
+    poprawką: 23,0 % ⇒ ≈ 106 px). Desktop NIETKNIĘTY (wraca
+    `justify-content: center` i stała szerokość). D-Q2 zostaje: wysokość
+    hero dalej liczy się z przypinanego `--svh`, więc chowany pasek URL
+    nie rusza logo (kontrakt e2e przechodzi bez zmian). Stała
+    `--logo-wh` usunięta — nie ma już czego mnożyć.
+  - **Tło paska przeżywa otwarcie menu.** `overlay.ts` blokuje scroll
+    przez `body{position:fixed;top:-scrollY}`, co ZERUJE `window.scrollY`
+    i odpala `scroll` — handler przeliczał próg na pozycji 0 i gasił
+    `[data-solid]` dokładnie w chwili otwarcia sheeta. Stan zamrożony
+    flagą `sheetOpen` w skrypcie Navbara (deklaracja MUSI stać przed
+    `onScroll` — pierwsze wywołanie leci przed sekcją menu, TDZ).
+    Zamrażamy stan ZASTANY, więc na górze strony otwarcie menu dalej
+    NIE zapala tła (oba kierunki w kontrakcie e2e).
+  - **`tone="dark"` nie znika przy otwartym sheecie** (zastępuje zapis
+    z 4.4 cz. 1 „przy otwartym sheecie ikona X wraca do atramentu"):
+    `:not([data-open])` zdjęte z reguł tonu. Uzasadnienie się nie
+    broniło — sheet to DOLNA szuflada, pasek zostaje nad ciemnym hero,
+    w dodatku POD zasłoną `.sheet-ov` (z-index 100 > 50 paska), więc
+    atramentowy znak lądował na ciemnym tle pod ciemną zasłoną. Nad
+    papierem pasek ma w tym momencie `[data-solid]`, które i tak wyłącza
+    ten wariant.
+  - Testy: `home.spec.ts` — stary test „logo się skaluje" rozwinięty
+    w describe z TRZEMA kontraktami (hero mieści się na niskim ekranie;
+    CTA kotwiczy się 40–48 px nad dolną krawędzią; wyższy ekran = większe
+    logo — wysokość ustawiana PRZED nawigacją, bo zmiana po załadowaniu
+    przypina `--svh`). `navigation.spec.ts` — trzy nowe kontrakty
+    chrome'u (tło przeżywa otwarcie menu / na górze się nie zapala /
+    ton kremowy przeżywa otwarcie menu na `/obsluga-budowy/`).
+  - **Zasięg baseline'ów (zmierzony, nie oszacowany)**: TYLKO `index-*`
+    na profilach mobilnych — `webkit-iphone-14` i `chromium-pixel-5`
+    (top + full). Desktop, `chrome-*` i wszystkie pozostałe trasy
+    BEZ ZMIAN (fixy 2–3 nie ruszają żadnego istniejącego zrzutu: sheet
+    fotografowany jest na `/realizacje/` u góry strony, bez solidu
+    i bez ciemnego tonu). `webkit-iphone-se/index-top` też przeszedł
+    BEZ ZMIAN — na 320×568 logo stoi na podłodze 80 px po obu stronach
+    zmiany, a treść i tak przerasta pierwszy ekran; różnica na
+    `webkit-iphone-se/index-full` (1674 px) to ZNANY flake tego zrzutu,
+    nie skutek PR-a.
 
 ## Dokumentacja
 
