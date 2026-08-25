@@ -11,6 +11,9 @@ export const ui = {
     "ekipaPage.title": "Ekipa EH/A — Pracownia EH/A",
     "ekipaPage.description":
       "Poznaj ekipę Pracowni EH/A — Łukasza i Maćka. Remonty domów z historią: ciesielstwo, murarstwo i fizyka budowli.",
+    "kompetencjePage.title": "Kompetencje i technologie — Pracownia EH/A",
+    "kompetencjePage.description":
+      "Ciesielstwo, murarstwo, sklepienia, fizyka budowli i instalacje — kompetencje i technologie Pracowni EH/A.",
     "workPage.title": "Realizacje — Pracownia EH/A",
     "workPage.description":
       "Realizacje Pracowni EH/A — remonty domów z historią: ciesielstwo, murarstwo, sklepienia, fizyka budowli i instalacje.",
