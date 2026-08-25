@@ -630,17 +630,97 @@ drewno-ai1`, `cegla-rozbiorkowa`; grid-overlap hero z kompetencji
     bloki — nie regresja layoutu. Stan zastany z 4.4 cz. 2, nie skutek
     PR-a tradycji (`revealSweep` rozszerzony czysto addytywnie).
   - `index-full` SE dalej BYWA graniczny w pełnym przebiegu, zielony
-    w izolacji — `index.spec.ts` jako jedyny siedzi na STARYM lokalnym
-    sweepie; przełączenie na wspólny `revealSweep` to wciąż otwarty
-    kandydat (dotyka baseline'ów `/` — wymaga decyzji).
-  - UWAGI dla 4.5 cz. 2 (obsluga-budowy): najlżejsza strona (hero +
-    3 sekcje + CTA) — wzorzec strony = tradycja/kompetencje (własny
-    prefiks, PaperBackdrop, tone navbara wg eksportu, moduły 4.4);
-    `tradycja-motion.ts` jest widoko-specyficzny (obsługa nie ma
-    diagramu — NIE konsumować); ostatni wpis szkieletowej trójki
-    w `skeleton.spec.ts` to `/obsluga-budowy/`, `/kontakt/`
-    i `/polityka-prywatnosci/` — wycięcie obsługi zostawia dwie trasy
-    (plik zostaje do 4.6/5).
+    w izolacji. **SPROSTOWANIE zastanego zapisu z 4.4 cz. 1**: notka,
+    jakoby `index.spec.ts` siedział na STARYM lokalnym sweepie, jest
+    NIEPRAWDZIWA — plik jest na wspólnym `revealSweep` od PR-a ekipy
+    (`b3afc77`), więc sweepa NIE ma po co ruszać. Realna
+    charakterystyka: `index-full.png` to JEDYNY zrzut fullPage
+    w projekcie BEZ per-shot `maxDiffPixelRatio`, czyli jedzie na
+    globalnym 0.0005, podczas gdy wszystkie pozostałe fullPage mają
+    0.001–0.0025. Nadanie mu per-shot 0.001 (klasa decyzji 4.4) dotyka
+    baseline'ów `/` i wymaga decyzji Mateusza — otwarty kandydat.
+    Uwaga interpretacyjna: „~0.01" z logu Playwrighta to wartość
+    ZAOKRĄGLONA (pisze `ratio 0.01` także przy faktycznym 0.00197) —
+    nie wnioskować z niej, że progi rzędu 0.0025 nic nie dają.
+- **Etap 4.5 cz. 2 (/obsluga-budowy/) — WYKONANY** (2026-08-25,
+  kod+testy; mini-analiza i decyzje portu: `docs/analiza-obsluga.md`):
+  - Najlżejszy widok serwisu, prefiks `.obs`, ZERO nowych mechanik:
+    konsumuje `content-motion.ts`, `content-config.ts`, PaperBackdrop
+    (dryf `PAPER_BG_SPEED`, kontrakt e2e), `Navbar tone="dark"`
+    i stopkę 4.1. **Jedyny widok treściowy BEZ zwijanych akapitów** —
+    skrypt eksportu nie ma funkcji `cv()` (analiza §1c), więc
+    CollapsibleText/collapsible.ts NIE wchodzą, a spec visual nie ma
+    zrzutu `*-full-open`. `tradycja-motion.ts` (diagram+kolek) świadomie
+    nieimportowany.
+  - Struktura: hero (mobile 430 px / desktop `flex:1`) + wstęp,
+    3 sekcje (JEDEN PUNKT KONTAKTU / PEŁNA KONTROLA Z DYSTANSU /
+    PODSUMOWANIE) + CTA → `/kontakt/` + mobilny pas domykający
+    `maciek-kroi`. **Desktop: hero + wstęp = DOKŁADNIE jeden ekran**
+    (`.obs-top { height: 100vh }`, hero `flex:1`, wstęp `flex:none`
+    z akapitem w `column-count: 2`) — odwzorowanie `screenH` eksportu
+    przy nakładkowym pasku; `[data-navref]` na `.obs-hero` (wzorzec
+    kompetencji — wstęp nie może wliczać się do progu solidu).
+  - **Sekcje jednym markupem przez grid-overlap** (zamiast duplikatów
+    dOnly/mOnly): kadr i nagłówek dzielą komórkę gridu na mobile (kadr
+    dostaje wysokość nagłówka automatycznie — bez zgadywania pikseli),
+    a na desktopie kadr przechodzi w `position:absolute` (pas 34 %
+    po lewej/prawej albo tło całej sekcji) i wypada z flow. Sekcja
+    podsumowania trzyma CTA w swoim markupie: mobile grid `"ph"/"cta"`,
+    desktop `"txt cta"`. Kolejność akapitów sekcji 04 (mobile
+    akapit→motto→akapit, desktop motto→linia→grid) załatwia `order`
+    vs `grid-template-areas` — bez kopii treści. Świadome duplikaty
+    ograniczone do: motto (stała `MOTTO`), mono-tag hero, rycina
+    wstępu, pas domykający i kreskowane linie desktopu.
+  - **GOTCHA gridu (złapana przy porcie)**: absolutne dziecko
+    kontenera gridu z JAWNYM `grid-area` ma za blok zawierający swoją
+    KOMÓRKĘ, nie padding-box kontenera (CSS Grid §9.2) — kadr sekcji
+    podsumowania z odziedziczonym `grid-area: txt` renderował się
+    wielkości LEWEJ KOLUMNY zamiast pełnego bleedu; lekarstwo
+    `grid-area: auto` w regule desktopowej (sekcji 03/04 nie dotyczy —
+    tam kontener przestaje być gridem). Pilnuje tego SONDA UKŁADU
+    w e2e, nie pixel-diff.
+  - Assety: 2 nowe fotografie (`czas-na-twoj-ruch-naglowek` 1456 q42
+    45 KB — tło pod ciężkim welonem; `maciek-kroi` 1000 q42 69 KB —
+    pas mOnly, grayscale+luminosity) + `zuraw-rycina1-m` 460 px Z ALFĄ
+    (105 KB; rycina widoczna na mobile MUSI mieć alfę — lekcja 4.2 §2a;
+    460 px = dpr2 kadru 230 px, przy 560 px ta sama rycina waży 155 KB).
+    Reużyte bez zmian: `ekipa-budowlana1` (hero, eager+fetchpriority,
+    33 KB), `plac-budowy-photo2`, `plac-budowy-photo3` (świadomie BEZ
+    wariantu `-full` — dekoracyjny pas pod sepią, upscale ≤1,15×),
+    `koparka-rycina1`, `dom-ryc-house4/1` (alfa), `zuraw-rycina1`
+    (dOnly). Korekta a11y NIE była potrzebna (eksport nie ma tu
+    tekstów `rgba(...,.5–.55)`), allowlista axe zostaje PUSTA.
+  - JS widoku: skrypt strony **0,3 KB** + content-motion 2,2 KB
+    ≈ **2,5 KB raw ponad chrome** — najlżejszy widok treściowy
+    (tradycja ≈ 3,6 KB). LHCI mierzy `/` i `/polityka-prywatnosci/`,
+    więc budżetów ten PR nie rusza (progi NIETKNIĘTE).
+  - Testy: e2e `obsluga.spec.ts` (SSR bez JS z asercjami `:visible`
+    przy motcie, KONTRAKT braku `[data-clp]`, tone="dark" przez
+    expect.poll, sonda „hero+wstęp = jeden ekran", sonda pełnego bleedu
+    `.s3-ph`, sonda D-U1 zapasu kadrów `[data-plx]` ≥ `1 + PLX_AMT`,
+    CTA, reveal, dryf tła, strażnik scrolla, breakpoint flip na
+    `.obs-band`/`.s2-rule`/`.obs-hero-row`); visual `obsluga.spec.ts`
+    na `usePreviewGuard` + wspólnym `revealSweep` (obsluga-top /
+    obsluga-full; fullPage timeout 20 s + per-shot 0.001); trasa
+    wycięta ze `skeleton.spec.ts` z baseline'ami
+    `skeleton-obsluga-budowy-*` (24 pliki). **W `ROUTES` zostały DWIE
+    trasy** — `/kontakt/` (Etap 5) i `/polityka-prywatnosci/` (4.6);
+    plik znika z ostatnią z nich. Bramki 2026-08-25:
+    format/lint/typecheck/unit(80)/build/e2e(400)/visual
+    `--ignore-snapshots`(114) zielone.
+  - UWAGA: baseline'y `obsluga-*` NIE istnieją — komplety linux+darwin
+    generuje Mateusz (workflow z kontrolą intruzów → darwin na końcu;
+    znani intruzi bot-commitów: `ekipa-top` SE, `index-full` SE/14,
+    `work-index-full` SE — przywracać
+    `git checkout <sha-przed-botem> -- <plik>`; lokalny
+    `test:visual:update` lubi podprogowo przepisać `index-full` SE
+    i `kompetencje-full-open` 14).
+  - UWAGI dla 4.6 (/polityka-prywatnosci/): treść 9 sekcji z designu
+    1:1, sticky spis treści, DATA obowiązywania, sloty antyscrapingowe
+    (`contact-details.ts`); wzorzec strony = obsługa/tradycja (własny
+    prefiks, PaperBackdrop wg eksportu, tone navbara z `navColor`);
+    strona jest statyczna i tekstowa, więc `content-motion` może się
+    okazać zbędny — rozstrzygnąć w mini-analizie.
 
 ## Dokumentacja
 
