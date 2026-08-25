@@ -548,6 +548,84 @@ zostają, widoki budowane od nowa wg `docs/design/` — patrz
     eksportowe `hero-tradycja-i-ekologia1`, `tradycja-i-ekologia-
 drewno-ai1`, `cegla-rozbiorkowa`; grid-overlap hero z kompetencji
     do reużycia, jeśli eksport ma płytę tytułową na hero.
+- **Etap 4.5 cz. 1 (/tradycja-i-ekologia/) — WYKONANY** (2026-08-25,
+  kod+testy; mini-analiza i decyzje portu: `docs/analiza-tradycja.md`):
+  - Widok wg eksportu, prefiks `.trd`, moduły 4.4 KONSUMOWANE bez zmian
+    (CollapsibleText/collapsible.ts ×3 pudła po **132 px** — fz/up/tw,
+    content-motion.ts, content-config.ts, `Navbar tone="dark"`,
+    PaperBackdrop — dryf `PAPER_BG_SPEED`, kontrakt e2e). Hero BEZ
+    płyty tytułowej: h1 wewnątrz hero (`[data-navref]` na całej sekcji;
+    430 px mobile / **68vh** desktop), kolor h1 per próg czystym CSS
+    (mobile atrament na wygaszonym dole kadru + maska fade, desktop
+    krem na dolnym gradiencie + mono-etykieta dOnly).
+  - Sekcje: manifest (mobile lead mOnly + JEDEN scalony akapit =
+    `MAN_P.join(" ")`; desktop grid .62/1/1 z rysowaną ryciną liścia),
+    ciemny pas materiałów (mOnly), fizyka budowli z **ANIMOWANYM
+    DIAGRAMEM warstw**, upcycling (2 kadry dom-z-bala z badge'ami/
+    podpisami), trwałość z efektem **kolka**, mikroklimat (jeden
+    markup: grid akapitów + 3 karty), CTA → /kontakt/ (bez cytatu).
+    Fizyka/upcycling/trwałość = świadome duplikacje dOnly/mOnly
+    (wzorzec rzemiosł 4.4 cz. 2; treści w stałych frontmattera);
+    manifest/mikroklimat/CTA = jeden markup.
+  - **DIAGRAM + KOLEK = osobny mały moduł `tradycja-motion.ts`**
+    (0,36 KB; content-motion NIETKNIĘTY): port animacji na **CSS
+    TRANSITIONS zamiast keyframes** (wszystkie animacje eksportu są
+    dwustanowe; freeze.css testów sadza wtedy stany końcowe natychmiast
+    po `.in` — bez księgowości animationend/drop(), lekcja webkit-CI
+    zaadresowana konstrukcyjnie); kaskada delayami transition-delay
+    1:1 z eksportu (warstwy 0/.08/.16/.24/.32 s, strzałka scaleX .42 s,
+    groty 1.3 s; kolek 2.2 s do opacity .14); uzbrojenie WYŁĄCZNIE pod
+    `html.js-motion` + `@media <1024` (animacja mobile-only jak
+    w eksporcie — desktopowa kopia diagramu bez atrybutu, statyczna);
+    IO o parametrach revIO (rootMargin −10 %, threshold .01) —
+    ŚWIADOME odstępstwo od eksportowego progu 30 %: kolek siedzi
+    w zwiniętym pudle przycięty do ~31 % (próg .3 = flake na granicy),
+    threshold .01 odpala deterministycznie także elementy przycięte.
+    Bez JS / przy reduce diagram i kolek statyczne i kompletne (SSR).
+  - **`revealSweep` w tests/helpers/visual.ts rozszerzony ADDYTYWNIE**
+    o `[data-diag]:not(.in)` i `[data-kolek]:not(.in)` w selektorze
+    maruderów (inne trasy nie mają tych atrybutów — zero wpływu na
+    istniejące specy); diagram na zrzutach w stanach końcowych, BEZ
+    maski.
+  - Assety: 5 nowych WebP (hero 1456 q48 112 KB eager+fetchpriority,
+    reużyty też jako tło pasa mikroklimatu; dom-z-bala4 1456 q42
+    211 KB; dom-z-bala3 1456 q42 312 KB — portret, lazy; cegla-
+    rozbiorkowa 1200 q42 pod mgłą .66; tradycja-i-ekologia-drewno-ai1
+    1200 q42 pod opacity .34); reużyte: ekologia-techno (1300 =
+    zoptymalizowany ekologia-techno-ai), house-old1 (CTA),
+    eha-kolek-ryc-m (alfa), lisc-rycina1 (alfa), dom-ryc-house2/3/5
+    (alfa) — ZERO nowych rycin. Korekta a11y (klasa 4.4): podpisy
+    kadrów/etykiety krawędzi diagramu/podpis PARA WODNA rgba .5–.55 →
+    **.65**. JS widoku: skrypt strony 0,4 KB + collapsible 0,55 KB +
+    content-motion 2,3 KB + tradycja-motion 0,36 KB (≈3,6 KB raw ponad
+    chrome; diagram+kolek = 0,36 KB).
+  - Testy: e2e `tradycja.spec.ts` (wzorzec kompetencji; SSR bez JS
+    z asercjami `:visible` przy duplikatach i KOMPLETNYM statycznym
+    diagramem, [data-clp] ×3 po 132 px, zwijanie bez skoku ±2 px,
+    tone="dark" przez expect.poll, diagram po rozwinięciu+dojechaniu
+    do stanów końcowych przez expect.poll — warstwy/scaleX/groty,
+    kolek do opacity .14, desktop-diagram statyczny bez uzbrojenia,
+    CTA, reveal, dryf tła, strażnik scrolla, breakpoint flip); visual
+    `tradycja.spec.ts` na `usePreviewGuard` + wspólnym `revealSweep`
+    (tradycja-top / -full / -full-open mobile; fullPage timeout 20 s +
+    per-shot 0.001 — klasa decyzji 4.4); trasa wycięta ze
+    `skeleton.spec.ts` z baseline'ami
+    `skeleton-tradycja-i-ekologia-*` (24 pliki). Bramki 2026-08-25:
+    format/lint/typecheck/unit(80)/build/e2e(359)/visual
+    `--ignore-snapshots`(108) zielone.
+  - UWAGA: baseline'y `tradycja-*` NIE istnieją — komplety linux+darwin
+    generuje Mateusz (PR → workflow z kontrolą intruzów → darwin na
+    końcu; znani intruzi bot-commitów: ekipa-top SE, index-full SE/14,
+    work-index-full SE — przywracać `git checkout <sha-przed-botem> --
+<plik>`).
+  - UWAGI dla 4.5 cz. 2 (obsluga-budowy): najlżejsza strona (hero +
+    3 sekcje + CTA) — wzorzec strony = tradycja/kompetencje (własny
+    prefiks, PaperBackdrop, tone navbara wg eksportu, moduły 4.4);
+    `tradycja-motion.ts` jest widoko-specyficzny (obsługa nie ma
+    diagramu — NIE konsumować); ostatni wpis szkieletowej trójki
+    w `skeleton.spec.ts` to `/obsluga-budowy/`, `/kontakt/`
+    i `/polityka-prywatnosci/` — wycięcie obsługi zostawia dwie trasy
+    (plik zostaje do 4.6/5).
 
 ## Dokumentacja
 
