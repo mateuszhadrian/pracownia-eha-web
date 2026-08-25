@@ -1,15 +1,26 @@
-// Polityka prywatności — meta + linki. Docelowa treść (9 sekcji RODO,
-// sticky spis treści, data obowiązywania, sloty antyscrapingowe) wchodzi
-// w Etapie 4.6 — testy treści są na szkielecie pomijane z powodem
-// (test.skip, wzorzec testing.md), a NIE skasowane: pilnują kontraktu od
-// pierwszego builda widoku. Treść jest niezależna od profilu — jak
-// seo.spec.ts biega tylko na chromium-1920. PL-only.
+// Polityka prywatności — META i TREŚĆ dokumentu. Plik powstał w Etapie 3
+// z UŚPIONYM kontraktem „komplet 9 sekcji RODO"; od Etapu 4.6 kontrakt
+// jest AKTYWNY (widok renderuje `.pp-sec`), więc `test.skip` przestaje
+// wchodzić — zostaje jako strażnik na wypadek regresji budowania widoku.
+//
+// Podział względem tests/e2e/polityka.spec.ts (Etap 4.6): TUTAJ siedzi
+// wszystko, co jest TREŚCIĄ albo META i nie zależy od profilu — jak
+// seo.spec.ts biega tylko na chromium-1920. Zachowania profilozależne
+// (skoki spisu treści pod paskiem, sticky desktop, sloty po JS, ruch,
+// progi) są w spechu widoku. PL-only.
 import { expect, test } from "@playwright/test";
 import { CONTACT_PATH, POLICY_PATH } from "../../src/lib/routes";
 import { useChromium1920Only } from "../helpers/guards";
 import { gotoReady } from "../helpers/scroll";
 
 const SITE = "https://pracownia-eha.pl";
+
+/** Data obowiązywania i wersja z pasma daty (decyzja Mateusza z 4.6 —
+ *  docs/analiza-polityka.md §2 pkt 9). Kontrakt trzyma je tutaj, żeby
+ *  zmiana daty była świadoma: dokument prawny nie zmienia daty „przy
+ *  okazji" edycji treści. */
+const EFFECTIVE_DATE = "01.09.2026";
+const VERSION = "1.0";
 
 useChromium1920Only(
   "treść/meta polityki są niezależne od profilu — jeden projekt wystarczy",
@@ -47,6 +58,57 @@ test(`${POLICY_PATH}: komplet 9 sekcji RODO (od Etapu 4.6)`, async ({
   await expect(
     page.locator(`.pp-sec a[href="${CONTACT_PATH}"]`).first(),
   ).toBeAttached();
+});
+
+test(`${POLICY_PATH}: spis treści opisuje dokładnie te sekcje, które są`, async ({
+  page,
+}) => {
+  await gotoReady(page, POLICY_PATH);
+  // Spis i nagłówki sekcji mają w widoku JEDNO źródło (stała SECS), ale
+  // kontrakt sprawdza EFEKT: każda kotwica trafia w istniejące `id`,
+  // a jej etykieta zgadza się z nagłówkiem sekcji.
+  const links = page.locator(".pp-toc-l a");
+  await expect(links).toHaveCount(9);
+  for (const link of await links.all()) {
+    const href = await link.getAttribute("href");
+    expect(href).toMatch(/^#pp-0[1-9]$/);
+    const section = page.locator(`${href!}.pp-sec`);
+    await expect(section).toHaveCount(1);
+    // etykieta kotwicy = tytuł sekcji (bez numeru, który jest dekoracją)
+    const label = (
+      await link.locator("span:not(.pp-toc-n)").innerText()
+    ).trim();
+    await expect(section.locator("h2")).toHaveText(label);
+  }
+});
+
+test(`${POLICY_PATH}: pasmo daty obowiązywania jest wypełnione`, async ({
+  page,
+}) => {
+  await gotoReady(page, POLICY_PATH);
+  await expect(page.locator(".pp-date")).toContainText(
+    `OBOWIĄZUJE OD ${EFFECTIVE_DATE}`,
+  );
+  await expect(page.locator(".pp-date")).toContainText(`WERSJA ${VERSION}`);
+  // sekcja 09 powtarza tę samą datę — w widoku z jednej stałej
+  await expect(page.locator(".pp-upd")).toHaveText(
+    `OSTATNIA AKTUALIZACJA: ${EFFECTIVE_DATE}`,
+  );
+});
+
+test(`${POLICY_PATH}: żaden placeholder designu nie został w treści`, async ({
+  page,
+}) => {
+  await gotoReady(page, POLICY_PATH);
+  // Eksport designu miał świadome luki do uzupełnienia przy wdrożeniu
+  // ([DOMENA], [DOSTAWCA POCZTY E-MAIL], [EOG / POZA EOG], [OKRES — …]).
+  // Publikacja dokumentu prawnego z takim nawiasem = wpadka, więc
+  // strażnik szuka WZORCA, nie konkretnych fraz.
+  const text = await page.locator("main.pp").innerText();
+  expect(text).not.toMatch(/\[[^\]]+\]/);
+  // najczęstsze konkrety — komunikat czytelny, gdy wzorzec wróci
+  expect(text).not.toContain("[DOMENA]");
+  expect(text).toContain("pracownia-eha.pl");
 });
 
 test("link polityki w stopce jest na każdym szkielecie", async ({ page }) => {

@@ -1,9 +1,1160 @@
 ---
-import SkeletonPage from "@/components/SkeletonPage.astro";
+// Podstrona /polityka-prywatnosci/ (Etap 4.6) — port
+// docs/design/export/polityka-prywatnosci.html; decyzje:
+// docs/analiza-polityka.md. Jedyny DOKUMENT PRAWNY serwisu i ostatni
+// widok przed Etapem 5. Zero nowych mechanik: konsumuje
+// content-motion.ts (reveale/rysowanie/parallax rycin/dryf tła za
+// bramką js-motion), PaperBackdrop i stopkę 4.1. Navbar DOMYŚLNY —
+// eksport nie ma navColor/logoCol (analiza §1c).
+//
+// PIERWSZA trasa widokowa BEZ [data-navref]: strona nie ma hero, więc
+// pasek wchodzi w stan solid na fallbacku NAV_SOLID_FALLBACK_PX (8 px)
+// z Etapu 4.1 — przezroczysty pasek nad samą typografią kolidowałby
+// z kickerem i h1.
+//
+// Prefiks klas `.pp` jest NARZUCONY przez uśpiony kontrakt Etapu 3
+// (tests/e2e/policy.spec.ts: dokładnie 9 elementów `.pp-sec`, NIP
+// w pierwszej sekcji, mailto: składany w JS, link do /kontakt/).
+//
+// Treść obu drzew eksportu jest identyczna co do znaku — różni się
+// wyłącznie MIEJSCE akapitu wstępnego (mobile nad spisem treści,
+// desktop w kolumnie dokumentu). To zmiana układu, nie treści, więc
+// idzie JEDEN markup na grid-areas. Jedyna duplikacja dOnly/mOnly to
+// rycina gołębia w dwóch wariantach PLIKU (mobilna z alfą — lekcja
+// 4.2 §2a; desktopowa spłaszczona, 2× lżejsza).
+import golab from "@/assets/golab-poczt-rycina1.webp";
+import golabM from "@/assets/golab-poczt-rycina1-m.webp";
+import Footer from "@/components/Footer.astro";
+import Navbar from "@/components/navbar/Navbar.astro";
+import PaperBackdrop from "@/components/PaperBackdrop.astro";
+import { ui } from "@/i18n/ui";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { CONTACT_PATH } from "@/lib/routes";
+
+// Data obowiązywania i wersja — pasmo daty designu było świadomie puste
+// („data wchodzi przy wdrożeniu"); wartości = decyzja Mateusza
+// z 2026-08-25 (analiza §2 pkt 9). JEDNO źródło dla pasma daty i chipa
+// „OSTATNIA AKTUALIZACJA" w sekcji 09 — kopie nie mogą się rozjechać.
+const EFFECTIVE_DATE = "01.09.2026";
+const VERSION = "1.0";
+
+// Numery, kickery i tytuły sekcji — jedno źródło dla SPISU TREŚCI
+// i nagłówków sekcji (spis nie może opisywać czegoś innego niż treść).
+const SECS = [
+  { id: "01", kick: "01 · ADMINISTRATOR", title: "Administrator danych" },
+  { id: "02", kick: "02 · ZAKRES DANYCH", title: "Jakie dane przetwarzamy" },
+  { id: "03", kick: "03 · PODSTAWA PRAWNA", title: "Cel i podstawa prawna" },
+  { id: "04", kick: "04 · ODBIORCY", title: "Odbiorcy danych" },
+  {
+    id: "05",
+    kick: "05 · TRANSFER",
+    title: "Przekazywanie danych poza EOG",
+  },
+  { id: "06", kick: "06 · RETENCJA", title: "Jak długo przechowujemy dane" },
+  { id: "07", kick: "07 · TWOJE PRAWA", title: "Twoje prawa" },
+  {
+    id: "08",
+    kick: "08 · DOBROWOLNOŚĆ",
+    title: "Dobrowolność i decyzje automatyczne",
+  },
+  { id: "09", kick: "09 · ZMIANY", title: "Zmiany tej polityki" },
+] as const;
+
+// Karty sekcji 03 (cel → podstawa → uzasadnienie).
+const PURPOSES = [
+  {
+    what: "Odpowiedź na Twoją wiadomość i dalsza korespondencja",
+    law: "art. 6 ust. 1 lit. f RODO",
+    why: "Prawnie uzasadniony interes: komunikacja z osobą, która kieruje do nas zapytanie. Gdy wiadomość dotyczy wyceny lub prowadzenia prac — art. 6 ust. 1 lit. b RODO (działania podjęte na Twoje żądanie przed zawarciem umowy).",
+  },
+  {
+    what: "Ochrona strony przed spamem, botami i nadużyciami",
+    law: "art. 6 ust. 1 lit. f RODO",
+    why: "Prawnie uzasadniony interes: bezpieczeństwo usługi.",
+  },
+  {
+    what: "Zbiorcza statystyka odwiedzin strony",
+    law: "art. 6 ust. 1 lit. f RODO",
+    why: "Prawnie uzasadniony interes: utrzymanie i rozwój strony w oparciu o dane o ruchu, które nie identyfikują osób.",
+  },
+] as const;
+
+// Podmioty przetwarzające (sekcja 04). Dostawca poczty i lokalizacja
+// serwerów = decyzja Mateusza (placeholdery designu — analiza §2 pkt 9).
+const PROCESSORS = [
+  {
+    name: "Cloudflare",
+    desc: "Hosting strony, zapora sieciowa, ochrona antybotowa (Turnstile) oraz zbiorcza statystyka odwiedzin (Web Analytics).",
+  },
+  {
+    name: "Resend",
+    desc: "Wysyłka wiadomości e-mail z formularza — powiadomienie do nas i automatyczne potwierdzenie do Ciebie, jeśli podasz adres e-mail; infrastruktura wysyłkowa w regionie UE (Irlandia).",
+  },
+  {
+    name: "The Camels",
+    desc: "Skrzynka pocztowa, do której trafia i w której jest przechowywana korespondencja. Lokalizacja serwerów: Polska (EOG).",
+  },
+] as const;
+
+// Prawa osoby, której dane dotyczą (sekcja 07).
+const RIGHTS = [
+  "dostępu do swoich danych i otrzymania ich kopii,",
+  "sprostowania danych,",
+  "usunięcia danych,",
+  "ograniczenia przetwarzania,",
+  "sprzeciwu wobec przetwarzania opartego na prawnie uzasadnionym interesie,",
+  "przenoszenia danych.",
+] as const;
 ---
 
-<SkeletonPage
-  title="Polityka prywatności — Pracownia EH/A"
-  heading="Polityka prywatności"
-  description="Polityka prywatności serwisu pracownia-eha.pl."
-/>
+<BaseLayout
+  title={ui.pl["policyPage.title"]}
+  description={ui.pl["policyPage.description"]}
+>
+  <script is:inline slot="head">
+    // PRZED paintem: motion OK → html.js-motion (uzbraja stany startowe
+    // revealów i rysowania rycin; reszta w content-motion.ts niżej).
+    if (window.matchMedia("(prefers-reduced-motion: no-preference)").matches) {
+      document.documentElement.classList.add("js-motion");
+    }
+  </script>
+
+  <Navbar />
+
+  <main class="pp">
+    <PaperBackdrop />
+
+    {/* ── nagłówek (bez hero — stąd brak [data-navref]) ── */}
+    <header class="pp-head">
+      <p class="pp-kick" data-rev>OCHRONA DANYCH OSOBOWYCH</p>
+      <h1 data-rev data-rev-d="1">Polityka prywatności</h1>
+    </header>
+
+    {/* ── pasmo daty obowiązywania ── */}
+    <div class="pp-date">
+      <div class="pp-date-in">
+        <span class="pp-date-l"
+          >OBOWIĄZUJE OD <span class="pp-date-v">{EFFECTIVE_DATE}</span></span
+        >
+        <span class="pp-date-r">WERSJA {VERSION}</span>
+      </div>
+    </div>
+
+    {
+      /* ── dokument: wstęp + spis treści + 9 sekcji. Mobile = jedna
+        kolumna w kolejności DOM; desktop = grid „toc | (lead / secs)"
+        ze spisem sticky (analiza §2 pkt 2). ── */
+    }
+    <div class="pp-doc">
+      <p class="pp-lead">
+        Ta polityka opisuje, jak przetwarzamy dane osobowe przekazane przez
+        formularz kontaktowy oraz pozostałe kanały kontaktu na stronie <span
+          class="pp-dot">pracownia-eha.pl</span
+        >. Piszemy prostym językiem — bez prawniczego szumu, ale z kompletem
+        informacji wymaganych przez RODO.
+      </p>
+
+      <nav class="pp-toc" aria-labelledby="pp-toc-h">
+        <p class="pp-toc-h" id="pp-toc-h">SPIS TREŚCI</p>
+        <ol class="pp-toc-l">
+          {
+            SECS.map((s) => (
+              <li>
+                <a href={`#pp-${s.id}`}>
+                  <span class="pp-toc-n" aria-hidden="true">
+                    {s.id}
+                  </span>
+                  <span>{s.title}</span>
+                </a>
+              </li>
+            ))
+          }
+        </ol>
+      </nav>
+
+      <div class="pp-secs">
+        {/* ── 01 administrator ── */}
+        <section class="pp-sec" id={`pp-${SECS[0].id}`}>
+          <p class="pp-kick" data-rev>{SECS[0].kick}</p>
+          <h2 data-rev data-rev-d="1">{SECS[0].title}</h2>
+          <p class="pp-p">
+            Administratorem Twoich danych osobowych jest Pracownia Łukasz
+            Jarosz-Jarszewski (Pracownia EH/A), Strzyżowiec 30, 59-610 Wleń,
+            NIP: 527-244-99-69, REGON: 540526327 — operator strony <span
+              class="pp-und">pracownia-eha.pl</span
+            >.
+          </p>
+          {
+            /* Telefony i mail przez sloty antyscrapingowe (D-CH5): pełnych
+              ciągów NIE MA w statycznym HTML. W przeciwieństwie do chrome'u
+              sloty NIE startują `hidden` — w dokumencie prawnym zdanie
+              z dziurą jest nie do przyjęcia, więc bez JS czytamy etykietę
+              zastępczą z linkiem do formularza (analiza §2 pkt 10). */
+          }
+          <p class="pp-p">
+            W sprawach dotyczących danych osobowych napisz na adres <a
+              class="pp-und pp-slot"
+              data-mail
+              href={CONTACT_PATH}><span data-slot>e-mail</span></a
+            >, zadzwoń pod <a
+              class="pp-und pp-slot"
+              data-tel="maciek"
+              href={CONTACT_PATH}><span data-slot>numer Maćka</span></a
+            > lub <a
+              class="pp-und pp-slot"
+              data-tel="lukasz"
+              href={CONTACT_PATH}><span data-slot>numer Łukasza</span></a
+            > albo skorzystaj z <a class="pp-link" href={CONTACT_PATH}
+              >formularza kontaktowego</a
+            >.
+          </p>
+        </section>
+
+        {/* ── 02 zakres danych ── */}
+        <section class="pp-sec" id={`pp-${SECS[1].id}`}>
+          <p class="pp-kick" data-rev>{SECS[1].kick}</p>
+          <h2 data-rev data-rev-d="1">{SECS[1].title}</h2>
+          <p class="pp-p">
+            <strong>Z formularza kontaktowego:</strong> imię i nazwisko, numer telefonu
+            lub adres e-mail, lokalizacja inwestycji oraz treść wiadomości — czyli
+            to, co sam napiszesz o budynku i planowanym zakresie prac.
+          </p>
+          <p class="pp-p">
+            <strong>Automatycznie, w warstwie technicznej:</strong> adres IP i podstawowe
+            informacje o przeglądarce — wykorzystywane przez infrastrukturę Cloudflare
+            (hosting, zapora WAF, mechanizm antybotowy Turnstile) do ochrony strony
+            przed spamem i nadużyciami oraz do zbiorczej statystyki odwiedzin (Cloudflare
+            Web Analytics).
+          </p>
+          <p class="pp-p">
+            Statystyka odwiedzin jest zbiorcza i nie identyfikuje osób: nie
+            zapisujemy plików cookie ani żadnych danych w Twojej przeglądarce,
+            nie nadajemy użytkownikom identyfikatorów i nie śledzimy Cię na
+            innych stronach. Zliczane są wyłącznie odsłony, adresy podstron,
+            kraj oraz rodzaj urządzenia i przeglądarki.
+          </p>
+          <p class="pp-p">
+            Strona nie wyświetla reklam, nie profiluje użytkowników i nie używa
+            plików cookie do celów marketingowych.
+          </p>
+          <p class="pp-note">
+            Formularz nie przyjmuje załączników. Rzuty, ekspertyzy i zdjęcia
+            budynku prześlij e-mailem — wtedy przetwarzamy je razem z
+            korespondencją, na zasadach z punktu 06.
+          </p>
+        </section>
+
+        {/* ── 03 cel i podstawa prawna ── */}
+        <section class="pp-sec" id={`pp-${SECS[2].id}`}>
+          <p class="pp-kick" data-rev>{SECS[2].kick}</p>
+          <h2 data-rev data-rev-d="1">{SECS[2].title}</h2>
+          <ul class="pp-cards">
+            {
+              PURPOSES.map((p) => (
+                <li class="pp-card">
+                  <p class="pp-card-t">{p.what}</p>
+                  <p class="pp-card-law">{p.law}</p>
+                  <p class="pp-card-p">{p.why}</p>
+                </li>
+              ))
+            }
+          </ul>
+        </section>
+
+        {/* ── 04 odbiorcy ── */}
+        <section class="pp-sec" id={`pp-${SECS[3].id}`}>
+          <p class="pp-kick" data-rev>{SECS[3].kick}</p>
+          <h2 data-rev data-rev-d="1">{SECS[3].title}</h2>
+          <p class="pp-p">
+            Korzystamy z usług podmiotów przetwarzających, które obsługują
+            techniczną stronę komunikacji:
+          </p>
+          <ul class="pp-procs">
+            {
+              PROCESSORS.map((p) => (
+                <li class="pp-proc">
+                  <p class="pp-proc-t">{p.name}</p>
+                  <p class="pp-card-p">{p.desc}</p>
+                </li>
+              ))
+            }
+          </ul>
+          <p class="pp-p pp-p-gap">
+            Twoje dane nie są sprzedawane ani udostępniane nikomu do jego
+            własnych celów, w szczególności marketingowych.
+          </p>
+        </section>
+
+        {/* ── 05 transfer poza EOG ── */}
+        <section class="pp-sec" id={`pp-${SECS[4].id}`}>
+          <p class="pp-kick" data-rev>{SECS[4].kick}</p>
+          <h2 data-rev data-rev-d="1">{SECS[4].title}</h2>
+          <p class="pp-p">
+            Cloudflare i Resend mają siedziby w USA, więc część danych może być
+            przetwarzana poza Europejskim Obszarem Gospodarczym. Podstawą
+            takiego transferu są standardowe klauzule umowne zatwierdzone przez
+            Komisję Europejską (art. 46 ust. 2 lit. c RODO) oraz — w zakresie, w
+            jakim dostawca posiada aktualną certyfikację — program EU-U.S. Data
+            Privacy Framework.
+          </p>
+          <p class="pp-p">
+            Dostawca skrzynki pocztowej: <span class="pp-dot">The Camels</span> —
+            serwery w Polsce, czyli na terenie EOG; korespondencja nie jest przekazywana
+            poza EOG.
+          </p>
+        </section>
+
+        {/* ── 06 retencja ── */}
+        <section class="pp-sec" id={`pp-${SECS[5].id}`}>
+          <p class="pp-kick" data-rev>{SECS[5].kick}</p>
+          <h2 data-rev data-rev-d="1">{SECS[5].title}</h2>
+          <p class="pp-p">
+            Formularz niczego nie zapisuje po drodze — nie prowadzimy bazy
+            zapytań, a wiadomość trafia bezpośrednio na naszą skrzynkę e-mail.
+          </p>
+          <p class="pp-p">
+            Korespondencję przechowujemy tak długo, jak wymaga tego obsługa
+            sprawy, a w razie nawiązania współpracy — przez okres przedawnienia
+            ewentualnych roszczeń oraz okres wymagany przepisami podatkowymi (<span
+              class="pp-dot">5 lat, licząc od końca roku rozliczeniowego</span
+            >). Zapytania, które nie skończyły się współpracą, usuwamy po <span
+              class="pp-dot">12 miesiącach</span
+            >.
+          </p>
+          <p class="pp-p">
+            Krótkotrwałe logi techniczne u dostawców (np. logi wysyłki, logi
+            zapory) są usuwane automatycznie zgodnie z ich politykami retencji.
+          </p>
+        </section>
+
+        {/* ── 07 twoje prawa ── */}
+        <section class="pp-sec" id={`pp-${SECS[6].id}`}>
+          <p class="pp-kick" data-rev>{SECS[6].kick}</p>
+          <h2 data-rev data-rev-d="1">{SECS[6].title}</h2>
+          <p class="pp-p">W związku z przetwarzaniem danych masz prawo do:</p>
+          <ol class="pp-rights">
+            {
+              RIGHTS.map((r, i) => (
+                <li>
+                  <span class="pp-rights-n" aria-hidden="true">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span>{r}</span>
+                </li>
+              ))
+            }
+          </ol>
+          <p class="pp-p pp-p-gap">
+            Żeby skorzystać z tych praw, po prostu napisz lub zadzwoń — dane
+            kontaktowe w punkcie 01. Masz też prawo wnieść skargę do Prezesa
+            Urzędu Ochrony Danych Osobowych (<a
+              class="pp-link"
+              href="https://uodo.gov.pl"
+              target="_blank"
+              rel="noopener">uodo.gov.pl</a
+            >).
+          </p>
+        </section>
+
+        {/* ── 08 dobrowolność ── */}
+        <section class="pp-sec" id={`pp-${SECS[7].id}`}>
+          <p class="pp-kick" data-rev>{SECS[7].kick}</p>
+          <h2 data-rev data-rev-d="1">{SECS[7].title}</h2>
+          <p class="pp-p">
+            Podanie danych jest dobrowolne, ale bez numeru telefonu lub adresu
+            e-mail nie będziemy w stanie odpowiedzieć na zapytanie.
+          </p>
+          <p class="pp-p">
+            Nie podejmujemy decyzji w sposób zautomatyzowany i nie profilujemy
+            użytkowników — mechanizm antybotowy (Cloudflare Turnstile) ocenia
+            wyłącznie, czy formularz wysyła człowiek, a statystyka odwiedzin
+            liczona jest zbiorczo, bez łączenia danych z konkretną osobą.
+          </p>
+        </section>
+
+        {/* ── 09 zmiany ── */}
+        <section class="pp-sec" id={`pp-${SECS[8].id}`}>
+          <p class="pp-kick" data-rev>{SECS[8].kick}</p>
+          <h2 data-rev data-rev-d="1">{SECS[8].title}</h2>
+          <p class="pp-p">
+            Aktualna wersja polityki jest zawsze dostępna pod tym adresem.
+            Istotne zmiany będą odnotowane nową datą obowiązywania.
+          </p>
+          <p class="pp-upd">OSTATNIA AKTUALIZACJA: {EFFECTIVE_DATE}</p>
+        </section>
+      </div>
+    </div>
+
+    {/* ── pas „PYTANIA O DANE" ── */}
+    <section class="pp-ask">
+      <img
+        class="pp-golab mOnly"
+        data-ryc="r"
+        data-plxr
+        src={golabM.src}
+        width={golabM.width}
+        height={golabM.height}
+        alt=""
+        loading="lazy"
+        decoding="async"
+      />
+      <img
+        class="pp-golab dOnly"
+        src={golab.src}
+        width={golab.width}
+        height={golab.height}
+        alt=""
+        loading="lazy"
+        decoding="async"
+      />
+      <div class="pp-ask-in">
+        <div class="pp-ask-txt">
+          <p class="pp-kick" data-rev>PYTANIA O DANE</p>
+          <h2 data-rev data-rev-d="1">Masz pytania o swoje dane?</h2>
+          <p class="pp-p">
+            Napisz albo zadzwoń — odpowiadamy na wnioski dotyczące danych bez
+            formularzy i bez zbędnej procedury.
+          </p>
+        </div>
+        <div class="pp-ask-c">
+          <a class="pp-big pp-slot" data-tel="maciek" href={CONTACT_PATH}
+            ><span data-slot>Numer telefonu</span></a
+          >
+          <a class="pp-big pp-mail pp-slot" data-mail href={CONTACT_PATH}
+            ><span data-slot>Adres e-mail</span></a
+          >
+          <a class="pp-goto" href={CONTACT_PATH}>PRZEJDŹ DO KONTAKTU →</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</BaseLayout>
+
+<style is:global>
+  /* ── Tokeny widoku (odczyty z eksportu — analiza §1). Mobile w bazie,
+     desktop w @media 1024 (para: CONTENT_DESKTOP_MIN_PX). Tokeny
+     typograficzne desktop identyczne z .obs/.trd/.kmp/.eka (te same
+     formuły eksportów). ── */
+  .pp {
+    /* kontener treści eksportu: 700/30 (spis treści: 26) */
+    --wmax: 700px;
+    --wpad: 30px;
+    /* rycina gołębia wystaje za prawą krawędź pasma */
+    overflow-x: clip;
+    /* tło jak pozostałe trasy treściowe: baza kremowa + skan papieru
+       (PaperBackdrop, z-index -1 — stąd isolation) */
+    position: relative;
+    isolation: isolate;
+    background: var(--bg-cream);
+  }
+  @media (min-width: 1024px) {
+    .pp {
+      --wmax: 1600px;
+      --wpad: var(--g);
+      --body: clamp(13.5px, 1.08vw, 17px);
+      --lhb: 1.72;
+      --mono: clamp(10px, 0.76vw, 12px);
+      --monos: clamp(9px, 0.66vw, 10.5px);
+      --h1: clamp(40px, 3.75vw, 60px);
+      --h2: clamp(24px, 2.1vw, 33px);
+      --lead: clamp(17px, 1.46vw, 23px);
+    }
+  }
+
+  /* warianty per breakpoint (wzorzec dOnly/mOnly z 4.1–4.5) */
+  @media (max-width: 1023.98px) {
+    .pp .dOnly {
+      display: none !important;
+    }
+  }
+  @media (min-width: 1024px) {
+    .pp .mOnly {
+      display: none !important;
+    }
+  }
+
+  /* wspólny kontener treści (mobile 700/30, desktop 1600/--g) */
+  .pp-head,
+  .pp-date-in,
+  .pp-doc,
+  .pp-ask-in {
+    max-width: var(--wmax);
+    margin-inline: auto;
+    width: 100%;
+    box-sizing: border-box;
+    padding-inline: var(--wpad);
+  }
+
+  /* ── wspólne klocki typograficzne ── */
+  .pp-kick {
+    margin: 0;
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: rgba(87, 101, 74, 0.95);
+  }
+  .pp h1 {
+    margin: 0;
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: 38px;
+    line-height: 1.12;
+    max-width: 300px;
+    color: var(--ink);
+    text-wrap: pretty;
+  }
+  .pp h2 {
+    margin: 0;
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: 26px;
+    line-height: 1.2;
+    color: var(--ink);
+    text-wrap: pretty;
+  }
+  .pp-p {
+    margin: 0;
+    font-family: var(--font-body), sans-serif;
+    font-size: 14.5px;
+    line-height: 1.75;
+    color: var(--muted);
+    text-wrap: pretty;
+  }
+  .pp-p strong {
+    font-weight: 600;
+  }
+  .pp-p-gap {
+    margin-top: 8px;
+  }
+  /* cytat-domknięcie sekcji 02 */
+  .pp-note {
+    margin: 6px 0 0;
+    padding-left: 14px;
+    border-left: 1px solid rgba(87, 101, 74, 0.5);
+    font-family: var(--font-serif), serif;
+    font-style: italic;
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: rgba(33, 29, 24, 0.72);
+  }
+  /* kropkowane/ciągłe podkreślenia wyróżnień z eksportu */
+  .pp-dot {
+    border-bottom: 1px dashed rgba(76, 59, 43, 0.55);
+  }
+  .pp-und {
+    border-bottom: 1px solid rgba(76, 59, 43, 0.35);
+  }
+  a.pp-und {
+    color: inherit;
+    text-decoration: none;
+  }
+  a.pp-und:hover,
+  a.pp-und:focus-visible {
+    color: var(--accent);
+  }
+  .pp-link {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(87, 101, 74, 0.45);
+  }
+  .pp-link:hover,
+  .pp-link:focus-visible {
+    color: var(--accent-ink);
+  }
+
+  /* ── nagłówek strony (bez hero: treść startuje pod FIXED paskiem;
+     mobile 92 + 4 = eksportowe 96 px, desktop = pasek + padding
+     eksportu, który tam był mierzony od DOŁU paska w flow) ── */
+  .pp-head {
+    position: relative;
+    padding-top: calc(var(--hdr-h) + 4px);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  @media (min-width: 1024px) {
+    .pp-head {
+      padding-top: calc(var(--hdr-h) + clamp(48px, 4.8vw, 78px));
+      padding-bottom: clamp(30px, 3vw, 48px);
+      gap: clamp(12px, 1.2vw, 19px);
+    }
+    .pp h1 {
+      font-size: var(--h1);
+      line-height: 1.06;
+      max-width: none;
+    }
+    .pp h2 {
+      font-size: var(--h2);
+      line-height: 1.18;
+    }
+    .pp-p {
+      font-size: var(--body);
+      line-height: var(--lhb);
+    }
+    .pp-note {
+      font-size: calc(var(--body) * 0.94);
+      padding-left: 16px;
+    }
+  }
+
+  /* ── pasmo daty obowiązywania ── */
+  .pp-date {
+    position: relative;
+    margin-top: 22px;
+    background: #3a3428;
+    color: #f5efe3;
+  }
+  .pp-date-in {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    padding-block: 12px;
+  }
+  .pp-date-l,
+  .pp-date-r {
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+  }
+  .pp-date-l {
+    color: rgba(245, 239, 227, 0.9);
+  }
+  .pp-date-v {
+    border-bottom: 1px dashed rgba(245, 239, 227, 0.55);
+  }
+  /* eksportowe .6 dawało na #3A3428 kontrast poniżej 4.5:1 przy mono
+     10 px — klasa korekty a11y z 4.4/4.5 (ratchet axe od pustej
+     allowlisty) */
+  .pp-date-r {
+    color: rgba(228, 220, 200, 0.72);
+  }
+  @media (min-width: 1024px) {
+    .pp-date {
+      margin-top: 0;
+    }
+    .pp-date-in {
+      padding-block: clamp(12px, 1.2vw, 19px);
+      gap: clamp(20px, 2vw, 32px);
+      flex-wrap: nowrap;
+    }
+    .pp-date-l,
+    .pp-date-r {
+      font-size: var(--mono);
+    }
+  }
+
+  /* ── dokument: wstęp + spis + sekcje ──
+     Mobile: jedna kolumna w kolejności DOM (wstęp → spis → sekcje).
+     Desktop: „toc | lead / secs" — spis w kolumnie spinającej oba
+     rzędy, align-self:start (inaczej rozciągnięty element nie ma po
+     czym jechać i sticky nic nie robi). */
+  .pp-doc {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .pp-lead {
+    margin: 0;
+    padding-top: 24px;
+    font-family: var(--font-body), sans-serif;
+    font-size: 14.5px;
+    line-height: 1.75;
+    color: var(--muted);
+    text-wrap: pretty;
+  }
+  @media (min-width: 1024px) {
+    .pp-doc {
+      display: grid;
+      grid-template-columns: clamp(240px, 22vw, 330px) minmax(0, 1fr);
+      grid-template-areas: "toc lead" "toc secs";
+      gap: 0 clamp(48px, 5vw, 90px);
+      align-items: start;
+      padding-top: clamp(40px, 4vw, 64px);
+      padding-bottom: clamp(56px, 5.6vw, 90px);
+    }
+    .pp-lead {
+      grid-area: lead;
+      padding-top: 0;
+      max-width: clamp(560px, 58vw, 780px);
+      font-size: var(--body);
+      line-height: var(--lhb);
+    }
+  }
+
+  /* ── spis treści (kotwice natywne — działa bez JS) ── */
+  .pp-toc {
+    margin-top: 26px;
+    /* pudło eksportu ma własny padding 26 px — kompensacja kontenera */
+    margin-inline: calc(26px - var(--wpad));
+    box-sizing: border-box;
+    border: 1px solid rgba(33, 29, 24, 0.22);
+    background: #f3ede1;
+    padding: 18px 22px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .pp-toc-h {
+    margin: 0;
+    font-family: var(--font-mono), monospace;
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    /* eksportowe .55 → .65: klasa korekty a11y z 4.4/4.5 */
+    color: rgba(33, 29, 24, 0.65);
+  }
+  .pp-toc-l {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+  }
+  .pp-toc-l li {
+    border-bottom: 1px dashed rgba(33, 29, 24, 0.18);
+  }
+  .pp-toc-l li:last-child {
+    border-bottom: none;
+  }
+  .pp-toc-l a {
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+    min-height: 40px;
+    padding: 6px 0;
+    text-decoration: none;
+    color: var(--ink);
+    font-family: var(--font-body), sans-serif;
+    font-size: 14.5px;
+    line-height: 1.4;
+  }
+  .pp-toc-l a:hover,
+  .pp-toc-l a:focus-visible {
+    color: var(--accent);
+  }
+  /* Eksportowe rgba(87,101,74,.9) daje na pudle spisu (#F3EDE1) 4,34:1
+     przy mono 11 px — poniżej progu AA. Pełny akcent = 5,35:1 (klasa
+     korekty a11y z 4.4/4.5; allowlista axe zostaje PUSTA). Ten sam
+     token dostaje bliźniaczy licznik listy praw — jedna reguła zamiast
+     dwóch bliskich wartości. */
+  .pp-toc-n {
+    flex: none;
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: 11px;
+    color: var(--accent);
+  }
+  @media (min-width: 1024px) {
+    .pp-toc {
+      grid-area: toc;
+      align-self: start;
+      /* pasek jest FIXED — sticky musi zatrzymać się POD nim, inaczej
+         spis wjeżdża pod pasek (eksport miał pasek w flow) */
+      position: sticky;
+      top: calc(var(--hdr-h) + clamp(28px, 2.8vw, 44px));
+      margin: 0;
+      padding: clamp(20px, 2vw, 32px) clamp(22px, 2.2vw, 35px);
+      gap: clamp(10px, 1vw, 16px);
+    }
+    .pp-toc-h {
+      font-size: var(--monos);
+    }
+    .pp-toc-l a {
+      min-height: 0;
+      padding-block: clamp(8px, 0.8vw, 13px);
+      font-size: calc(var(--body) * 0.96);
+    }
+    .pp-toc-n {
+      font-size: var(--monos);
+    }
+  }
+
+  /* ── sekcje ── */
+  .pp-secs {
+    display: flex;
+    flex-direction: column;
+  }
+  .pp-sec {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 38px;
+    /* kotwica spisu treści musi wylądować POD nakładkowym paskiem
+       (kontrakt e2e) — zapas 18 px ≈ eksportowe 74/40 px offsetu */
+    scroll-margin-top: calc(var(--hdr-h) + 18px);
+  }
+  @media (min-width: 1024px) {
+    .pp-secs {
+      grid-area: secs;
+      max-width: clamp(560px, 58vw, 780px);
+      gap: clamp(38px, 3.8vw, 60px);
+      padding-top: clamp(38px, 3.8vw, 60px);
+    }
+    .pp-sec {
+      gap: clamp(10px, 1vw, 16px);
+      padding-top: clamp(24px, 2.4vw, 38px);
+      border-top: 1px dashed rgba(33, 29, 24, 0.3);
+    }
+  }
+
+  /* karty sekcji 03 (cel · podstawa · uzasadnienie) */
+  .pp-cards,
+  .pp-procs {
+    margin: 4px 0 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+  }
+  .pp-cards {
+    gap: 16px;
+  }
+  .pp-procs {
+    gap: 14px;
+  }
+  .pp-card,
+  .pp-proc {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px dashed rgba(33, 29, 24, 0.3);
+    padding-top: 12px;
+  }
+  .pp-card {
+    gap: 5px;
+  }
+  .pp-proc {
+    gap: 4px;
+  }
+  .pp-card-t {
+    margin: 0;
+    font-family: var(--font-body), sans-serif;
+    font-weight: 500;
+    font-size: 15.5px;
+    line-height: 1.45;
+    color: var(--ink);
+  }
+  .pp-card-law {
+    margin: 0;
+    font-family: var(--font-mono), monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--accent);
+  }
+  .pp-card-p {
+    margin: 0;
+    font-family: var(--font-body), sans-serif;
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: var(--faint);
+    text-wrap: pretty;
+  }
+  .pp-proc-t {
+    margin: 0;
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: 16px;
+    color: var(--ink);
+  }
+  @media (min-width: 1024px) {
+    .pp-cards {
+      gap: clamp(16px, 1.6vw, 26px);
+    }
+    .pp-procs {
+      gap: clamp(14px, 1.4vw, 22px);
+    }
+    .pp-card,
+    .pp-proc {
+      border-top-color: rgba(33, 29, 24, 0.24);
+      padding-top: clamp(12px, 1.2vw, 19px);
+    }
+    .pp-card-t {
+      font-size: calc(var(--body) * 1.06);
+    }
+    .pp-card-law {
+      font-size: calc(var(--body) * 0.84);
+    }
+    .pp-card-p {
+      font-size: calc(var(--body) * 0.94);
+    }
+    .pp-proc-t {
+      font-size: calc(var(--lead) * 0.7);
+    }
+  }
+
+  /* lista praw (sekcja 07) — numery 01–06 są DEKORACJĄ (ol niesie
+     numerację dla czytników ekranu) */
+  .pp-rights {
+    margin: 4px 0 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+  }
+  .pp-rights li {
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+    padding: 9px 0;
+    border-bottom: 1px dashed rgba(33, 29, 24, 0.22);
+    font-family: var(--font-body), sans-serif;
+    font-size: 14.5px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+  .pp-rights li:last-child {
+    border-bottom: none;
+  }
+  .pp-rights-n {
+    flex: none;
+    font-family: var(--font-mono), monospace;
+    font-size: 11px;
+    /* patrz .pp-toc-n — korekta a11y klasy 4.4/4.5 */
+    color: var(--accent);
+  }
+  @media (min-width: 1024px) {
+    .pp-rights li {
+      font-size: var(--body);
+      padding-block: clamp(9px, 0.9vw, 14px);
+    }
+    .pp-rights-n {
+      font-size: var(--monos);
+    }
+  }
+
+  /* chip „OSTATNIA AKTUALIZACJA" (sekcja 09) */
+  .pp-upd {
+    margin: 4px 0 0;
+    align-self: flex-start;
+    padding-bottom: 2px;
+    border-bottom: 1px dashed rgba(76, 59, 43, 0.45);
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    /* eksportowe .55 → .65 (klasa korekty a11y 4.4/4.5) */
+    color: rgba(33, 29, 24, 0.65);
+  }
+  @media (min-width: 1024px) {
+    .pp-upd {
+      font-size: var(--monos);
+      padding-bottom: 3px;
+    }
+  }
+
+  /* ── pas „PYTANIA O DANE" ── */
+  .pp-ask {
+    position: relative;
+    margin-top: 40px;
+    background: #f1ebdd;
+    border-top: 1px solid rgba(33, 29, 24, 0.14);
+    border-bottom: 1px solid rgba(33, 29, 24, 0.14);
+    overflow: clip;
+  }
+  .pp-golab {
+    position: absolute;
+    right: -46px;
+    bottom: -14px;
+    width: 150px;
+    height: auto;
+    max-width: none;
+    opacity: 0.3;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+  .pp-ask-in {
+    position: relative;
+    padding-block: 28px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .pp-ask-txt {
+    display: contents;
+  }
+  .pp-ask h2 {
+    max-width: 240px;
+  }
+  .pp-ask .pp-p {
+    max-width: 320px;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+  .pp-ask-c {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .pp-big {
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: 22px;
+    color: var(--ink);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(76, 59, 43, 0.35);
+    padding-bottom: 2px;
+  }
+  .pp-mail {
+    font-size: 20px;
+  }
+  .pp-big:hover,
+  .pp-big:focus-visible {
+    color: var(--accent);
+  }
+  .pp-goto {
+    margin-top: 10px;
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(87, 101, 74, 0.5);
+    padding-bottom: 2px;
+  }
+  .pp-goto:hover,
+  .pp-goto:focus-visible {
+    color: var(--accent-ink);
+  }
+  @media (min-width: 1024px) {
+    .pp-ask {
+      margin-top: 0;
+    }
+    .pp-golab {
+      right: clamp(40px, 5vw, 110px);
+      bottom: calc(-1 * clamp(10px, 1.2vw, 22px));
+      width: clamp(180px, 16vw, 260px);
+    }
+    .pp-ask-in {
+      padding-block: clamp(40px, 4vw, 64px);
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: clamp(48px, 5vw, 80px);
+      align-items: center;
+    }
+    .pp-ask-txt {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(12px, 1.2vw, 19px);
+    }
+    .pp-ask h2 {
+      font-size: calc(var(--h2) * 1.18);
+      line-height: 1.14;
+      max-width: none;
+    }
+    .pp-ask .pp-p {
+      max-width: clamp(420px, 42vw, 640px);
+      font-size: var(--body);
+      line-height: var(--lhb);
+    }
+    .pp-ask-c {
+      gap: clamp(10px, 1vw, 16px);
+      margin-top: 0;
+    }
+    .pp-big {
+      font-size: calc(var(--lead) * 1.24);
+      padding-bottom: 3px;
+    }
+    .pp-mail {
+      font-size: calc(var(--lead) * 1.14);
+    }
+    .pp-goto {
+      margin-top: clamp(8px, 0.8vw, 13px);
+      font-size: var(--monos);
+      padding-bottom: 3px;
+    }
+  }
+
+  /* ═══ RUCH (bramka js-motion; bez JS / przy reduce brak stanów
+     startowych = strona statyczna i kompletna). Mobile: reveale +
+     rysowanie rycin maską + parallax rycin; desktop: wyłącznie dryf
+     tła (eksport nie ma tu ani jednego `rycsb`). Wzorce i wartości
+     1:1 z 4.2–4.5. ═══ */
+  @media (max-width: 1023.98px) {
+    html.js-motion .pp [data-rev] {
+      opacity: 0;
+      transform: translateY(22px);
+      transition:
+        opacity 0.7s ease,
+        transform 0.8s cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+    html.js-motion .pp [data-rev].in {
+      opacity: 1;
+      transform: none;
+    }
+    html.js-motion .pp [data-rev][data-rev-d="1"] {
+      transition-delay: 0.09s;
+    }
+    html.js-motion .pp [data-ryc] {
+      -webkit-mask-repeat: no-repeat, no-repeat;
+      mask-repeat: no-repeat, no-repeat;
+      -webkit-mask-size:
+        280% 100%,
+        240% 100%;
+      mask-size:
+        280% 100%,
+        240% 100%;
+    }
+    html.js-motion .pp [data-ryc="r"] {
+      -webkit-mask-image: var(--ryc-wedge-r), var(--ryc-lines-r);
+      mask-image: var(--ryc-wedge-r), var(--ryc-lines-r);
+      -webkit-mask-position:
+        0 0,
+        0 0;
+      mask-position:
+        0 0,
+        0 0;
+    }
+    html.js-motion .pp [data-ryc="r"].in {
+      animation: ppRycR 2.8s cubic-bezier(0.3, 0.05, 0.25, 1) both;
+    }
+  }
+
+  /* gradienty masek „rysowania" (eksport: klin 255° + smugi) */
+  .pp {
+    --ryc-wedge-r: linear-gradient(255deg, #000 40%, rgba(0, 0, 0, 0) 52%);
+    --ryc-lines-r: linear-gradient(
+      255deg,
+      rgba(0, 0, 0, 0) 0 34%,
+      rgba(0, 0, 0, 0.85) 34% 36.5%,
+      rgba(0, 0, 0, 0) 36.5% 40%,
+      rgba(0, 0, 0, 0.85) 40% 42.5%,
+      rgba(0, 0, 0, 0) 42.5% 46.5%,
+      rgba(0, 0, 0, 0.85) 46.5% 49%,
+      rgba(0, 0, 0, 0) 49% 100%
+    );
+  }
+  @keyframes ppRycR {
+    0% {
+      filter: opacity(0.55);
+    }
+    75% {
+      filter: opacity(0.85);
+    }
+    100% {
+      -webkit-mask-position:
+        100% 0,
+        100% 0;
+      mask-position:
+        100% 0,
+        100% 0;
+      filter: opacity(1);
+    }
+  }
+</style>
+
+<script>
+  // Ruch — dynamicznie, tylko przy motion OK (sections.md). Widok nie ma
+  // zwijanych akapitów ani diagramu, więc collapsible.ts
+  // i tradycja-motion.ts nie wchodzą.
+  if (matchMedia("(prefers-reduced-motion: no-preference)").matches) {
+    import("@/components/sections/content-motion");
+  }
+</script>
