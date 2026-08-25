@@ -2,8 +2,8 @@
 // błędów konsoli. PL-only (eha). Ten sam kod biega w E2E na preview i po
 // deployu przeciw produkcji: pnpm test:smoke:prod (BASE_URL).
 // Selektory celowo ogólne (main h1) — mają przetrwać wymianę szkieletu
-// Etapu 0 na docelowe widoki bez edycji smoke'a. Asercja formularza
-// (#contact .kt-form) wraca z widokiem /kontakt/ w Etapie 5.
+// Etapu 0 na docelowe widoki bez edycji smoke'a. Od Etapu 5 dochodzi
+// asercja samego formularza (.kt-form) — to on jest sensem tej trasy.
 import { expect, test } from "@playwright/test";
 import { collectPageIssues } from "../helpers/guards";
 
@@ -20,13 +20,15 @@ test.describe("smoke", { tag: "@prod-smoke" }, () => {
     expect(issues()).toEqual([]);
   });
 
-  test("/kontakt/ wstaje: 200, treść w DOM", async ({ page }) => {
+  test("/kontakt/ wstaje: 200, formularz w DOM", async ({ page }) => {
     // Podstrona z formularzem — deploy musi ją serwować; sam endpoint
-    // sonduje osobny test niżej. Asercja formularza (#contact .kt-form)
-    // wchodzi z widokiem w Etapie 5.
+    // sonduje osobny test niżej.
     const res = await page.goto("/kontakt/", { waitUntil: "networkidle" });
     expect(res?.status()).toBe(200);
     await expect(page.locator("main h1")).toBeAttached();
+    await expect(page.locator(".kt-form")).toBeAttached();
+    // E9: 4 pola wszędzie (5. pole desktopu eksportu = pomyłka designu)
+    await expect(page.locator(".kt-f")).toHaveCount(4);
   });
 
   test("kluczowe zasoby odpowiadają", async ({ request }) => {
@@ -55,9 +57,10 @@ test.describe("smoke", { tag: "@prod-smoke" }, () => {
     // odrzuca PRZED wysyłką przez Resend — sonda nie generuje maili.
     const res = await request.post("/api/kontakt", {
       multipart: {
+        // kontrakt pól E9 (Etap 5): jedno pole `contact` + `place`
         name: "Prod Smoke",
-        email: "prod-smoke@example.com",
-        temat: "",
+        contact: "prod-smoke@example.com",
+        place: "",
         message: "Sonda żywotności endpointu — honeypot celowo wypełniony.",
         firma: "smoke-probe-bot-trap",
         elapsed: "10000",

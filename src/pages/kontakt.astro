@@ -1,10 +1,1691 @@
 ---
-import SkeletonPage from "@/components/SkeletonPage.astro";
+// Podstrona /kontakt/ (Etap 5) — port docs/design/export/kontakt.html;
+// decyzje: docs/analiza-kontakt.md. OSTATNI widok serwisu i JEDYNY
+// z funkcją: warstwa wizualna to zwykły port w klasie 4.4–4.6 (zero
+// nowych mechanik ruchu — konsumuje content-motion.ts, PaperBackdrop,
+// Navbar tone="dark" i stopkę 4.1), cała nowa robota siedzi
+// w formularzu E9 i w kontrakcie klient↔serwer (contact-form.ts +
+// contact-ui.ts + functions/api/kontakt.ts).
+//
+// JEDEN markup na oba progi. Widok nie ma ani jednego bloku o różnej
+// TREŚCI — różni się wyłącznie KOMPOZYCJA: mobile to płaski stos sekcji,
+// desktop to dwie kolumny, z czego lewa jest JEDNĄ sticky kartą.
+// Port robi to `display: contents` na .kt-card/.kt-main (mobile) plus
+// `order` w kolejności eksportu mobile; na desktopie kontenery wracają
+// do flexa i order przestaje mieć znaczenie (analiza §2 pkt 2).
+// Świadome warianty per-próg: mono-etykieta E-MAIL (dOnly), kreskowana
+// linia nad „napisz wiadomość" (mOnly) i pary wariantów rycin
+// (mobile Z ALFĄ — lekcja 4.2 §2a).
+import house4 from "@/assets/dom-ryc-house4.webp";
+import golab from "@/assets/golab-poczt-rycina1.webp";
+import golabM from "@/assets/golab-poczt-rycina1-m.webp";
+import kalamaz from "@/assets/kalamaz-rycina1.webp";
+import kalamazM from "@/assets/kalamaz-rycina1-m.webp";
+// Rycina telefonu na CIEMNYM hero w dwóch wariantach: desktop
+// spłaszczony na biel (invert + screen neutralizuje tło — wzorzec
+// HomeKontakt), mobile Z ALFĄ (przy otwartym sheecie starszy WebKit gubi
+// mix-blend-mode przez body{position:fixed} z overlay.ts).
+import telefon from "@/assets/telefon-rycina1.webp";
+import telefonM from "@/assets/telefon-rycina1-m.webp";
+import Footer from "@/components/Footer.astro";
+import Navbar from "@/components/navbar/Navbar.astro";
+import PaperBackdrop from "@/components/PaperBackdrop.astro";
+import { CONTACT_ENDPOINT } from "@/components/sections/contact/contact-config";
 import { ui } from "@/i18n/ui";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { MESSAGE_MAX, NAME_MAX, PLACE_MAX } from "@/lib/contact-form";
+import { FACEBOOK_URL, INSTAGRAM_URL } from "@/lib/jsonld";
+import { POLICY_PATH } from "@/lib/routes";
+
+// Mapa obszaru działania — link z eksportu (wyszukiwarka, nie osadzona
+// ramka: iframe Map to trzeci-party skrypt, którego polityka nie deklaruje).
+const MAP_URL = "https://www.google.com/maps/search/Jelenia+G%C3%B3ra";
+
+// Powtarzane mono-tagi — jedno źródło, żeby kopie nie mogły się rozjechać.
+const TAG_HOURS = "KONTAKT 7 DNI W TYGODNIU · BUDOWA PN–PT 8–16";
+const TAG_REPLY = "ODPOWIADAMY W CIĄGU 2 DNI ROBOCZYCH";
 ---
 
-<SkeletonPage
+<BaseLayout
   title={ui.pl["contactPage.title"]}
-  heading="Kontakt"
   description={ui.pl["contactPage.description"]}
-/>
+>
+  <script is:inline slot="head">
+    // PRZED paintem: motion OK → html.js-motion (uzbraja stany startowe
+    // revealów i rysowania rycin; reszta w content-motion.ts niżej).
+    // UWAGA: logika formularza (contact-ui.ts) NIE stoi za tą bramką —
+    // to funkcja, nie dekoracja.
+    if (window.matchMedia("(prefers-reduced-motion: no-preference)").matches) {
+      document.documentElement.classList.add("js-motion");
+    }
+  </script>
+
+  <Navbar tone="dark" />
+
+  <main class="kt">
+    <PaperBackdrop />
+
+    {/* ── hero: NISKIE (eksport clamp(230,20cqw,320)), pasek nakładkowy ── */}
+    <header class="kt-hero" data-navref>
+      {
+        /* Rycina hero w DWÓCH osobnych elementach (wzorzec 4.5 cz. 2):
+          jeden obraz z data-ryc I data-rycsb naraz odpalałby oba
+          IntersectionObservery content-motion i psuł progi rysowania. */
+      }
+      <img
+        class="kt-hero-ryc mOnly"
+        data-ryc="r"
+        data-plxr
+        src={telefonM.src}
+        width={telefonM.width}
+        height={telefonM.height}
+        alt=""
+        loading="eager"
+        decoding="async"
+      />
+      <img
+        class="kt-hero-ryc dOnly"
+        src={telefon.src}
+        width={telefon.width}
+        height={telefon.height}
+        alt=""
+        loading="eager"
+        decoding="async"
+      />
+      <div class="kt-hero-in">
+        <p class="kt-kick kt-hero-kick" data-rev>KONTAKT</p>
+        <h1 data-rev data-rev-d="1">Skontaktuj się z&nbsp;nami</h1>
+        <p class="kt-hero-lead" data-rev data-rev-d="2">
+          Wierzymy, że wielkie projekty zaczynają się od dobrej rozmowy.
+          Zadzwoń, aby porozmawiać o Twojej wizji, sprawdzić statykę
+          historycznej struktury lub omówić logistykę relokacji budynku.
+        </p>
+      </div>
+    </header>
+
+    <div class="kt-split">
+      {
+        /* ── kolumna kontaktowa: desktop = jedna sticky karta, mobile =
+          rozsypane sekcje (display:contents + order — analiza §2 pkt 2) ── */
+      }
+      <div class="kt-card">
+        <div class="kt-call">
+          <p class="kt-call-hd">ZADZWOŃ DO NAS</p>
+          {
+            /* Antyscraping D-CH5: kotwice startują BEZ href, z czytelną
+              etykietą zastępczą; numer i href dokłada fillContactSlots()
+              ze skryptu Navbara. Wariant „czytelny fallback" (decyzja
+              Mateusza) — na stronie KONTAKT znikające kafle byłyby gorsze
+              niż etykieta. */
+          }
+          {
+            /* eslint-disable astro/jsx-a11y/anchor-is-valid --
+              kotwice slotów startują CELOWO bez href (D-CH5: pełny numer
+              i adres nie istnieją w statycznym HTML). Bez JS przeglądarka
+              i czytnik traktują je jak zwykły tekst — czyli dokładnie tak,
+              jak trzeba; `href` dokłada fillContactSlots(), a powód
+              tłumaczy <noscript> w panelu godzin. */
+          }
+          <a class="kt-tel" data-tel="maciek">
+            <span class="kt-tel-in">
+              <span class="kt-tel-lb">MACIEK</span>
+              <span class="kt-tel-no" data-slot>numer telefonu</span>
+            </span>
+            <span class="kt-arr" aria-hidden="true">→</span>
+          </a>
+          <a class="kt-tel" data-tel="lukasz">
+            <span class="kt-tel-in">
+              <span class="kt-tel-lb">ŁUKASZ</span>
+              <span class="kt-tel-no" data-slot>numer telefonu</span>
+            </span>
+            <span class="kt-arr" aria-hidden="true">→</span>
+          </a>
+          {/* eslint-enable astro/jsx-a11y/anchor-is-valid */}
+        </div>
+
+        <div class="kt-hours">
+          <noscript>
+            <p class="kt-noscript">
+              Numery telefonów, adres e-mail i wysyłka formularza wymagają
+              włączonego JavaScriptu — tak chronimy dane kontaktowe przed
+              automatami zbierającymi adresy.
+            </p>
+          </noscript>
+          <p class="kt-p kt-hours-p">
+            Nie ograniczamy kontaktu godzinami pracy — telefon odbierzemy też
+            wieczorem i w weekend. Na budowach jesteśmy zwykle pon.–pt.
+            8:00–16:00, a dla naszych inwestorów jesteśmy wsparciem na każdym
+            etapie.
+          </p>
+          <p class="kt-tag">{TAG_HOURS}</p>
+        </div>
+
+        <div class="kt-mail">
+          <p class="kt-lb dOnly">E-MAIL</p>
+          {
+            /* eslint-disable astro/jsx-a11y/anchor-is-valid --
+              slot antyscrapingowy jak kotwice telefonów wyżej */
+          }
+          <a class="kt-mail-a" data-mail><span data-slot>adres e-mail</span></a>
+          {/* eslint-enable astro/jsx-a11y/anchor-is-valid */}
+          <p class="kt-tag">{TAG_REPLY}</p>
+        </div>
+
+        <div class="kt-reg">
+          <div class="kt-area">
+            <img
+              class="kt-ryc kt-area-ryc mOnly"
+              data-ryc="r"
+              src={house4.src}
+              width={house4.width}
+              height={house4.height}
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
+            <img
+              class="kt-ryc kt-area-ryc dOnly"
+              data-rycsb="r"
+              src={house4.src}
+              width={house4.width}
+              height={house4.height}
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
+            <p class="kt-lb kt-lb-acc">OBSZAR DZIAŁANIA</p>
+            <p class="kt-area-t">
+              Dolny Śląsk<br />okolice Jeleniej Góry<br /><span
+                >dojazd do ok. godziny drogi</span
+              >
+            </p>
+            <a
+              class="kt-map"
+              href={MAP_URL}
+              target="_blank"
+              rel="noopener noreferrer">ZOBACZ OBSZAR NA MAPIE →</a
+            >
+          </div>
+          <div class="kt-legal">
+            <p class="kt-lb">DANE REJESTROWE</p>
+            <ul class="kt-legal-l">
+              <li>Pracownia Łukasz Jarosz-Jarszewski</li>
+              <li>NIP: 527-244-99-69</li>
+              <li>REGON: 540526327</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* ── kolumna główna: tekst + formularz + dane firmowe + social ── */}
+      <div class="kt-main">
+        <section class="kt-write">
+          <img
+            class="kt-ryc kt-write-ryc mOnly"
+            data-ryc="r"
+            data-plxr
+            src={kalamazM.src}
+            width={kalamazM.width}
+            height={kalamazM.height}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+          <img
+            class="kt-ryc kt-write-ryc dOnly"
+            data-rycsb="r"
+            src={kalamaz.src}
+            width={kalamaz.width}
+            height={kalamaz.height}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+          <p class="kt-kick" data-rev>NAPISZ WIADOMOŚĆ</p>
+          <h2 data-rev data-rev-d="1">Wolisz formę pisemną?</h2>
+          <p class="kt-p">
+            Wyślij nam e-mail z opisem swojej inwestycji, lokalizacją i
+            ewentualnymi załącznikami (rzuty, zdjęcia). Odpowiemy tak szybko,
+            jak to możliwe.
+          </p>
+        </section>
+
+        <section class="kt-formsec" id="formularz">
+          <div class="kt-frame">
+            {
+              /* method/action działają też bez JS (POST wprost do Pages
+                Function); skrypt przechwytuje submit, dokłada `elapsed`
+                i token Turnstile, po czym pokazuje ekran .sent.
+                `novalidate`: walidację prowadzi contact-ui.ts tą samą
+                funkcją co serwer (E9 „telefon LUB e-mail" — natywne
+                required tego nie wyrazi). */
+            }
+            <form
+              class="kt-form"
+              method="post"
+              action={CONTACT_ENDPOINT}
+              novalidate
+            >
+              <div class="kt-form-hd">
+                <p class="kt-kick" data-rev>FORMULARZ</p>
+                <h2 data-rev data-rev-d="1">Albo wypełnij formularz</h2>
+                <p class="kt-p kt-form-lead">
+                  Kilka zdań o budynku i lokalizacji wystarczy, żebyśmy mogli
+                  wstępnie ocenić zakres prac.
+                </p>
+              </div>
+
+              <div class="kt-fields">
+                <label class="kt-f" data-f="name">
+                  <span class="kt-f-lb">01 · IMIĘ I NAZWISKO</span>
+                  <input
+                    id="kt-name"
+                    name="name"
+                    type="text"
+                    maxlength={NAME_MAX}
+                    autocomplete="name"
+                    required
+                    aria-describedby="kt-name-err"
+                    placeholder="Jan Kowalski"
+                  />
+                  <span class="kt-err" id="kt-name-err"
+                    >Podaj imię i nazwisko.</span
+                  >
+                </label>
+
+                <label class="kt-f" data-f="contact">
+                  <span class="kt-f-lb">02 · TELEFON LUB E-MAIL</span>
+                  <input
+                    id="kt-contact"
+                    name="contact"
+                    type="text"
+                    inputmode="tel"
+                    autocomplete="tel"
+                    required
+                    aria-describedby="kt-contact-err"
+                    placeholder="+48 000 000 000"
+                  />
+                  <span class="kt-err" id="kt-contact-err"
+                    >Podaj numer telefonu albo adres e-mail — inaczej nie damy
+                    rady odpisać.</span
+                  >
+                </label>
+
+                <label class="kt-f" data-f="place">
+                  <span class="kt-f-lb">03 · LOKALIZACJA INWESTYCJI</span>
+                  <input
+                    id="kt-place"
+                    name="place"
+                    type="text"
+                    maxlength={PLACE_MAX}
+                    placeholder="Miejscowość, gmina"
+                  />
+                </label>
+
+                <label class="kt-f kt-f-msg" data-f="msg">
+                  <span class="kt-f-lb">04 · OPIS</span>
+                  <textarea
+                    id="kt-msg"
+                    name="message"
+                    rows="4"
+                    maxlength={MESSAGE_MAX}
+                    required
+                    aria-describedby="kt-msg-err"
+                    placeholder="Dom przysłupowy z 1820 r., potrzebna wymiana więźby i naprawa ściany szachulcowej…"
+                  ></textarea>
+                  <span class="kt-err" id="kt-msg-err"
+                    >Napisz kilka zdań o budynku — minimum 10 znaków.</span
+                  >
+                </label>
+              </div>
+
+              {
+                /* Honeypot: pole `firma` jest READONLY (autofill Chrome'a
+                  nie wypełnia readonly — atrybut zdejmuje dopiero focus
+                  w contact-ui.ts, żeby bot piszący „po ludzku" nadal się
+                  łapał). aria-hidden + tabindex=-1 trzymają je poza
+                  czytnikami i poza tab-orderem. NIE USUWAĆ. */
+              }
+              <div class="kt-hp" aria-hidden="true">
+                <label for="kt-firma">Firma (zostaw to pole puste)</label>
+                <input
+                  id="kt-firma"
+                  name="firma"
+                  type="text"
+                  tabindex="-1"
+                  autocomplete="off"
+                  readonly
+                />
+              </div>
+
+              <div class="kt-foot">
+                {
+                  /* E9: BEZ checkboxa RODO (eksportowy kwadracik to pusty
+                    <span>, nie <input>) — zostaje notka z linkiem. */
+                }
+                <p class="kt-rodo">
+                  Wysyłając wiadomość, akceptujesz <a href={POLICY_PATH}
+                    >Politykę prywatności</a
+                  >. Twoje dane posłużą wyłącznie do odpowiedzi na to zapytanie.
+                </p>
+                <button
+                  class="kt-send"
+                  type="submit"
+                  data-send="Wyślij zapytanie →"
+                  data-sending="Wysyłamy…"
+                >
+                  <span class="lb">Wyślij zapytanie →</span>
+                </button>
+              </div>
+
+              <p class="kt-srv" role="alert" hidden>
+                Nie udało się wysłać wiadomości. Spróbuj ponownie za chwilę albo
+                zadzwoń do nas.
+              </p>
+              {/* montaż widgetu Turnstile (ładowany leniwie przy focusie) */}
+              <div class="kt-ts"></div>
+            </form>
+
+            <div class="kt-done">
+              <h2 class="kt-done-h" tabindex="-1">Wiadomość wysłana.</h2>
+              <p class="kt-p">
+                Dziękujemy — odezwiemy się najszybciej, jak to możliwe. Zwykle w
+                1–2 dni robocze; na budowie jesteśmy pn.–pt. 8:00–16:00.
+              </p>
+              <button class="kt-again" type="button"
+                >Wyślij kolejną wiadomość</button
+              >
+            </div>
+          </div>
+        </section>
+
+        <section class="kt-firm">
+          <p class="kt-kick" data-rev>DANE FIRMOWE I OBSZAR</p>
+          <p class="kt-p kt-firm-p">
+            Pracujemy na Dolnym Śląsku, w okolicach Jeleniej Góry — w sercu
+            krainy domów przysłupowych. Dojeżdżamy na budowy w promieniu około
+            godziny drogi od Jeleniej Góry.
+          </p>
+        </section>
+
+        <section class="kt-social">
+          <img
+            class="kt-ryc kt-social-ryc mOnly"
+            data-ryc="r"
+            src={golabM.src}
+            width={golabM.width}
+            height={golabM.height}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+          <img
+            class="kt-ryc kt-social-ryc dOnly"
+            data-rycsb="r"
+            src={golab.src}
+            width={golab.width}
+            height={golab.height}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+          <div class="kt-social-txt">
+            <p class="kt-kick" data-rev>MEDIA SPOŁECZNOŚCIOWE</p>
+            <h2 data-rev data-rev-d="1">Śledź nasze realizacje</h2>
+            <p class="kt-p">
+              Zobacz, jak przywracamy statykę i duszę wiekowym budynkom i jak
+              wygląda upcycling na wielką skalę w naszym wykonaniu.
+            </p>
+          </div>
+          <div class="kt-social-l">
+            <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer">
+              <span class="kt-social-n">Instagram</span>
+              <span class="kt-social-h">@pracowniaeha →</span>
+            </a>
+            <a href={FACEBOOK_URL} target="_blank" rel="noopener noreferrer">
+              <span class="kt-social-n">Facebook</span>
+              <span class="kt-social-h">/pracowniaeha →</span>
+            </a>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <aside class="kt-rodo-band">
+      <p>
+        Administratorem Twoich danych osobowych jest Pracownia Łukasz
+        Jarosz-Jarszewski (Pracownia EH/A), NIP 527-244-99-69. Dane przetwarzane
+        są w celu odpowiedzi na Twoje zapytanie. Więcej informacji znajdziesz w
+        naszej <a href={POLICY_PATH}>Polityce Prywatności</a>.
+      </p>
+    </aside>
+  </main>
+
+  <Footer />
+</BaseLayout>
+
+<style is:global>
+  /* ── Tokeny widoku (odczyty z eksportu — analiza §1). Mobile w bazie,
+     desktop w @media 1024 (para: CONTACT_DESKTOP_MIN_PX). Tokeny
+     typograficzne desktop identyczne z .obs/.trd/.kmp/.eka (te same
+     formuły eksportów, mnożniki --k/--w pominięte). ── */
+  .kt {
+    /* kontener mobile eksportu: 700 px, padding 30 px (26 px w pudłach) */
+    --wmax: 700px;
+    --px: 30px;
+    --pxb: 26px;
+    /* kolory eksportu, których nie ma w tokenach globalnych */
+    --kt-hero-bg: #3a3428;
+    --kt-call-hd: #4b5840;
+    --kt-call-bg: #57654a;
+    --kt-form-bg: #f1ebdd;
+    --kt-err-col: #8c3a25;
+    /* ryciny wystają za krawędź — clip bez tworzenia scrollera */
+    overflow-x: clip;
+    /* tło jak pozostałe trasy treściowe: baza kremowa + skan papieru
+       (PaperBackdrop, z-index -1 — stąd isolation) */
+    position: relative;
+    isolation: isolate;
+    background: var(--bg-cream);
+  }
+  @media (min-width: 1024px) {
+    .kt {
+      --wmax: 1600px;
+      --body: clamp(13.5px, 1.08vw, 17px);
+      --lhb: 1.72;
+      --mono: clamp(10px, 0.76vw, 12px);
+      --monos: clamp(9px, 0.66vw, 10.5px);
+      --h1: clamp(40px, 3.75vw, 60px);
+      --h2: clamp(31px, 2.78vw, 44px);
+      --lead: clamp(17px, 1.46vw, 23px);
+      --cta: clamp(13px, 1.01vw, 16px);
+      --gapx: clamp(48px, 5vw, 80px);
+      /* padding paneli sticky karty */
+      --pan-y: clamp(20px, 2vw, 32px);
+      --pan-x: clamp(22px, 2.2vw, 35px);
+    }
+  }
+
+  /* warianty per breakpoint (wzorzec dOnly/mOnly z 4.1–4.6) */
+  @media (max-width: 1023.98px) {
+    .kt .dOnly {
+      display: none !important;
+    }
+  }
+  @media (min-width: 1024px) {
+    .kt .mOnly {
+      display: none !important;
+    }
+  }
+
+  /* ── wspólne klocki typograficzne ── */
+  .kt-kick {
+    margin: 0;
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: rgba(87, 101, 74, 0.95);
+  }
+  .kt h2 {
+    margin: 0;
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: 26px;
+    line-height: 1.2;
+    color: var(--ink);
+    text-wrap: pretty;
+  }
+  .kt-p {
+    margin: 0;
+    font-family: var(--font-body), sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+  /* mono-tagi z kreskowanym podkreśleniem (godziny, czas odpowiedzi).
+     Eksportowe rgba(33,29,24,.55) przy mono 10 px nie przechodzi AA na
+     papierze — korekta klasy 4.4–4.6 (allowlista axe zostaje pusta). */
+  .kt-tag {
+    margin: 4px 0 0;
+    align-self: flex-start;
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: rgba(33, 29, 24, 0.65);
+    border-bottom: 1px dashed rgba(76, 59, 43, 0.45);
+    padding-bottom: 2px;
+  }
+  .kt-lb {
+    margin: 0;
+    font-family: var(--font-mono), monospace;
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: rgba(33, 29, 24, 0.65);
+  }
+  .kt-lb-acc {
+    color: var(--accent);
+  }
+
+  /* ── HERO (niskie, pasek nakładkowy; [data-navref]) ── */
+  .kt-hero {
+    position: relative;
+    background: var(--kt-hero-bg);
+    color: var(--bg);
+    overflow: hidden;
+    /* eksportowe 96 px = pasek 92 px + 4 px (wzorzec polityki) */
+    padding: calc(var(--hdr-h) + 4px) 0 34px;
+  }
+  .kt-hero-in {
+    position: relative;
+    width: 100%;
+    max-width: var(--wmax);
+    margin-inline: auto;
+    padding-inline: var(--px);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .kt-hero-kick {
+    color: rgba(228, 220, 200, 0.75);
+  }
+  .kt-hero h1 {
+    margin: 0;
+    max-width: 280px;
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: 40px;
+    line-height: 1.1;
+    text-wrap: pretty;
+  }
+  .kt-hero-lead {
+    margin: 8px 0 0;
+    max-width: 330px;
+    font-family: var(--font-body), sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+    color: rgba(245, 239, 227, 0.86);
+  }
+  .kt-hero-ryc {
+    position: absolute;
+    right: -46px;
+    top: 52px;
+    width: 240px;
+    max-width: none;
+    height: auto;
+    opacity: 0.3;
+    /* rycina na CIEMNYM tle: invert + sepia jak w eksporcie */
+    filter: invert(1) sepia(0.3);
+    pointer-events: none;
+  }
+  @media (min-width: 1024px) {
+    /* eksportowe clamp(230px,20cqw,320px) — hero jest NISKIE, a treść
+       kotwiczy się przy jego dolnej krawędzi */
+    .kt-hero {
+      height: clamp(230px, 20vw, 320px);
+      padding: 0;
+    }
+    .kt-hero-in {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: clamp(24px, 2.2vw, 36px);
+      padding-inline: var(--g);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-areas:
+        "kick lead"
+        "title lead";
+      gap: clamp(14px, 1.3vw, 21px) var(--gapx);
+      align-items: end;
+    }
+    .kt-hero-kick {
+      grid-area: kick;
+      font-size: var(--mono);
+    }
+    .kt-hero h1 {
+      grid-area: title;
+      max-width: none;
+      font-size: var(--h1);
+      line-height: 1.06;
+    }
+    .kt-hero-lead {
+      grid-area: lead;
+      align-self: end;
+      margin: 0;
+      max-width: clamp(420px, 42vw, 640px);
+      font-size: var(--body);
+      line-height: var(--lhb);
+      text-wrap: pretty;
+    }
+  }
+
+  /* ── SPLIT: mobile płaski stos (display:contents + order),
+     desktop dwie kolumny z lewą jako sticky kartą ── */
+  @media (max-width: 1023.98px) {
+    .kt-split {
+      display: flex;
+      flex-direction: column;
+    }
+    .kt-card,
+    .kt-main {
+      display: contents;
+    }
+    /* kolejność 1:1 z eksportem mobile */
+    .kt-call {
+      order: 1;
+    }
+    .kt-hours {
+      order: 2;
+    }
+    .kt-write {
+      order: 3;
+    }
+    .kt-mail {
+      order: 4;
+    }
+    .kt-formsec {
+      order: 5;
+    }
+    .kt-firm {
+      order: 6;
+    }
+    .kt-reg {
+      order: 7;
+    }
+    .kt-social {
+      order: 8;
+    }
+    /* Szerokości kontenerów mobile eksportu. Sekcje BEZ tła dostają
+       padding wewnątrz pełnej szerokości (a nie zwężoną skrzynkę): tylko
+       wtedy `overflow: hidden` przycina ryciny na krawędzi EKRANU, jak
+       w eksporcie, a nie na krawędzi kolumny tekstu. */
+    .kt-hours,
+    .kt-mail,
+    .kt-write,
+    .kt-firm,
+    .kt-social {
+      width: 100%;
+      max-width: var(--wmax);
+      box-sizing: border-box;
+      padding-inline: var(--px);
+      margin-inline: auto;
+    }
+    .kt-call,
+    .kt-reg {
+      width: min(100% - 2 * var(--pxb), var(--wmax) - 2 * var(--pxb));
+      margin-inline: auto;
+    }
+  }
+  @media (min-width: 1024px) {
+    .kt-split {
+      max-width: var(--wmax);
+      margin-inline: auto;
+      box-sizing: border-box;
+      padding: clamp(44px, 4.4vw, 70px) var(--g) clamp(56px, 5.6vw, 90px);
+      display: grid;
+      grid-template-columns: clamp(360px, 34vw, 520px) 1fr;
+      gap: var(--gapx);
+      align-items: start;
+    }
+    .kt-card {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid rgba(33, 29, 24, 0.22);
+      background: var(--bg-card);
+      box-shadow: 0 1px 3px rgba(33, 29, 24, 0.08);
+      overflow: hidden;
+      /* pasek jest FIXED, więc offset eksportu clamp(104px,8.6cqw,136px)
+         trzeba liczyć OD DOŁU paska; align-self:start — rozciągnięty
+         grid-item nie ma po czym jechać (lekcja spisu treści z polityki) */
+      position: sticky;
+      top: calc(var(--hdr-h) + clamp(32px, calc(8.6vw - 72px), 64px));
+      align-self: start;
+    }
+    .kt-main {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(44px, 4.4vw, 70px);
+      min-width: 0;
+    }
+  }
+
+  /* ── kafle telefonów ── */
+  .kt-call {
+    display: flex;
+    flex-direction: column;
+  }
+  .kt-call-hd {
+    margin: 0;
+    background: var(--kt-call-hd);
+    padding: 11px 22px 10px;
+    font-family: var(--font-mono), monospace;
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: rgba(245, 239, 227, 0.85);
+  }
+  .kt-tel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    text-decoration: none;
+    color: var(--bg);
+    background: var(--kt-call-bg);
+    padding: 14px 22px;
+    transition: background 0.2s ease;
+  }
+  .kt-tel + .kt-tel {
+    border-top: 1px solid rgba(245, 239, 227, 0.18);
+  }
+  .kt-tel:hover,
+  .kt-tel:focus-visible {
+    background: var(--kt-call-hd);
+    color: var(--bg);
+  }
+  .kt-tel-in {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+  .kt-tel-lb {
+    font-family: var(--font-mono), monospace;
+    font-weight: 600;
+    font-size: 9.5px;
+    letter-spacing: 0.18em;
+    /* Korekta a11y klasy 4.4–4.6 (axe złapał realnie): eksportowe
+       rgba(245,239,227,.75) na #57654A to 3,87:1 przy mono 9,5 px —
+       poniżej AA. 0.9 daje 4,78:1; allowlista axe zostaje PUSTA. */
+    color: rgba(245, 239, 227, 0.9);
+  }
+  .kt-tel-no {
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: 24px;
+  }
+  .kt-arr {
+    flex: none;
+    font-family: var(--font-serif), serif;
+    font-size: 22px;
+  }
+  @media (max-width: 1023.98px) {
+    .kt-call {
+      position: relative;
+      z-index: 1;
+      /* wjazd na hero (eksport: margin-top:-16px) */
+      margin-top: -16px;
+      box-shadow: 0 6px 20px rgba(33, 29, 24, 0.18);
+    }
+  }
+  @media (min-width: 1024px) {
+    .kt-call-hd {
+      padding: clamp(12px, 1.2vw, 19px) var(--pan-x)
+        calc(clamp(12px, 1.2vw, 19px) - 1px);
+      font-size: var(--monos);
+    }
+    .kt-tel {
+      padding: clamp(15px, 1.5vw, 24px) var(--pan-x);
+    }
+    .kt-tel-lb {
+      font-size: var(--monos);
+    }
+    .kt-tel-no {
+      font-size: calc(var(--lead) * 1.24);
+    }
+    .kt-arr {
+      font-size: calc(var(--lead) * 1.05);
+    }
+  }
+
+  /* ── godziny + noscript ── */
+  .kt-hours {
+    display: flex;
+    flex-direction: column;
+    padding-top: 22px;
+  }
+  .kt-hours-p {
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: var(--faint);
+  }
+  .kt-noscript {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border: 1px dashed rgba(76, 59, 43, 0.45);
+    font-family: var(--font-body), sans-serif;
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+  @media (min-width: 1024px) {
+    .kt-hours {
+      gap: 12px;
+      padding: var(--pan-y) var(--pan-x);
+      border-bottom: 1px dashed rgba(33, 29, 24, 0.3);
+    }
+    .kt-hours-p {
+      font-size: calc(var(--body) * 0.92);
+      text-wrap: pretty;
+    }
+  }
+
+  /* ── e-mail ── */
+  .kt-mail {
+    display: flex;
+    flex-direction: column;
+  }
+  .kt-mail-a {
+    align-self: flex-start;
+    margin-top: 4px;
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: 22px;
+    color: var(--ink);
+    text-decoration: none;
+    border-bottom: 1px dashed rgba(76, 59, 43, 0.55);
+    padding-bottom: 2px;
+    transition: color 0.2s ease;
+  }
+  .kt-mail-a:hover,
+  .kt-mail-a:focus-visible {
+    color: var(--accent);
+  }
+  @media (min-width: 1024px) {
+    .kt-mail {
+      gap: 10px;
+      padding: var(--pan-y) var(--pan-x);
+      border-bottom: 1px dashed rgba(33, 29, 24, 0.3);
+    }
+    .kt-mail .kt-lb {
+      color: var(--accent);
+      font-size: var(--monos);
+    }
+    .kt-mail-a {
+      margin-top: 0;
+      font-size: calc(var(--lead) * 1.14);
+    }
+  }
+
+  /* ── obszar działania + dane rejestrowe ── */
+  .kt-reg {
+    position: relative;
+    margin-top: 20px;
+    box-sizing: border-box;
+    padding: 22px 24px;
+    border: 1px solid rgba(33, 29, 24, 0.22);
+    background: var(--bg-card);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .kt-area,
+  .kt-legal {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  @media (max-width: 1023.98px) {
+    /* Rycina domku jest CAŁEGO pudła (eksport: bottom:-16px liczone od
+       jego dolnej krawędzi), a nie samego panelu OBSZAR — przycina ją
+       overflow pudła. Na desktopie panel wraca do roli kontenera. */
+    .kt-area {
+      position: static;
+    }
+  }
+  @media (min-width: 1024px) {
+    .kt-area {
+      overflow: hidden;
+    }
+  }
+  .kt-area-t {
+    margin: 0;
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: 20px;
+    line-height: 1.45;
+    color: var(--ink);
+  }
+  .kt-area-t span {
+    font-family: var(--font-mono), monospace;
+    font-weight: 400;
+    font-size: 13px;
+    color: var(--faint);
+  }
+  .kt-map {
+    align-self: flex-start;
+    margin-top: 6px;
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(87, 101, 74, 0.5);
+    padding-bottom: 2px;
+  }
+  .kt-map:hover,
+  .kt-map:focus-visible {
+    color: var(--accent-ink);
+  }
+  .kt-legal {
+    padding-top: 16px;
+    border-top: 1px dashed rgba(33, 29, 24, 0.3);
+  }
+  .kt-legal-l {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    max-width: 220px;
+    font-family: var(--font-mono), monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+  .kt-legal-l li {
+    border-bottom: 1px dashed rgba(76, 59, 43, 0.4);
+    padding-bottom: 4px;
+  }
+  @media (min-width: 1024px) {
+    /* pudło rejestrowe istnieje tylko na mobile — na desktopie jego
+       zawartość to dwa kolejne panele sticky karty */
+    .kt-reg {
+      display: contents;
+    }
+    .kt-area,
+    .kt-legal {
+      gap: 10px;
+      padding: var(--pan-y) var(--pan-x);
+      border: 0;
+      margin: 0;
+    }
+    .kt-area {
+      border-bottom: 1px dashed rgba(33, 29, 24, 0.3);
+    }
+    .kt-area .kt-lb,
+    .kt-legal .kt-lb {
+      font-size: var(--monos);
+    }
+    .kt-area-t {
+      font-size: calc(var(--lead) * 1.02);
+    }
+    .kt-area-t span,
+    .kt-map {
+      font-size: var(--monos);
+    }
+    .kt-legal-l {
+      max-width: none;
+      gap: 6px;
+      font-size: calc(var(--body) * 0.88);
+    }
+    .kt-legal-l li {
+      padding-bottom: 5px;
+    }
+  }
+
+  /* ── „napisz wiadomość" ── */
+  .kt-write {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  @media (max-width: 1023.98px) {
+    /* kreskowana linia nad sekcją (eksport ma ją jako osobny element) */
+    .kt-write::before {
+      content: "";
+      border-top: 1px dashed rgba(33, 29, 24, 0.3);
+      margin: 26px 0 14px;
+    }
+  }
+  .kt-write h2 {
+    font-size: 27px;
+    max-width: 230px;
+  }
+  .kt-write .kt-p {
+    max-width: 290px;
+  }
+  @media (min-width: 1024px) {
+    .kt-write {
+      gap: clamp(12px, 1.2vw, 19px);
+    }
+    .kt-write .kt-kick {
+      font-size: var(--mono);
+    }
+    .kt-write h2 {
+      font-size: var(--h2);
+      line-height: 1.12;
+      max-width: clamp(400px, 40vw, 600px);
+    }
+    .kt-write .kt-p {
+      font-size: var(--body);
+      line-height: var(--lhb);
+      max-width: clamp(440px, 46vw, 700px);
+      text-wrap: pretty;
+    }
+  }
+
+  /* ── FORMULARZ ── */
+  .kt-formsec {
+    scroll-margin-top: calc(var(--hdr-h) + 18px);
+  }
+  @media (max-width: 1023.98px) {
+    .kt-formsec {
+      /* pas na PEŁNEJ szerokości ekranu (eksport) */
+      width: 100%;
+      margin-top: 30px;
+      box-sizing: border-box;
+      padding: 26px var(--px) 30px;
+      background: var(--kt-form-bg);
+      border-top: 1px solid rgba(33, 29, 24, 0.14);
+      border-bottom: 1px solid rgba(33, 29, 24, 0.14);
+    }
+    .kt-frame {
+      max-width: calc(var(--wmax) - 2 * var(--px));
+      margin-inline: auto;
+    }
+  }
+  @media (min-width: 1024px) {
+    .kt-formsec {
+      box-sizing: border-box;
+      background: var(--kt-form-bg);
+      border: 1px solid rgba(33, 29, 24, 0.16);
+      padding: clamp(30px, 3vw, 48px) clamp(32px, 3.2vw, 52px)
+        clamp(34px, 3.4vw, 54px);
+    }
+  }
+  .kt-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .kt-form-hd {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .kt-form-lead {
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: var(--faint);
+  }
+  .kt-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .kt-f {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .kt-f-lb {
+    font-family: var(--font-mono), monospace;
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: rgba(33, 29, 24, 0.65);
+  }
+  .kt-f input,
+  .kt-f textarea {
+    font-family: var(--font-body), sans-serif;
+    color: var(--ink);
+    background: transparent;
+    outline: none;
+    /* PODŁOGA 16 px na mobile: Safari iOS zoomuje stronę przy focusie
+       mniejszego pola i zostawia ją zoomniętą (sections.md) */
+    font-size: 16px;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+  .kt-f input {
+    border: none;
+    border-bottom: 1px solid rgba(33, 29, 24, 0.35);
+    padding: 8px 0;
+  }
+  .kt-f textarea {
+    border: 1px solid rgba(33, 29, 24, 0.28);
+    background: rgba(255, 255, 255, 0.4);
+    padding: 10px;
+    line-height: 1.6;
+    resize: none;
+  }
+  .kt-f input:focus {
+    border-bottom-color: var(--accent);
+    box-shadow: 0 1px 0 0 var(--accent);
+  }
+  .kt-f textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px rgba(var(--glow), 0.45);
+  }
+  /* komunikat błędu siedzi w SSR i pokazuje go klasa .err (contact-ui.ts
+     zapala tylko klasę — zero tekstów w JS) */
+  .kt-err {
+    display: none;
+    font-family: var(--font-body), sans-serif;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--kt-err-col);
+  }
+  .kt-f.err .kt-err {
+    display: block;
+  }
+  .kt-f.err input,
+  .kt-f.err textarea {
+    border-color: var(--kt-err-col);
+  }
+  .kt-f.err input {
+    box-shadow: 0 1px 0 0 var(--kt-err-col);
+  }
+  /* honeypot — poza ekranem, poza tab-orderem, poza czytnikami */
+  .kt-hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+  .kt-foot {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .kt-rodo {
+    margin: 0;
+    font-family: var(--font-body), sans-serif;
+    font-size: 11.5px;
+    line-height: 1.55;
+    color: rgba(33, 29, 24, 0.7);
+  }
+  /* Link w bloku tekstu MUSI być odróżnialny bez koloru (axe
+     link-in-text-block; Tailwind preflight zdejmuje domyślne
+     podkreślenie) — wzorzec .pp-link z polityki prywatności. */
+  .kt-rodo a,
+  .kt-rodo-band a {
+    color: var(--accent-ink);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(65, 77, 55, 0.45);
+  }
+  .kt-rodo a:hover,
+  .kt-rodo a:focus-visible,
+  .kt-rodo-band a:hover,
+  .kt-rodo-band a:focus-visible {
+    color: var(--accent);
+  }
+  .kt-send {
+    border: none;
+    border-radius: 2px;
+    background: var(--sepia);
+    color: var(--bg);
+    font-family: var(--font-body), sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .kt-send:hover:not(:disabled) {
+    background: #3a2d20;
+  }
+  .kt-send:disabled {
+    opacity: 0.7;
+    cursor: default;
+  }
+  .kt-srv {
+    margin: 0;
+    font-family: var(--font-body), sans-serif;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--kt-err-col);
+  }
+  .kt-ts:empty {
+    display: none;
+  }
+  /* ekran potwierdzenia — zamiast formularza, bez toastów */
+  .kt-done {
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .kt-done-h {
+    outline: none;
+  }
+  .kt-frame.sent .kt-form {
+    display: none;
+  }
+  .kt-frame.sent .kt-done {
+    display: flex;
+  }
+  .kt-again {
+    align-self: flex-start;
+    margin-top: 4px;
+    border: 1px solid rgba(33, 29, 24, 0.35);
+    border-radius: 2px;
+    background: transparent;
+    color: var(--ink);
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition:
+      background 0.2s ease,
+      border-color 0.2s ease;
+  }
+  .kt-again:hover,
+  .kt-again:focus-visible {
+    background: rgba(var(--glow), 0.09);
+    border-color: var(--accent);
+  }
+  @media (min-width: 1024px) {
+    .kt-form,
+    .kt-fields {
+      gap: clamp(22px, 2.2vw, 36px);
+    }
+    .kt-form-hd {
+      gap: 10px;
+    }
+    .kt-form-hd .kt-kick {
+      font-size: var(--mono);
+    }
+    .kt-form-hd h2 {
+      font-size: calc(var(--h2) * 0.82);
+      line-height: 1.14;
+    }
+    .kt-form-lead {
+      font-size: calc(var(--body) * 0.94);
+      max-width: clamp(420px, 44vw, 660px);
+      text-wrap: pretty;
+    }
+    .kt-fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      row-gap: clamp(20px, 2vw, 32px);
+      column-gap: clamp(20px, 2vw, 32px);
+    }
+    .kt-f-msg {
+      grid-column: 1 / -1;
+    }
+    .kt-f {
+      gap: 8px;
+      min-width: 0;
+    }
+    .kt-f-lb {
+      font-size: var(--monos);
+    }
+    .kt-f input,
+    .kt-f textarea {
+      font-size: var(--body);
+    }
+    .kt-f input {
+      padding: 10px 0;
+    }
+    .kt-f textarea {
+      padding: 12px 14px;
+      background: rgba(255, 255, 255, 0.45);
+    }
+    .kt-foot {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: clamp(24px, 2.6vw, 42px);
+    }
+    .kt-rodo {
+      max-width: clamp(340px, 34vw, 520px);
+      font-size: calc(var(--body) * 0.8);
+    }
+    .kt-send {
+      flex: none;
+      font-size: var(--body);
+      padding: clamp(15px, 1.5vw, 24px) clamp(26px, 2.6vw, 42px);
+    }
+    .kt-done .kt-p {
+      font-size: var(--body);
+      line-height: var(--lhb);
+      max-width: clamp(420px, 44vw, 660px);
+    }
+    .kt-again {
+      font-size: var(--monos);
+    }
+  }
+
+  /* ── dane firmowe ── */
+  .kt-firm {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 30px;
+  }
+  .kt-firm-p {
+    font-size: 14.5px;
+  }
+  @media (min-width: 1024px) {
+    .kt-firm {
+      gap: clamp(14px, 1.4vw, 22px);
+      padding-top: clamp(30px, 3vw, 48px);
+      border-top: 1px dashed rgba(33, 29, 24, 0.3);
+    }
+    .kt-firm .kt-kick {
+      font-size: var(--mono);
+    }
+    .kt-firm-p {
+      font-size: var(--body);
+      line-height: var(--lhb);
+      text-align: justify;
+      hyphens: auto;
+    }
+  }
+
+  /* ── social ── */
+  .kt-social {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    margin-top: 34px;
+  }
+  .kt-social-txt {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 194px;
+  }
+  .kt-social h2 {
+    max-width: 200px;
+  }
+  .kt-social-txt .kt-p {
+    max-width: 280px;
+  }
+  .kt-social-l {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    margin-top: 18px;
+  }
+  .kt-social-l a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    text-decoration: none;
+    color: inherit;
+    border-bottom: 1px solid rgba(33, 29, 24, 0.2);
+    padding: 12px 0;
+    transition: color 0.2s ease;
+  }
+  .kt-social-l a:hover,
+  .kt-social-l a:focus-visible {
+    color: var(--accent);
+  }
+  .kt-social-n {
+    font-family: var(--font-body), sans-serif;
+    font-weight: 500;
+    font-size: 15px;
+  }
+  .kt-social-h {
+    font-family: var(--font-mono), monospace;
+    font-size: 12px;
+    color: rgba(33, 29, 24, 0.65);
+    border-bottom: 1px dashed rgba(76, 59, 43, 0.5);
+  }
+  @media (min-width: 1024px) {
+    .kt-social {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(40px, 4vw, 64px);
+      align-items: start;
+      margin-top: 0;
+      padding-top: clamp(30px, 3vw, 48px);
+      border-top: 1px dashed rgba(33, 29, 24, 0.3);
+    }
+    .kt-social-txt {
+      gap: clamp(10px, 1vw, 16px);
+      min-height: 0;
+    }
+    .kt-social .kt-kick {
+      font-size: var(--mono);
+    }
+    .kt-social h2 {
+      font-size: calc(var(--h2) * 0.8);
+      line-height: 1.14;
+      max-width: none;
+    }
+    .kt-social-txt .kt-p {
+      font-size: calc(var(--body) * 0.94);
+      line-height: 1.65;
+      max-width: none;
+      text-wrap: pretty;
+    }
+    .kt-social-l {
+      margin-top: 0;
+    }
+    .kt-social-l a {
+      padding: clamp(12px, 1.2vw, 19px) 0;
+    }
+    .kt-social-n {
+      font-size: var(--body);
+    }
+    .kt-social-h {
+      font-size: calc(var(--body) * 0.86);
+    }
+  }
+
+  /* ── pasmo RODO ── */
+  .kt-rodo-band {
+    margin-top: 34px;
+    background: rgba(33, 29, 24, 0.045);
+    border-top: 1px solid rgba(33, 29, 24, 0.12);
+  }
+  .kt-rodo-band p {
+    margin: 0;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: var(--wmax);
+    margin-inline: auto;
+    padding: 22px var(--px) 26px;
+    font-family: var(--font-serif), serif;
+    font-style: italic;
+    font-size: 12px;
+    line-height: 1.65;
+    color: rgba(33, 29, 24, 0.72);
+  }
+  @media (min-width: 1024px) {
+    .kt-rodo-band {
+      margin-top: 0;
+    }
+    .kt-rodo-band p {
+      padding: clamp(22px, 2.2vw, 35px) var(--g) clamp(26px, 2.6vw, 42px);
+      font-size: calc(var(--body) * 0.84);
+      line-height: 1.7;
+    }
+  }
+
+  /* ── ryciny (pozycje z eksportu; mobile Z ALFĄ, desktop spłaszczone) ── */
+  .kt-ryc {
+    position: absolute;
+    max-width: none;
+    height: auto;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+  .kt-write-ryc {
+    right: -30px;
+    top: 48px;
+    width: 150px;
+    opacity: 0.4;
+  }
+  .kt-area-ryc {
+    right: -56px;
+    bottom: -16px;
+    width: 150px;
+    opacity: 0.22;
+  }
+  .kt-social-ryc {
+    right: -44px;
+    top: -10px;
+    width: 168px;
+    opacity: 0.4;
+  }
+  @media (min-width: 1024px) {
+    .kt-hero-ryc {
+      right: clamp(30px, 4vw, 80px);
+      top: auto;
+      bottom: calc(-1 * clamp(20px, 2.4vw, 44px));
+      width: clamp(280px, 24vw, 370px);
+      /* wariant spłaszczony na biel: invert + screen neutralizuje tło
+         na ciemnym hero (wzorzec HomeKontakt) */
+      mix-blend-mode: screen;
+    }
+    .kt-write-ryc {
+      right: clamp(4px, 1vw, 18px);
+      top: calc(-1 * clamp(6px, 0.8vw, 14px));
+      width: clamp(160px, 14vw, 220px);
+    }
+    .kt-area-ryc {
+      right: -40px;
+      bottom: -16px;
+      width: clamp(130px, 12vw, 190px);
+    }
+    .kt-social-ryc {
+      right: 0;
+      top: clamp(6px, 1vw, 20px);
+      width: clamp(170px, 15vw, 240px);
+    }
+  }
+
+  /* ═══ RUCH (bramka js-motion; bez JS / przy reduce brak stanów
+     startowych = strona statyczna i kompletna). Mobile: reveale +
+     rysowanie rycin maską + parallax rycin; desktop: rysowanie
+     [data-rycsb] + dryf tła. Wzorce i wartości 1:1 z 4.2–4.6.
+     Widok używa wyłącznie wariantu „r" (wszystkie ryciny wjeżdżają
+     z prawej krawędzi — eksport). ═══ */
+  @media (max-width: 1023.98px) {
+    html.js-motion .kt [data-rev] {
+      opacity: 0;
+      transform: translateY(22px);
+      transition:
+        opacity 0.7s ease,
+        transform 0.8s cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+    html.js-motion .kt [data-rev].in {
+      opacity: 1;
+      transform: none;
+    }
+    html.js-motion .kt [data-rev][data-rev-d="1"] {
+      transition-delay: 0.09s;
+    }
+    html.js-motion .kt [data-rev][data-rev-d="2"] {
+      transition-delay: 0.18s;
+    }
+    html.js-motion .kt [data-ryc] {
+      -webkit-mask-repeat: no-repeat, no-repeat;
+      mask-repeat: no-repeat, no-repeat;
+      -webkit-mask-size:
+        280% 100%,
+        240% 100%;
+      mask-size:
+        280% 100%,
+        240% 100%;
+    }
+    html.js-motion .kt [data-ryc="r"] {
+      -webkit-mask-image: var(--ryc-wedge-r), var(--ryc-lines-r);
+      mask-image: var(--ryc-wedge-r), var(--ryc-lines-r);
+      -webkit-mask-position:
+        0 0,
+        0 0;
+      mask-position:
+        0 0,
+        0 0;
+    }
+    html.js-motion .kt [data-ryc="r"].in {
+      animation: ktRycR 2.8s cubic-bezier(0.3, 0.05, 0.25, 1) both;
+    }
+  }
+  @media (min-width: 1024px) {
+    html.js-motion .kt [data-rycsb] {
+      -webkit-mask-repeat: no-repeat, no-repeat;
+      mask-repeat: no-repeat, no-repeat;
+      -webkit-mask-size:
+        280% 100%,
+        240% 100%;
+      mask-size:
+        280% 100%,
+        240% 100%;
+    }
+    html.js-motion .kt [data-rycsb="r"] {
+      -webkit-mask-image: var(--ryc-wedge-r), var(--ryc-lines-r);
+      mask-image: var(--ryc-wedge-r), var(--ryc-lines-r);
+      -webkit-mask-position:
+        0 0,
+        0 0;
+      mask-position:
+        0 0,
+        0 0;
+    }
+    html.js-motion .kt [data-rycsb="r"].in {
+      animation: ktRycR 2s cubic-bezier(0.3, 0.05, 0.25, 1) both;
+    }
+  }
+
+  /* gradienty masek „rysowania" (eksport: klin 255° + smugi) */
+  .kt {
+    --ryc-wedge-r: linear-gradient(255deg, #000 40%, rgba(0, 0, 0, 0) 52%);
+    --ryc-lines-r: linear-gradient(
+      255deg,
+      rgba(0, 0, 0, 0) 0 34%,
+      rgba(0, 0, 0, 0.85) 34% 36.5%,
+      rgba(0, 0, 0, 0) 36.5% 40%,
+      rgba(0, 0, 0, 0.85) 40% 42.5%,
+      rgba(0, 0, 0, 0) 42.5% 46.5%,
+      rgba(0, 0, 0, 0.85) 46.5% 49%,
+      rgba(0, 0, 0, 0) 49% 100%
+    );
+  }
+  @keyframes ktRycR {
+    0% {
+      filter: opacity(0.55);
+    }
+    75% {
+      filter: opacity(0.85);
+    }
+    100% {
+      -webkit-mask-position:
+        100% 0,
+        100% 0;
+      mask-position:
+        100% 0,
+        100% 0;
+      filter: opacity(1);
+    }
+  }
+</style>
+
+<script>
+  // Formularz — logika ładowana ZAWSZE (funkcja, nie dekoracja);
+  // Turnstile dociąga się dopiero przy pierwszym focusie w formularzu,
+  // więc nie wchodzi do bundle'a wejściowego.
+  import { initContactUi } from "@/components/sections/contact/contact-ui";
+  const section = document.querySelector<HTMLElement>("main.kt");
+  if (section) initContactUi(section);
+
+  // Ruch — dynamicznie, tylko przy motion OK (sections.md). Widok nie ma
+  // zwijanych akapitów (analiza §1c), więc collapsible.ts nie wchodzi;
+  // tradycja-motion.ts jest widoko-specyficzny i też nie.
+  if (matchMedia("(prefers-reduced-motion: no-preference)").matches) {
+    import("@/components/sections/content-motion");
+  }
+</script>

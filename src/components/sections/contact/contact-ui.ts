@@ -1,17 +1,20 @@
 // Formularz /kontakt/ — logika ZAWSZE aktywna (niezależna od
 // prefers-reduced-motion): walidacja, pułapki antyspamowe, token Turnstile,
-// wysyłka i ekran potwierdzenia. Ruch widoku żyje osobno w contact-motion.ts
-// (za bramką motion).
+// wysyłka i ekran potwierdzenia. Ruch widoku obsługuje WSPÓLNY moduł
+// sections/content-motion.ts za bramką js-motion (Etap 5 — słownictwo
+// eksportu pokrywa się z widokami 4.4–4.6; osobnego contact-motion.ts
+// w tym repo nie ma i nie potrzeba: docs/analiza-kontakt.md §2 pkt 8).
 //
-// Reguły walidacji (EMAIL_RE, MESSAGE_MIN, MIN_FILL_MS) importowane z
-// src/lib/contact-form.ts — jedno źródło prawdy dla klienta i serwera.
-// Telefon jest OPCJONALNY (D-K4) i nie ma walidacji klienckiej.
-// Etykiety przycisku przychodzą przez data-atrybuty z ContactForm.astro.
+// Reguły walidacji (classifyContact, MESSAGE_MIN, MIN_FILL_MS) importowane
+// z src/lib/contact-form.ts — jedno źródło prawdy dla klienta i serwera.
+// Pole 02 to E9-owe „telefon LUB e-mail": ta sama funkcja rozstrzyga po
+// obu stronach, więc walidacje nie mogą się rozjechać.
+// Etykiety przycisku przychodzą przez data-atrybuty z markupu widoku.
 //
 // Telefon i e-mail w kaflach kontaktowych składa fillContactSlots
 // (src/lib/contact-details.ts, wołany przez skrypt chrome'u w Navbarze) —
 // ten moduł nie zna fragmentów numeru ani adresu.
-import { EMAIL_RE, MESSAGE_MIN, MIN_FILL_MS } from "@/lib/contact-form";
+import { classifyContact, MESSAGE_MIN, MIN_FILL_MS } from "@/lib/contact-form";
 import {
   CONTACT_ENDPOINT,
   TURNSTILE_SITE_KEY,
@@ -63,10 +66,10 @@ export function initContactUi(section: HTMLElement): void {
   const srvErr = q<HTMLElement>(".kt-srv");
   const tsBox = q<HTMLElement>(".kt-ts");
   const fName = q<HTMLElement>('[data-f="name"]');
-  const fMail = q<HTMLElement>('[data-f="email"]');
+  const fContact = q<HTMLElement>('[data-f="contact"]');
   const fMsg = q<HTMLElement>('[data-f="msg"]');
   const iName = q<HTMLInputElement>("#kt-name");
-  const iMail = q<HTMLInputElement>("#kt-email");
+  const iContact = q<HTMLInputElement>("#kt-contact");
   const iMsg = q<HTMLTextAreaElement>("#kt-msg");
   const hp = q<HTMLInputElement>('[name="firma"]');
   if (
@@ -75,10 +78,10 @@ export function initContactUi(section: HTMLElement): void {
     !srvErr ||
     !tsBox ||
     !fName ||
-    !fMail ||
+    !fContact ||
     !fMsg ||
     !iName ||
-    !iMail ||
+    !iContact ||
     !iMsg ||
     !hp
   ) {
@@ -86,8 +89,9 @@ export function initContactUi(section: HTMLElement): void {
   }
 
   /* honeypot jest readonly (autofill Chrome'a nie wypełnia readonly —
-     naprawa incydentu z preview, patrz komentarz w ContactForm.astro);
-     focus zdejmuje blokadę, żeby bot piszący „po ludzku" nadal się łapał */
+     naprawa incydentu z preview, patrz komentarz przy polu `firma`
+     w src/pages/kontakt.astro); focus zdejmuje blokadę, żeby bot piszący
+     „po ludzku" nadal się łapał */
   hp.addEventListener("focus", () => hp.removeAttribute("readonly"), {
     once: true,
   });
@@ -161,7 +165,7 @@ export function initContactUi(section: HTMLElement): void {
     const input = wrap.querySelector("input, textarea");
     input?.setAttribute("aria-invalid", on ? "true" : "false");
   }
-  for (const wrap of [fName, fMail, fMsg]) {
+  for (const wrap of [fName, fContact, fMsg]) {
     wrap
       .querySelector("input, textarea")
       ?.addEventListener("input", () => setErr(wrap, false));
@@ -187,12 +191,14 @@ export function initContactUi(section: HTMLElement): void {
     if (busy) return;
 
     const okName = iName!.value.trim().length > 0;
-    const okMail = EMAIL_RE.test(iMail!.value.trim());
+    // E9: poprawny telefon ALBO poprawny e-mail — rozstrzyga ta sama
+    // funkcja, którą woła walidacja serwerowa.
+    const okContact = classifyContact(iContact!.value).kind !== "invalid";
     const okMsg = iMsg!.value.trim().length >= MESSAGE_MIN;
     setErr(fName!, !okName);
-    setErr(fMail!, !okMail);
+    setErr(fContact!, !okContact);
     setErr(fMsg!, !okMsg);
-    if (!okName || !okMail || !okMsg) {
+    if (!okName || !okContact || !okMsg) {
       form!.querySelector<HTMLElement>(".err input, .err textarea")?.focus();
       return;
     }
@@ -236,7 +242,7 @@ export function initContactUi(section: HTMLElement): void {
     .querySelector<HTMLButtonElement>(".kt-again")
     ?.addEventListener("click", () => {
       form.reset();
-      for (const wrap of [fName!, fMail!, fMsg!]) setErr(wrap, false);
+      for (const wrap of [fName!, fContact!, fMsg!]) setErr(wrap, false);
       srvErr!.hidden = true;
       frame.classList.remove("sent");
       t0 = Date.now();

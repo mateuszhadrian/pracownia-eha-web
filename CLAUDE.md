@@ -976,6 +976,200 @@ secs"` (mobile: kolumna w kolejności DOM). Jedyna duplikacja
     px (0,02–0,05), więc próg jej nie przepuści. Globalny 0.0005
     w `playwright.config.ts` NIETKNIĘTY. Kandydat odkładany od 4.5 cz. 2
     — zamknięty.
+- **Etap 5 (/kontakt/ + formularz E9) — WYKONANY (kod)** (2026-08-25;
+  mini-analiza i decyzje portu: `docs/analiza-kontakt.md`).
+  ⚠️ **Infrastruktura Etapu 5 NIE jest jeszcze zrobiona** — kod stoi na
+  placeholderze `TURNSTILE_SITE_KEY = "<TURNSTILE_SITE_KEY>"`; lista
+  kroków do klikniecia niżej.
+  - OSTATNI widok serwisu i jedyny z FUNKCJĄ. Warstwa wizualna =
+    zwykły port w klasie 4.4–4.6: prefiks `.kt`, ZERO nowych mechanik
+    (konsumuje `content-motion.ts`, `content-config.ts`,
+    `PaperBackdrop` z dryfem `PAPER_BG_SPEED`, `Navbar tone="dark"`,
+    stopkę 4.1). Bez zwijanych akapitów (`grep -c 'cv(' = 0`) ⇒
+    `CollapsibleText`/`collapsible.ts` NIE wchodzą i nie ma zrzutu
+    `*-full-open`. **`contact-motion.ts` NIE POWSTAŁ** (komentarz
+    w `contact-ui.ts` odziedziczony z delunga był myślący życzeniowo —
+    sprostowany): słownictwo eksportu (`rev`/`ryc`/`plxr`/`rycsb`/
+    `bgRef`) pokrywa wspólny moduł treściowy.
+  - **JEDEN markup na oba progi, bez duplikatów dOnly/mOnly treści.**
+    Widok nie ma ani jednego bloku o różnej TREŚCI — różni się tylko
+    KOMPOZYCJA (mobile: płaski stos sekcji; desktop: dwie kolumny,
+    lewa = jedna sticky karta). Port robi to **`display: contents`**
+    na `.kt-card`/`.kt-main` na mobile + `order` w kolejności eksportu
+    (telefony → godziny → „napisz wiadomość" → e-mail → formularz →
+    dane firmowe → pudło rejestrowe → social); na desktopie kontenery
+    wracają do flexa i `order` przestaje działać. To samo zagnieżdżone
+    na `.kt-reg` (mobile: bordowane pudło; desktop: `contents`, jego
+    dwa panele wchodzą do karty). Warianty per-próg ograniczone do:
+    mono-etykiety `E-MAIL` (dOnly), kreskowanej linii nad „napisz
+    wiadomość" (mOnly) i par wariantów rycin.
+  - **Sticky kolumna z doliczonym paskiem**: eksportowe
+    `clamp(104px,8.6cqw,136px)` mierzył od góry kontenera z paskiem
+    72 px W FLOW; nasz jest FIXED, więc
+    `top: calc(var(--hdr-h) + clamp(32px, calc(8.6vw - 72px), 64px))`
+    (przy 1440 = 123,84 px, czyli 1:1 z eksportem) + `align-self:
+start` (lekcja spisu treści z polityki). Hero NISKIE
+    (`clamp(230px,20vw,320px)` desktop / `--hdr-h + 4px` mobile),
+    `[data-navref]` na hero, treść hero kotwiczona do dołu przez
+    `grid-template-areas: "kick lead" / "title lead"`.
+  - **DWIE pułapki designu potwierdzone liczbowo i NIE portowane**
+    (E9): piąte pole desktopu (`04 · ZAKRES PRAC`) — wszystkie inne
+    placeholdery występują w pliku 2×, ten 1×, więc to pomyłka; OPIS
+    wraca na desktopie do numeru `04`, a w gridzie 2-kolumnowym
+    zostaje po nim pusta komórka obok `03` (świadome — forma czyta się
+    dobrze, bo `04 · OPIS` i tak idzie na całą szerokość). Druga: RODO
+    renderowane jako pusty `<span>` 16×16 z ramką (nie `<input>`) —
+    zostaje sama notka z linkiem do polityki. Obie gałęzie eksportu
+    miały przy kwadraciku RÓŻNY tekst, co potwierdza niedopracowanie.
+  - **Kontrakt pól przepisany pod E9** (`src/lib/contact-form.ts`):
+    `name` / **`contact`** / **`place`** / `message` (+ `firma`,
+    `elapsed`, `lang`, `cf-turnstile-response`). Pola `email`, `phone`
+    i `temat`/`TOPICS` USUNIĘTE (formularz eha nie ma tematu, a
+    polityka ich nie deklaruje). Nowe: `PHONE_RE` (po normalizacji
+    opcjonalny „+" i 9–15 cyfr), `PLACE_MAX = 120`, **`classifyContact()`**
+    — JEDNO źródło prawdy rozbioru pola 02 dla klienta i serwera;
+    obsługuje też wpis mieszany („jan@x.pl, 600 000 000" → oba pola,
+    `kind: "email"`). Lokalizacja OPCJONALNA (decyzja Mateusza).
+    `buildNotifyEmail` niesie telefon / e-mail / lokalizację (brak =
+    „—") i temat `[pracownia-eha.pl] {miejscowość}: zapytanie od {imię}`.
+  - **`functions/api/kontakt.ts` pod E9**: odczyt `contact`/`place`,
+    `reply_to` maila #1 = adres nadawcy ALBO `CONTACT_TO` przy samym
+    telefonie (Resend odrzuca pusty Reply-To), **mail #2 wysyłany
+    WYŁĄCZNIE gdy `data.email !== ""`**. To nie kosmetyka: karta
+    „Resend" w sekcji 04 `/polityka-prywatnosci/` mówi „automatyczne
+    potwierdzenie do Ciebie, **jeśli podasz adres e-mail**" — bez tej
+    zmiany kod rozjeżdżałby się z opublikowanym dokumentem prawnym.
+    KV dalej trzyma WYŁĄCZNIE licznik `quota:YYYY-MM-DD`.
+    Warstwy antyspamowe NIETKNIĘTE (honeypot `readonly`, min-czas,
+    Turnstile leniwie + `execute` przy submit, WAF, KV quota).
+  - `contact-ui.ts`: `[data-f="email"]`/`#kt-email` →
+    `[data-f="contact"]`/`#kt-contact`, walidacja przez
+    `classifyContact`. Mechanika Turnstile/honeypotu/ekranu `.sent`
+    bez zmian. **Komunikaty walidacji siedzą w SSR**
+    (`<span class="kt-err">`, pokazuje je CSS przy `.err`) — zero
+    tekstów w JS.
+  - **Sloty antyscrapingowe: wariant „czytelny fallback"** (decyzja
+    Mateusza — odstępstwo od chrome'u ORAZ od `.pp`): kotwice
+    `a[data-tel]`/`a[data-mail]` renderują się widoczne, **BEZ `href`**,
+    z etykietą zastępczą w `[data-slot]` („numer telefonu" / „adres
+    e-mail"); `fillContactSlots()` podmienia tekst i dokłada `href`.
+    Link do `/kontakt/` z polityki nie miałby tu sensu, a wariant
+    `hidden` zostawiłby stronę kontaktową bez JEDNEJ danej. Stąd
+    punktowy `eslint-disable astro/jsx-a11y/anchor-is-valid` (3 kotwice)
+    i `<noscript>` tłumaczący, dlaczego numeru nie widać. D-CH5
+    zweryfikowany na `dist`: 0 wystąpień numerów i maila.
+  - Assety: **JEDEN nowy plik** — `kalamaz-rycina1-m.webp` (300 px,
+    alfa q42/aq45, 29 KB; rycina widoczna na mobile MUSI mieć alfę —
+    lekcja 4.2 §2a). Reużyte bez zmian: `telefon-rycina1(-m)`,
+    `kalamaz-rycina1` (dOnly), `dom-ryc-house4`,
+    `golab-poczt-rycina1(-m)` z 4.6, `koparka-rycina1` w stopce.
+    **ZERO fotografii** (drugi taki widok po polityce) ⇒ zero
+    `[data-plx]`. Rycina telefonu na ciemnym hero: desktop wariant
+    spłaszczony z `invert(1) sepia(.3)` + `mix-blend-mode: screen`
+    (wzorzec HomeKontakt), mobile wariant z alfą, sam `filter`.
+  - GOTCHA złapana przy porcie: **rycina rysowana na OBU progach nie
+    może być jednym elementem** z `data-ryc` i `data-rycsb` naraz —
+    content-motion obserwuje oba atrybuty niezależnie i progi wejścia
+    by się nawzajem wyprzedzały; `dom-ryc-house4` i rycina hero idą
+    jako para mOnly/dOnly (wzorzec 4.5 cz. 2). Druga: sekcje BEZ tła
+    muszą mieć na mobile `padding-inline` wewnątrz PEŁNEJ szerokości
+    (a nie zwężoną skrzynkę) — inaczej `overflow: hidden` przycina
+    ryciny na krawędzi kolumny tekstu zamiast na krawędzi ekranu.
+  - Korekty a11y (klasa 4.4–4.6, axe ZŁAPAŁ obie realnie): etykiety
+    MACIEK/ŁUKASZ w kaflach `rgba(245,239,227,.75)` na `#57654A` =
+    3,87:1 przy mono 9,5 px → `.9` (4,78:1); linki do polityki w notce
+    RODO i w paśmie dolnym były odróżnialne SAMYM KOLOREM
+    (`link-in-text-block`; Tailwind preflight zdejmuje podkreślenie) →
+    kreska `border-bottom` wzorem `.pp-link`. Allowlista axe dalej
+    **PUSTA**.
+  - JS widoku: skrypt strony **3,6 KB raw / 1,9 KB gzip** (zawiera
+    CAŁY `contact-ui.ts` — logika ładowana ZAWSZE) + `content-motion`
+    2,3 KB raw (import dynamiczny). **Turnstile NIE wchodzi do bundla
+    wejściowego**: 0 wystąpień `challenges.cloudflare.com` w
+    `dist/kontakt/index.html`, skrypt dociąga się przy pierwszym
+    `focusin` (kontrakt w e2e). LHCI mierzy `/` i
+    `/polityka-prywatnosci/`, więc budżetów ten PR nie rusza.
+  - Testy: unit `contact-form.test.ts` PRZEPISANY pod E9 (warianty
+    telefon / e-mail / oba / żadne, granice, honeypot, min-czas,
+    higiena maili); nowy e2e `kontakt.spec.ts` (SSR bez JS z 4 polami
+    i sensownym `method`/`action`, brak checkboxa RODO, brak
+    `[data-clp]`/`[data-plx]`, honeypot `readonly` + `tabindex=-1`,
+    D-CH5 na surowym HTML, sloty po JS, walidacja alternatywna na
+    **deterministycznym zegarze** (`Date.now` z przesuwanym skewem —
+    bez czekania MIN_FILL_MS), stub Turnstile + stub endpointu, ekran
+    `.sent`, „wyślij kolejną", błąd `.kt-srv`, leniwy Turnstile,
+    sticky kolumna, `tone="dark"` przez `expect.poll`, reveal, dryf
+    tła, `collectPageIssues`, strażnik scrolla, breakpoint flip);
+    visual `kontakt.spec.ts` na `usePreviewGuard` + wspólnym
+    `revealSweep` (kontakt-top / kontakt-full; fullPage timeout 20 s +
+    per-shot 0.001). `smoke.spec.ts` dostał asercję `.kt-form` + 4 pól
+    i nowy kontrakt pól w sondzie POST.
+  - **`tests/visual/skeleton.spec.ts` SKASOWANY** razem z baseline'ami
+    `skeleton-kontakt-*` (24 pliki, `git rm`) — była to ostatnia trasa
+    szkieletu. Plik znika z repo.
+  - **Próg `index-full` podniesiony 0.0025 → 0.006** (decyzja Mateusza;
+    stała `FULLPAGE_MAX_DIFF_RATIO` w `tests/visual/index.spec.ts`,
+    globalny 0.0005 NIETKNIĘTY). Objaw: `webkit-iphone-se/index-full`
+    czerwony w CI na 9923 px = 0.00435. Rozpoznanie przeprowadzone do
+    końca, bo trzy zastane heurystyki dawały tu SPRZECZNE odpowiedzi:
+    (1) render `/` z buildu gałęzi i z buildu `origin/main` na TEJ SAMEJ
+    maszynie jest identyczny CO DO PIKSELA (0 różnic, 640×12272 — build
+    main w osobnym `git worktree`), więc PR nie jest przyczyną;
+    (2) actual z CI jest **bajt-w-bajt równy** zrzutowi z workflow
+    baseline'ów, a dwa niezależne przebiegi nie powtórzyłyby losowego
+    stanu — więc to NIE jest flake w rozumieniu „raz tak, raz siak";
+    (3) poprzednie CI na main było z tym baseline'em ZIELONE, więc
+    baseline nie jest przeterminowany. Rozstrzygnęły OGLĘDZINY pasma:
+    tekst stoi piksel w piksel, przesuwa się WYŁĄCZNIE zdjęcie w tle —
+    pętla parallaxu `[data-plx]` osiadła na innej klatce przy zszywaniu
+    fullPage. Punkt osiadania zależy od obciążenia runnera, a to zmienia
+    się przy KAŻDEJ zmianie składu zestawu wizualnego (tu: zniknął
+    `skeleton.spec.ts`, doszedł `kontakt.spec.ts` → inny przydział na
+    4 workerów). Stąd próg na całą klasę zamiast przyjmowania zrzutu
+    bota: zapas do realnej regresji (0,02–0,05) zostaje 3–8×.
+    ⚠️ **Uwaga interpretacyjna na przyszłość**: surowy diff tego zrzutu
+    to 220 103 px, a Playwright raportuje 9 923 — liczy PERCEPCYJNIE
+    (próg koloru), więc „liczba różnych pikseli" z własnego skryptu
+    i liczba z logu Playwrighta to DWIE RÓŻNE metryki i nie wolno ich
+    porównywać. Lekarstwo strukturalne (zamrożenie transformów
+    `[data-plx]` przed zrzutem fullPage w `revealSweep`) unieważniłoby
+    baseline'y wszystkich widoków z kadrami — kandydat na Etap 6.
+  - **`/` zmienia się w buildzie, ale NIE w renderze** (sprawdzone przy
+    powyższej diagnozie i przy fail'u LHCI): odkąd `kontakt.astro` jest
+    DRUGIM konsumentem `PaperBackdrop`, Astro przenosi jego CSS
+    z inline'owego `<style>` do już linkowanego `BaseLayout.css`.
+    Lista skryptów `/` bez zmian, łączne bajty HTML+CSS 96 256 → 96 239
+    (−17 B), render identyczny co do piksela. Przy każdym przyszłym
+    czerwonym LHCI na `/` zaczynaj od tego porównania — hash
+    `BaseLayout.*.css` MOŻE się zmienić bez żadnego wpływu na wynik.
+  - Bramki 2026-08-25: format/lint/typecheck/unit(**86**, było 80)/
+    build/e2e(**598 passed / 482 skipped**, było 485/457)/visual
+    `--ignore-snapshots`(**126 z 156 zaplanowanych**, było 120 ze 150 —
+    skeleton miał JEDEN test na trasę, kontakt ma dwa) zielone.
+  - UWAGA: baseline'y `kontakt-*` NIE istnieją — komplety linux+darwin
+    generuje Mateusz (workflow z kontrolą intruzów → darwin na końcu;
+    znani intruzi bot-commitów: `ekipa-top` SE, `index-full` SE/14,
+    `work-index-full` SE oraz `kompetencje-full` firefox-desktop —
+    przywracać `git checkout <sha-przed-botem> -- <plik>`).
+  - **DO KLIKNIĘCIA przez Mateusza (Część B pkt 5.1–5.5)**: konto
+    Resend na `eha@` + domena `send.pracownia-eha.pl` (region EU,
+    rekordy DNS only, apeks NIETKNIĘTY) → `RESEND_API_KEY`; widget
+    Turnstile `eha-kontakt` (Managed, `pracownia-eha.pl` +
+    `pracownia-eha-web.pages.dev`) → **site key do
+    `src/components/sections/contact/contact-config.ts`, stała
+    `TURNSTILE_SITE_KEY`** (dziś `<TURNSTILE_SITE_KEY>`), secret do
+    Pages; KV `eha-kontakt-quota` + binding `KONTAKT_KV`; zmienne Pages
+    `RESEND_API_KEY` i `TURNSTILE_SECRET_KEY` (Production + Preview,
+    Encrypt); reguła WAF `kontakt-form-burst` (3 POST-y/10 s na
+    `/api/kontakt`). Do czasu wdrożenia formularz odpowiada błędem
+    `.kt-srv` (403 z Turnstile) — telefony i mail działają.
+  - UWAGI dla Etapu 6: JSON-LD `HomeAndConstructionBusiness` na
+    `/kontakt/` (węzeł JEST w `jsonld.ts`, ale NIE jest renderowany) +
+    geo i `@graph` na `/`; **Cloudflare Web Analytics — polityka JUŻ go
+    deklaruje, więc TRZEBA go włączyć**; brand polish (favicon +
+    `make-icons.mjs`); Search Console + sitemap; UptimeRobot; audyt
+    subsetów fontów (kandydat wiszący od Etapu 3); ewentualne
+    zacieśnienie LCP osobnym commitem.
 
 ## Dokumentacja
 

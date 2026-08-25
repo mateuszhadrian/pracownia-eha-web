@@ -67,13 +67,14 @@ async function handlePost({ request, env }: PagesContext): Promise<Response> {
     return typeof value === "string" ? value : "";
   };
 
+  // Kontrakt pól = formularz E9 (Etap 5): `contact` to JEDNO pole
+  // „telefon LUB e-mail", `place` to lokalizacja inwestycji. Rozbiorem
+  // i walidacją zajmuje się src/lib/contact-form.ts — jedno źródło
+  // prawdy wspólne z walidacją kliencką.
   const raw = {
     name: field("name"),
-    email: field("email"),
-    // Pole z designu (Etap 5) — opcjonalne; stare POST-y bez niego
-    // dostają "" i przechodzą tak samo.
-    phone: field("phone"),
-    temat: field("temat"),
+    contact: field("contact"),
+    place: field("place"),
     message: field("message"),
     firma: field("firma"),
     elapsed: field("elapsed"),
@@ -124,12 +125,14 @@ async function handlePost({ request, env }: PagesContext): Promise<Response> {
   }).format(new Date());
 
   // Mail #1 — powiadomienie do skrzynki; Reply-To = nadawca z formularza,
-  // więc „Odpowiedz" w Outlooku pisze wprost do klienta.
+  // więc „Odpowiedz" w Outlooku pisze wprost do klienta. Gdy podano SAM
+  // TELEFON, adresu nie ma — Reply-To wraca wtedy na własną skrzynkę
+  // (Resend odrzuca pusty/niebędący adresem Reply-To).
   const notify = buildNotifyEmail(validated.data, sentAt);
   const sent = await sendEmail(env.RESEND_API_KEY, {
     from: CONTACT_FROM_NOTIFY,
     to: [CONTACT_TO],
-    reply_to: validated.data.email,
+    reply_to: validated.data.email || CONTACT_TO,
     ...notify,
   });
   if (!sent.ok) {
@@ -137,19 +140,25 @@ async function handlePost({ request, env }: PagesContext): Promise<Response> {
     return json(502, { ok: false, error: "send" });
   }
 
-  // Mail #2 — potwierdzenie dla nadawcy; porażka NIE psuje odpowiedzi
-  // (wiadomość dotarła do skrzynki — to sedno usługi).
-  const confirm = buildConfirmEmail(validated.data);
-  const confirmSent = await sendEmail(env.RESEND_API_KEY, {
-    from: CONTACT_FROM_CONFIRM,
-    to: [validated.data.email],
-    reply_to: CONTACT_TO,
-    ...confirm,
-  });
-  if (!confirmSent.ok) {
-    console.error(
-      `kontakt: potwierdzenie nie wyszło (HTTP ${confirmSent.status})`,
-    );
+  // Mail #2 — potwierdzenie dla nadawcy. Wychodzi WYŁĄCZNIE, gdy podano
+  // adres e-mail (E9): przy samym telefonie nie ma dokąd go wysłać, a
+  // karta „Resend" w /polityka-prywatnosci/ deklaruje to wprost
+  // („automatyczne potwierdzenie do Ciebie, jeśli podasz adres e-mail").
+  // Porażka NIE psuje odpowiedzi — wiadomość dotarła do skrzynki, to
+  // sedno usługi.
+  if (validated.data.email) {
+    const confirm = buildConfirmEmail(validated.data);
+    const confirmSent = await sendEmail(env.RESEND_API_KEY, {
+      from: CONTACT_FROM_CONFIRM,
+      to: [validated.data.email],
+      reply_to: CONTACT_TO,
+      ...confirm,
+    });
+    if (!confirmSent.ok) {
+      console.error(
+        `kontakt: potwierdzenie nie wyszło (HTTP ${confirmSent.status})`,
+      );
+    }
   }
 
   return json(200, { ok: true });
