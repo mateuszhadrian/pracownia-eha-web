@@ -1,9 +1,2475 @@
 ---
-import SkeletonPage from "@/components/SkeletonPage.astro";
+// Podstrona /kompetencje-i-technologie/ (Etap 4.4, część 2) — port
+// docs/design/export/kompetencje-i-technologie.html; decyzje:
+// docs/analiza-kompetencje.md. Konsumuje moduły części 1 BEZ zmian ich
+// mechanik: CollapsibleText + collapsible.ts (zwijane akapity mobile,
+// progressive enhancement jak paginacja E5 — SSR z pełnym tekstem),
+// content-motion.ts (reveale/rysowanie/parallaxy/dryf tła za bramką
+// js-motion), Navbar tone="dark" (kremowy pasek nad hero z górnym
+// gradientem), PaperBackdrop. Sekcje rzemiosł (ciesielstwo/murarstwo/
+// sklepienia) mają na obu progach REALNIE różne kompozycje (analiza §2
+// pkt 5) — akapity/kadry/karty są świadomie zduplikowane dOnly/mOnly
+// (kicker+h2 wspólne); fizyka/instalacje/granice = jeden markup.
+import ceglaMoz from "@/assets/cegla-i-kamien.webp";
+import ceglaAi1 from "@/assets/cegla-i-kamien-ai1.webp";
+import cegla2 from "@/assets/cegla-i-kamien2-full.webp";
+import cegla3 from "@/assets/cegla-i-kamien3.webp";
+import czernica from "@/assets/czernica-elewacja-szachulcowa-3.webp";
+import house2 from "@/assets/dom-ryc-house2.webp";
+import house3 from "@/assets/dom-ryc-house3.webp";
+import house4 from "@/assets/dom-ryc-house4.webp";
+import house5 from "@/assets/dom-ryc-house5.webp";
+import house6 from "@/assets/dom-ryc-house6.webp";
+import house7 from "@/assets/dom-ryc-house7.webp";
+import ekologia from "@/assets/ekologia-techno.webp";
+import hero from "@/assets/kompetencje-i-technologie-hero.webp";
+import hydraulika from "@/assets/hydraulika-elektryka-ai.webp";
+import instalacjeKadr from "@/assets/instalacje-full.webp";
+import instalacjePol from "@/assets/instalacje.webp";
+import murAi1 from "@/assets/mur-szachulcowy-ai1.webp";
+import murAi2 from "@/assets/mur-szachulcowy-ai2.webp";
+import murFull from "@/assets/mur-szachulcowy-full.webp";
+import naglowek from "@/assets/naglowek-ost-sekcja-techn.webp";
+import podlogowka from "@/assets/podlogowka.webp";
+import rozdzielnica from "@/assets/rozdzielnica.webp";
+import sklepieniaAi from "@/assets/sklepienia-ai1.webp";
+import sklepienie from "@/assets/sklepienie-zagliste-full.webp";
+import Footer from "@/components/Footer.astro";
+import Navbar from "@/components/navbar/Navbar.astro";
+import PaperBackdrop from "@/components/PaperBackdrop.astro";
+import CollapsibleText from "@/components/sections/CollapsibleText.astro";
+import { ui } from "@/i18n/ui";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { CONTACT_PATH, TRADYCJA_PATH } from "@/lib/routes";
+
+// Treści powtarzane dOnly/mOnly — jedno źródło, żeby kopie nie mogły
+// się rozjechać (akapity z <em> siedzą inline w markupie).
+const CIES_P = [
+  "Traktujemy drewno z szacunkiem, jakiego wymaga historyczna substancja. Specjalizujemy się w ratowaniu, odbudowie i wznoszeniu od podstaw skomplikowanych konstrukcji drewnianych. Nie uznajemy współczesnych ułatwień w postaci metalowych łączników czy śrub tam, gdzie tradycja wymaga innej techniki.",
+  "Ściany i elementy nośne łączymy wyłącznie za pomocą precyzyjnie wykonanych, tradycyjnych złączy ciesielskich oraz drewnianych kołków. To właśnie ta ortodoksja technologiczna gwarantuje statykę i elastyczność budynków na kolejne stulecia. Niejednokrotnie integrujemy też stare, wiekowe drewno z nowym, odpowiednio wyselekcjonowanym materiałem.",
+];
+const MUR_P = [
+  "Fundamenty, ściany nośne i mury to kręgosłup każdego starego domu. Pracujemy z wymagającymi materiałami: kamieniem naturalnym, nową cegłą oraz historyczną cegłą z rozbiórki. Rozumiemy chemię starych zapraw i wiemy, jak zachowuje się mur obciążony upływem czasu.",
+  "Nasze prace murarskie to nie tylko układanie materiału, ale przede wszystkim przywracanie budynkom ich pierwotnej geometrii i wytrzymałości.",
+];
+const SKL_P2 =
+  "Tam, gdzie inne ekipy rezygnują z obawy przed skomplikowanym rozkładem sił i wektorów, my z pasją odtwarzamy historyczne ustroje nośne. Wykonujemy je z niesamowitą dbałością o detal, przywracając wnętrzom ich dawny, monumentalny charakter.";
+const CIES_CARDS = [
+  {
+    k: "MURY SZACHULCOWE I PRUSKIE",
+    t: "Budowa i renowacja w ustroju słupowo-ryglowym.",
+  },
+  { k: "KONSTRUKCJE PRZYSŁUPOWE", t: "Odtwarzanie i wznoszenie od podstaw." },
+  { k: "WIĘŹBY DACHOWE", t: "Wykonywanie potężnych więźb dachowych." },
+  {
+    k: "ELEMENTY KONSTRUKCYJNE",
+    t: "Prace przy małych i średnich elementach konstrukcyjnych.",
+  },
+];
+const MUR_CARDS = [
+  {
+    k: "MURY Z KAMIENIA I CEGŁY",
+    t: "Wznoszenie i renowacja murów — także z historycznej cegły rozbiórkowej.",
+  },
+  {
+    k: "FUGOWANIE HISTORYCZNYCH SPOIN",
+    t: "Precyzyjne odtwarzanie i uzupełnianie spoin starych murów.",
+  },
+  { k: "ŁUKI I NADPROŻA", t: "Murowanie łuków nadproży, okien i drzwi." },
+  { k: "TYNKI TRADYCYJNE", t: "Kładzenie tynków metodami tradycyjnymi." },
+];
+const TWORZYMY = [
+  "Sklepienia kolebkowe",
+  "Sklepienia żagliste",
+  "Sklepienia krzyżowo-żebrowe",
+  "Kopuły we wszelkim kształcie",
+  "Stropy odcinkowe",
+];
+const SKL_BADGE = "SKLEPIENIA ŻAGLISTE — REALIZACJA EH/A";
 ---
 
-<SkeletonPage
-  title="Kompetencje i technologie — Pracownia EH/A"
-  heading="Kompetencje i technologie"
-  description="Ciesielstwo, murarstwo, sklepienia, fizyka budowli i instalacje — kompetencje i technologie Pracowni EH/A."
-/>
+<BaseLayout
+  title={ui.pl["kompetencjePage.title"]}
+  description={ui.pl["kompetencjePage.description"]}
+>
+  <script is:inline slot="head">
+    // PRZED paintem: motion OK → html.js-motion (uzbraja stany startowe
+    // revealów/rysowania — reszta w content-motion.ts, ładowanym niżej).
+    if (window.matchMedia("(prefers-reduced-motion: no-preference)").matches) {
+      document.documentElement.classList.add("js-motion");
+    }
+  </script>
+
+  <Navbar tone="dark" />
+
+  <main class="kmp">
+    <PaperBackdrop />
+
+    {/* ── hero + płyta tytułowa: grid-overlap, JEDEN h1 (analiza §2.4) ── */}
+    <header class="kmp-head">
+      <div class="kmp-hero-ph" data-navref>
+        <img
+          data-plx
+          src={hero.src}
+          width={hero.width}
+          height={hero.height}
+          alt="Rysunek techniczny konstrukcji i fotografia wnętrza stodoły"
+          loading="eager"
+          fetchpriority="high"
+          decoding="async"
+        />
+        {/* gradient czytelności kremowego paska (tone="dark") */}
+        <span class="kmp-hero-top" aria-hidden="true"></span>
+      </div>
+      <div class="kmp-tt">
+        <p class="kmp-kick dOnly">KOMPETENCJE</p>
+        <h1>Kompetencje i technologie.</h1>
+        <p class="kmp-lead dOnly">Inżynieria tradycji.</p>
+      </div>
+    </header>
+
+    {/* ── akapit wprowadzający ── */}
+    <section class="kmp-intro">
+      <div class="int-rycw dOnly" aria-hidden="true">
+        <img
+          data-rycsb="l"
+          src={house6.src}
+          width={house6.width}
+          height={house6.height}
+          alt=""
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
+      <div class="int-in">
+        <p class="kmp-lead mOnly">Inżynieria tradycji.</p>
+        <p class="int-p">
+          W Pracowni EH/A nie idziemy na kompromisy. Budownictwo historyczne
+          wymaga pokory, inżynieryjnej precyzji i technologii, które przetrwały
+          wieki. Nasze kompetencje opierają się na głębokim zrozumieniu materii
+          – od statyki murów, przez fizykę drewna, aż po skomplikowane ustroje
+          nośne. Dzielimy nasze rzemiosło na dwie równorzędne dziedziny:
+          tradycyjne ciesielstwo oraz zaawansowane murarstwo, łącząc je ze
+          współczesną funkcjonalnością.
+        </p>
+      </div>
+    </section>
+
+    {/* ── CIESIELSTWO ── */}
+    <section class="kmp-cies">
+      <div class="cies-grid">
+        <div class="cies-txt">
+          <div class="kmp-sec-head cies-head">
+            <div class="kmp-plbg mOnly" aria-hidden="true">
+              <img
+                data-plx
+                src={murAi1.src}
+                width={murAi1.width}
+                height={murAi1.height}
+                alt=""
+                loading="lazy"
+                decoding="async"
+              />
+              <span class="kmp-fog"></span>
+            </div>
+            <div class="kmp-sec-head-in">
+              <p class="kmp-kick" data-rev>CIESIELSTWO</p>
+              <h2 data-rev data-rev-d="1">
+                Drewno. Ciesielstwo bez dróg na skróty
+              </h2>
+            </div>
+          </div>
+          <div class="kmp-ps kmp-ps-sep dOnly">
+            {CIES_P.map((t) => <p>{t}</p>)}
+          </div>
+        </div>
+        <div class="cies-photo dOnly">
+          <img
+            src={murFull.src}
+            width={murFull.width}
+            height={murFull.height}
+            alt="Mur szachulcowy w trakcie prac ciesielskich"
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+      </div>
+      <CollapsibleText
+        id="sec-ciesielstwo"
+        collapsedMax="132px"
+        class="kmp-clp mOnly"
+      >
+        <div class="kmp-clp-ryc cies-ryc" aria-hidden="true">
+          <img
+            data-ryc="r"
+            src={house6.src}
+            width={house6.width}
+            height={house6.height}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+        {CIES_P.map((t) => <p>{t}</p>)}
+        <div class="kmp-bandclp cies-band">
+          <img
+            data-plx
+            src={murFull.src}
+            width={murFull.width}
+            height={murFull.height}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+        <div class="kmp-zakm cies-zakm">
+          <img
+            class="zakm-bg"
+            src={murAi2.src}
+            width={murAi2.width}
+            height={murAi2.height}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            decoding="async"
+          />
+          <div class="zakm-in">
+            <p class="kmp-kick">ZAKRES PRAC CIESIELSKICH</p>
+            <div class="kmp-cards">
+              {
+                CIES_CARDS.map((c) => (
+                  <div class="kmp-card">
+                    <p class="kmp-card-k">{c.k}</p>
+                    <p class="kmp-card-t">{c.t}</p>
+                  </div>
+                ))
+              }
+            </div>
+          </div>
+        </div>
+      </CollapsibleText>
+      <div class="cies-zakd dOnly">
+        <div class="zakd-rycw" aria-hidden="true">
+          <img
+            data-rycsb="r"
+            src={house6.src}
+            width={house6.width}
+            height={house6.height}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+        <div class="zakd-in">
+          <p class="kmp-kick">ZAKRES PRAC CIESIELSKICH</p>
+          <div class="kmp-cards">
+            {
+              CIES_CARDS.map((c) => (
+                <div class="kmp-card">
+                  <p class="kmp-card-k">{c.k}</p>
+                  <p class="kmp-card-t">{c.t}</p>
+                </div>
+              ))
+            }
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {/* ── MURARSTWO ── */}
+    <section class="kmp-mur">
+      <div class="mur-moz dOnly">
+        <div class="moz-a">
+          <img
+            src={cegla2.src}
+            width={cegla2.width}
+            height={cegla2.height}
+            alt="Detal muru z cegły i kamienia"
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+        <div class="moz-b">
+          <img
+            src={ceglaMoz.src}
+            width={ceglaMoz.width}
+            height={ceglaMoz.height}
+            alt="Ściana z kamienia naturalnego"
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+      </div>
+      <div class="kmp-sec-head mur-head">
+        <div class="kmp-plbg mOnly" aria-hidden="true">
+          <img
+            data-plx
+            src={ceglaAi1.src}
+            width={ceglaAi1.width}
+            height={ceglaAi1.height}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+          <span class="kmp-fog"></span>
+        </div>
+        <div class="kmp-sec-head-in">
+          <p class="kmp-kick" data-rev>MURARSTWO</p>
+          <h2 data-rev data-rev-d="1">Cegła i kamień. Murarstwo z duszą</h2>
+        </div>
+      </div>
+      <div class="mur-grid dOnly">
+        <div class="mur-rycw" aria-hidden="true">
+          <img
+            data-rycsb="l"
+            src={house6.src}
+            width={house6.width}
+            height={house6.height}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+        <div class="kmp-ps">{MUR_P.map((t) => <p>{t}</p>)}</div>
+        <div class="mur-zak">
+          <p class="kmp-kick">ZAKRES PRAC MURARSKICH</p>
+          {
+            MUR_CARDS.map((c) => (
+              <div class="kmp-card">
+                <p class="kmp-card-k">{c.k}</p>
+                <p class="kmp-card-t">{c.t}</p>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+      <CollapsibleText
+        id="sec-murarstwo"
+        collapsedMax="132px"
+        class="kmp-clp mOnly"
+      >
+        <div class="kmp-clp-ryc mur-ryc" aria-hidden="true">
+          <img
+            data-ryc="r"
+            src={house3.src}
+            width={house3.width}
+            height={house3.height}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+        {MUR_P.map((t) => <p>{t}</p>)}
+        <div class="kmp-bandclp mur-band">
+          <img
+            data-plx
+            src={cegla2.src}
+            width={cegla2.width}
+            height={cegla2.height}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+        <div class="kmp-zakm mur-zakm">
+          <img
+            class="zakm-bg"
+            src={cegla3.src}
+            width={cegla3.width}
+            height={cegla3.height}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            decoding="async"
+          />
+          <div class="zakm-in">
+            <p class="kmp-kick">ZAKRES PRAC MURARSKICH</p>
+            <div class="kmp-cards">
+              {
+                MUR_CARDS.map((c) => (
+                  <div class="kmp-card">
+                    <p class="kmp-card-k">{c.k}</p>
+                    <p class="kmp-card-t">{c.t}</p>
+                  </div>
+                ))
+              }
+            </div>
+          </div>
+        </div>
+      </CollapsibleText>
+    </section>
+
+    {/* ── SKLEPIENIA ── */}
+    <section class="kmp-skl">
+      <div class="skl-grid">
+        <div class="skl-photo dOnly">
+          <img
+            src={sklepienie.src}
+            width={sklepienie.width}
+            height={sklepienie.height}
+            alt="Sklepienia żagliste w piwnicy — realizacja EH/A"
+            loading="lazy"
+            decoding="async"
+          />
+          <p class="kmp-badge skl-badge">{SKL_BADGE}</p>
+        </div>
+        <div class="skl-side">
+          <div class="skl-rycw dOnly" aria-hidden="true">
+            <img
+              data-rycsb="r"
+              src={house6.src}
+              width={house6.width}
+              height={house6.height}
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+          <div class="skl-card">
+            <div class="kmp-sec-head skl-head">
+              <div class="kmp-plbg mOnly" aria-hidden="true">
+                <img
+                  data-plx
+                  src={sklepieniaAi.src}
+                  width={sklepieniaAi.width}
+                  height={sklepieniaAi.height}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />
+                <span class="kmp-fog"></span>
+              </div>
+              <div class="kmp-sec-head-in">
+                <p class="kmp-kick" data-rev>SKLEPIENIA</p>
+                <h2 data-rev data-rev-d="1">
+                  Sklepienia. Korona naszego rzemiosła
+                </h2>
+              </div>
+            </div>
+            <div class="kmp-ps kmp-ps-sep dOnly">
+              <p>
+                To dziedzina, z której czerpiemy największą satysfakcję i która
+                jest ostatecznym sprawdzianem murarskich kompetencji. W myśl
+                zasady <em>„im trudniej, tym lepiej”</em>, podejmujemy się
+                najbardziej skomplikowanych wyzwań inżynieryjnych i
+                geometrycznych.
+              </p>
+              <p>{SKL_P2}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <CollapsibleText
+        id="sec-sklepienia"
+        collapsedMax="132px"
+        class="kmp-clp mOnly"
+      >
+        <div class="kmp-clp-ryc skl-ryc" aria-hidden="true">
+          <img
+            data-ryc="r"
+            src={house7.src}
+            width={house7.width}
+            height={house7.height}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+        <p>
+          To dziedzina, z której czerpiemy największą satysfakcję i która jest
+          ostatecznym sprawdzianem murarskich kompetencji. W myśl zasady <em
+            >„im trudniej, tym lepiej”</em
+          >, podejmujemy się najbardziej skomplikowanych wyzwań inżynieryjnych i
+          geometrycznych.
+        </p>
+        <p>{SKL_P2}</p>
+        <figure class="skl-kadr">
+          <div class="kmp-bandclp skl-band">
+            <img
+              data-plx
+              src={sklepienie.src}
+              width={sklepienie.width}
+              height={sklepienie.height}
+              alt="Sklepienia żagliste w piwnicy — realizacja EH/A"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+          <figcaption>{SKL_BADGE}</figcaption>
+        </figure>
+        <div class="skl-twom">
+          <p class="kmp-kick">TWORZYMY I ODTWARZAMY</p>
+          <div class="kmp-cards">
+            {
+              TWORZYMY.map((name, i) => (
+                <div class="two-card">
+                  <span class="two-num">{String(i + 1).padStart(2, "0")}</span>
+                  <span class="two-name">{name}</span>
+                </div>
+              ))
+            }
+          </div>
+        </div>
+      </CollapsibleText>
+    </section>
+
+    {/* ── TWORZYMY I ODTWARZAMY: ciemny pas (desktop) ── */}
+    <section class="kmp-two dOnly" aria-label="Tworzymy i odtwarzamy">
+      <div class="two-in">
+        <p class="kmp-kick two-kick">TWORZYMY I ODTWARZAMY</p>
+        <div class="two-grid">
+          {
+            TWORZYMY.map((name, i) => (
+              <div class="two-col">
+                <span class="two-num">{String(i + 1).padStart(2, "0")}</span>
+                <span class="two-name">{name}</span>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    {/* ── FIZYKA BUDOWLI ── */}
+    <section class="kmp-eko">
+      <div class="eko-strip mOnly" aria-hidden="true">
+        <img
+          src={ekologia.src}
+          width={ekologia.width}
+          height={ekologia.height}
+          alt=""
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
+      <div class="eko-grid">
+        <div class="eko-photo dOnly">
+          <img
+            src={ekologia.src}
+            width={ekologia.width}
+            height={ekologia.height}
+            alt="Wapień, wełna drzewna i stare drewno na warsztatowym blacie"
+            loading="lazy"
+            decoding="async"
+          />
+          <p class="kmp-badge eko-badge">
+            WAPIEŃ, WEŁNA DRZEWNA I STARE DREWNO NA WARSZTATOWYM BLACIE
+          </p>
+        </div>
+        <div class="eko-txt">
+          <p class="kmp-kick" data-rev>FIZYKA BUDOWLI</p>
+          <h2 data-rev data-rev-d="1">
+            Fizyka budowli. Ekologia, która działa
+          </h2>
+          <div class="eko-pw">
+            <div class="kmp-clp-ryc eko-ryc mOnly" aria-hidden="true">
+              <img
+                data-ryc="r"
+                data-plxr
+                src={house5.src}
+                width={house5.width}
+                height={house5.height}
+                alt=""
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
+            <p class="eko-p">
+              Nasze podejście do ekologii nie opiera się na modnych hasłach,
+              lecz na prawach fizyki i geologicznej wiedzy o materiałach.
+              Stosujemy ocieplenia i termomodernizacje budynków przy użyciu
+              otwartych dyfuzyjnie materiałów, takich jak wełna drzewna czy
+              tynki wapienne. Pozwala to historycznej tkance „oddychać”,
+              naturalnie regulując wilgotność i chroniąc konstrukcję przed
+              degradacją.
+            </p>
+          </div>
+        </div>
+        <div class="eko-card">
+          <p class="eko-card-k">TRADYCJA I EKOLOGIA</p>
+          <p class="eko-card-t">
+            Zajrzyj głębiej: jak natura i stare technologie chronią Twój dom
+            lepiej niż współczesna chemia.
+          </p>
+          <a class="kmp-btn" href={TRADYCJA_PATH}>Poznaj nasze podejście →</a>
+        </div>
+      </div>
+    </section>
+
+    {/* ── INSTALACJE ── */}
+    <section class="kmp-inst">
+      <div class="inst-grid">
+        <div class="inst-photo dOnly">
+          <img
+            src={instalacjeKadr.src}
+            width={instalacjeKadr.width}
+            height={instalacjeKadr.height}
+            alt="Rozdzielacz ogrzewania — realizacja EH/A"
+            loading="lazy"
+            decoding="async"
+          />
+          <p class="kmp-badge inst-badge">ROZDZIELACZ C.O.</p>
+        </div>
+        <div class="inst-panel">
+          <div class="inst-rycw dOnly" aria-hidden="true">
+            <img
+              data-rycsb="r"
+              src={house4.src}
+              width={house4.width}
+              height={house4.height}
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+          <div class="kmp-sec-head inst-head">
+            <div class="kmp-plbg mOnly" aria-hidden="true">
+              <img
+                data-plx
+                src={hydraulika.src}
+                width={hydraulika.width}
+                height={hydraulika.height}
+                alt=""
+                loading="lazy"
+                decoding="async"
+              />
+              <span class="kmp-fog"></span>
+            </div>
+            <div class="kmp-sec-head-in">
+              <p class="kmp-kick" data-rev>INSTALACJE</p>
+              <h2 data-rev data-rev-d="1">
+                Współczesny krwiobieg w historycznym ciele
+              </h2>
+            </div>
+          </div>
+          <div class="inst-body">
+            <div class="inst-p1w">
+              <div class="kmp-clp-ryc inst-ryc mOnly" aria-hidden="true">
+                <img
+                  data-ryc="r"
+                  data-plxr
+                  src={house4.src}
+                  width={house4.width}
+                  height={house4.height}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+              <p>
+                Zabytkowy charakter domu nie oznacza rezygnacji ze współczesnego
+                komfortu. Świadomie i w pełni bezpiecznie integrujemy nowoczesne
+                materiały budowlane i technologie z dawnym rzemiosłem.
+              </p>
+            </div>
+            <div class="inst-row">
+              <figure class="inst-pol mOnly">
+                <span class="inst-pol-ph">
+                  <img
+                    src={instalacjePol.src}
+                    width={instalacjePol.width}
+                    height={instalacjePol.height}
+                    alt="Rozdzielacz ogrzewania — realizacja EH/A"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </span>
+                <figcaption>ROZDZIELACZ C.O.</figcaption>
+              </figure>
+              <p>
+                Zajmujemy się kompleksowym wdrażaniem instalacji — od
+                projektowania i wykonawstwa instalacji elektrycznych po pełne
+                instalacje hydrauliczne — tworząc nowoczesny układ nerwowy
+                wewnątrz historycznej struktury.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="inst-para">
+        <figure class="ip-card ip-a">
+          <img
+            src={rozdzielnica.src}
+            width={rozdzielnica.width}
+            height={rozdzielnica.height}
+            alt="Rozdzielnica elektryczna — realizacja EH/A"
+            loading="lazy"
+            decoding="async"
+          />
+          <figcaption>ROZDZIELNICA ELEKTRYCZNA — REALIZACJA EH/A</figcaption>
+        </figure>
+        <figure class="ip-card ip-b">
+          <img
+            src={podlogowka.src}
+            width={podlogowka.width}
+            height={podlogowka.height}
+            alt="Ogrzewanie podłogowe w historycznym wnętrzu — realizacja EH/A"
+            loading="lazy"
+            decoding="async"
+          />
+          <figcaption>OGRZEWANIE PODŁOGOWE — REALIZACJA EH/A</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    {/* ── ŚWIADOME GRANICE (mobile: jasna sekcja; desktop: ciemny blok) ── */}
+    <section class="kmp-gran">
+      <div class="gran-bg dOnly" aria-hidden="true">
+        <img
+          src={czernica.src}
+          width={czernica.width}
+          height={czernica.height}
+          alt=""
+          loading="lazy"
+          decoding="async"
+        />
+        <span class="gran-shade"></span>
+      </div>
+      <div class="gran-top">
+        <div class="kmp-sec-head gran-head">
+          <div class="kmp-plbg mOnly" aria-hidden="true">
+            <img
+              data-plx
+              src={naglowek.src}
+              width={naglowek.width}
+              height={naglowek.height}
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
+            <span class="kmp-fog"></span>
+          </div>
+          <div class="kmp-sec-head-in">
+            <p class="kmp-kick" data-rev>ŚWIADOME GRANICE</p>
+            <h2 data-rev data-rev-d="1">Stan surowy zamknięty +</h2>
+          </div>
+        </div>
+        <CollapsibleText id="sec-granice" collapsedMax="128px" class="gran-clp">
+          <div class="kmp-clp-ryc gran-ryc mOnly" aria-hidden="true">
+            <img
+              data-ryc="r"
+              data-plxr
+              src={house2.src}
+              width={house2.width}
+              height={house2.height}
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+          <p>
+            Nie jesteśmy firmą od wszystkiego. Świadomie zrezygnowaliśmy z
+            typowych prac wykończeniowych, aby w 100% skupić się na tym, co
+            najważniejsze – na ratowaniu i budowie solidnej, trwałej
+            konstrukcji.
+          </p>
+          <p>
+            Prowadzimy inwestycję od ciężkich prac fundamentowych po tzw. <em
+              >stan surowy zamknięty +</em
+            >. Oznacza to, że oddajemy inwestorowi budynek z gotowym dachem,
+            wprowadzonymi instalacjami, wykonaną izolacją, zalanymi posadzkami
+            oraz zamontowaną stolarką okienną i drzwiową. Wykonujemy również
+            drobne, specjalistyczne prace wykończeniowe, takie jak układanie
+            tradycyjnych drewnianych podłóg na legarach.
+          </p>
+        </CollapsibleText>
+      </div>
+      <div class="gran-foot">
+        <div class="gf-in">
+          <span class="gran-sep mOnly" aria-hidden="true"></span>
+          <p class="gran-quote">
+            Malowanie ścian czy kładzenie glazury zostawiamy innym – naszą rolą
+            jest zagwarantowanie, że dom, który dla Ciebie wzniesiemy lub
+            odrestaurujemy, przetrwa pokolenia.
+          </p>
+          <span class="gran-sep mOnly" aria-hidden="true"></span>
+          <a class="kmp-btn gran-cta" href={CONTACT_PATH}
+            >Skontaktuj się z nami →</a
+          >
+        </div>
+      </div>
+      <div class="gran-strip mOnly" aria-hidden="true">
+        <div class="gs-in">
+          <img
+            data-plx
+            src={czernica.src}
+            width={czernica.width}
+            height={czernica.height}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</BaseLayout>
+
+<style is:global>
+  /* ── Tokeny widoku (odczyty z eksportu — analiza §1). Mobile w bazie,
+     desktop w @media 1024 (para: CONTENT_DESKTOP_MIN_PX). Tokeny
+     typograficzne desktop identyczne z .eka (te same formuły
+     w eksportach 4.4). ── */
+  .kmp {
+    /* kontener mobile eksportu: 700/30 */
+    --wmax: 700px;
+    /* ryciny/kadry wystają za krawędź — clip bez tworzenia scrollera */
+    overflow-x: clip;
+    /* tło jak `/`, /realizacje/ i /ekipa-eha/: baza kremowa + skan
+       papieru (PaperBackdrop, z-index -1 — stąd isolation) */
+    position: relative;
+    isolation: isolate;
+    background: var(--bg-cream);
+  }
+  @media (min-width: 1024px) {
+    .kmp {
+      --wmax: 1600px;
+      --body: clamp(13.5px, 1.08vw, 17px);
+      --lhb: 1.72;
+      --mono: clamp(10px, 0.76vw, 12px);
+      --monos: clamp(9px, 0.66vw, 10.5px);
+      --h2: clamp(31px, 2.78vw, 44px);
+    }
+  }
+
+  /* warianty per breakpoint (wzorzec dOnly/mOnly z 4.1–4.4) */
+  @media (max-width: 1023.98px) {
+    .kmp .dOnly {
+      display: none !important;
+    }
+  }
+  @media (min-width: 1024px) {
+    .kmp .mOnly {
+      display: none !important;
+    }
+  }
+
+  /* ── hero + płyta tytułowa (grid-overlap — analiza §2.4) ── */
+  .kmp-head {
+    position: relative;
+    display: grid;
+    grid-template-rows: 430px;
+  }
+  .kmp-hero-ph {
+    grid-area: 1 / 1;
+    position: relative;
+    height: 100%;
+    overflow: hidden;
+    /* kadr wygasa w papier ku dołowi (mobile) */
+    -webkit-mask-image: linear-gradient(#000 60%, rgba(0, 0, 0, 0) 100%);
+    mask-image: linear-gradient(#000 60%, rgba(0, 0, 0, 0) 100%);
+  }
+  /* zapas kadru = ruch parallaxu [data-plx] (D-U1; PLX_AMT 0.18) */
+  .kmp-hero-ph > img {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -9%;
+    width: 100%;
+    height: 118%;
+    max-width: none;
+    object-fit: cover;
+    object-position: 50% 40%;
+    filter: sepia(0.1) saturate(0.9);
+  }
+  /* gradient czytelności kremowego paska (tone="dark") */
+  .kmp-hero-top {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 118px;
+    background: linear-gradient(rgba(28, 21, 14, 0.62), rgba(28, 21, 14, 0));
+  }
+  .kmp-tt {
+    grid-area: 1 / 1;
+    position: relative;
+    z-index: 2;
+    align-self: end;
+    width: 100%;
+    max-width: var(--wmax);
+    margin-inline: auto;
+    box-sizing: border-box;
+    padding: 0 30px 22px;
+  }
+  .kmp-tt h1 {
+    margin: 0;
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: 42px;
+    line-height: 1.1;
+    color: var(--ink);
+  }
+  .kmp-lead {
+    margin: 0;
+    font-family: var(--font-serif), serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 19px;
+    line-height: 1.35;
+    color: var(--sepia);
+  }
+  .kmp-kick {
+    margin: 0;
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: rgba(87, 101, 74, 0.95);
+  }
+
+  /* ── intro ── */
+  .kmp-intro {
+    position: relative;
+  }
+  .int-in {
+    position: relative;
+    max-width: var(--wmax);
+    margin-inline: auto;
+    box-sizing: border-box;
+    padding: 4px 30px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .int-p {
+    margin: 0;
+    font-family: var(--font-body), sans-serif;
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: var(--faint);
+  }
+
+  /* ── wspólne klocki sekcji ── */
+  .kmp-sec-head {
+    position: relative;
+    overflow: hidden;
+  }
+  .kmp-plbg {
+    position: absolute;
+    inset: 0;
+    -webkit-mask-image: linear-gradient(#000 40%, rgba(0, 0, 0, 0) 100%);
+    mask-image: linear-gradient(#000 40%, rgba(0, 0, 0, 0) 100%);
+  }
+  /* zapas kadru = ruch parallaxu [data-plx] (D-U1) */
+  .kmp-plbg > img {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -9%;
+    width: 100%;
+    height: 118%;
+    max-width: none;
+    object-fit: cover;
+  }
+  .kmp-fog {
+    position: absolute;
+    inset: 0;
+    background: rgba(250, 247, 241, 0.66);
+  }
+  .kmp-sec-head-in {
+    position: relative;
+    max-width: var(--wmax);
+    margin-inline: auto;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 56px 30px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .kmp-sec-head h2 {
+    margin: 0;
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: 28px;
+    line-height: 1.2;
+    color: var(--ink);
+    text-wrap: pretty;
+  }
+  .kmp-eko h2 {
+    margin: 0;
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: 28px;
+    line-height: 1.2;
+    color: var(--ink);
+    text-wrap: pretty;
+  }
+
+  /* zwijane pudła: host = kontener 700/30 (przycisk „Czytaj dalej"
+     w osi kontenera — eksportowy „osobny kontener" ma te same
+     współrzędne); kadry full-bleed łamią kontener breakoutem */
+  .kmp .kmp-clp,
+  .kmp .gran-clp {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-width: var(--wmax);
+    margin-inline: auto;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 6px 30px 0;
+  }
+  .kmp .clp-body {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .kmp .clp-body p {
+    position: relative;
+    margin: 0;
+    font-family: var(--font-body), sans-serif;
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+  .kmp .clp-body em {
+    font-family: var(--font-serif), serif;
+    font-style: italic;
+    font-weight: 600;
+    font-size: 15.5px;
+    color: var(--sepia);
+  }
+  /* ryciny w treści (absolute — zwinięte pudło przycina je z maską) */
+  .kmp-clp-ryc {
+    position: absolute;
+    left: 30px;
+    right: 0;
+    top: 6px;
+    height: 112px;
+    pointer-events: none;
+  }
+  .kmp-clp-ryc > img {
+    position: absolute;
+    max-width: none;
+    height: auto;
+    mix-blend-mode: multiply;
+    opacity: 0.28;
+  }
+  .cies-ryc > img {
+    right: -74px;
+    top: -16px;
+    width: 150px;
+  }
+  .mur-ryc > img,
+  .skl-ryc > img {
+    right: -64px;
+    top: -14px;
+    width: 150px;
+  }
+
+  /* kadry full-bleed wewnątrz zwijanych pudeł */
+  .kmp-bandclp {
+    position: relative;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-top: 4px;
+    height: 210px;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(
+      rgba(0, 0, 0, 0) 0,
+      #000 14%,
+      #000 86%,
+      rgba(0, 0, 0, 0) 100%
+    );
+    mask-image: linear-gradient(
+      rgba(0, 0, 0, 0) 0,
+      #000 14%,
+      #000 86%,
+      rgba(0, 0, 0, 0) 100%
+    );
+  }
+  /* zapas kadru = ruch parallaxu (D-U1) */
+  .kmp-bandclp > img {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -9%;
+    width: 100%;
+    height: 118%;
+    max-width: none;
+    object-fit: cover;
+  }
+  .cies-band > img {
+    object-position: 30% 42%;
+    filter: sepia(0.24) saturate(0.82) contrast(1.05);
+  }
+  .mur-band > img {
+    object-position: 50% 40%;
+    filter: sepia(0.22) saturate(0.5) brightness(1.14) contrast(1.05);
+  }
+  .skl-band {
+    height: 220px;
+  }
+  .skl-band > img {
+    object-position: 50% 45%;
+    filter: brightness(1.04) sepia(0.18) saturate(0.85) contrast(1.06);
+  }
+
+  /* bloki ZAKRES (mobile, w pudłach): tło pod treścią + karty */
+  .kmp-zakm {
+    position: relative;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-top: -6px;
+  }
+  .zakm-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.16;
+    pointer-events: none;
+    -webkit-mask-image: linear-gradient(
+      rgba(0, 0, 0, 0) 0,
+      #000 22%,
+      #000 78%,
+      rgba(0, 0, 0, 0) 100%
+    );
+    mask-image: linear-gradient(
+      rgba(0, 0, 0, 0) 0,
+      #000 22%,
+      #000 78%,
+      rgba(0, 0, 0, 0) 100%
+    );
+  }
+  .cies-zakm .zakm-bg {
+    object-position: 50% 30%;
+    filter: sepia(0.2) saturate(0.8);
+  }
+  .mur-zakm .zakm-bg {
+    object-position: 50% 60%;
+    filter: sepia(0.25) saturate(0.55) brightness(1.18);
+  }
+  .zakm-in {
+    position: relative;
+    max-width: var(--wmax);
+    margin-inline: auto;
+    box-sizing: border-box;
+    padding: 26px 30px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .kmp-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    gap: 10px;
+  }
+  .kmp-card {
+    border: 1px solid rgba(33, 29, 24, 0.18);
+    background: var(--bg-card);
+    box-shadow: 0 1px 3px rgba(33, 29, 24, 0.08);
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .kmp-card-k {
+    margin: 0;
+    font-family: var(--font-mono), monospace;
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+  }
+  .kmp-card-t {
+    margin: 0;
+    font-family: var(--font-body), sans-serif;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--faint);
+  }
+
+  /* TWORZYMY I ODTWARZAMY — karty mobile (w pudle sklepień) */
+  .skl-twom {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 6px;
+  }
+  .two-card {
+    border: 1px solid rgba(33, 29, 24, 0.18);
+    background: var(--bg-card);
+    box-shadow: 0 1px 3px rgba(33, 29, 24, 0.08);
+    padding: 13px 14px;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .two-num {
+    font-family: var(--font-mono), monospace;
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+  }
+  .two-name {
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: 18px;
+    line-height: 1.25;
+    color: var(--ink);
+  }
+
+  /* podpis kadru sklepień (mobile) */
+  .skl-kadr {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .skl-kadr figcaption {
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    color: rgba(33, 29, 24, 0.65);
+  }
+
+  /* badge na kadrach (desktop) */
+  .kmp-badge {
+    position: absolute;
+    margin: 0;
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    color: rgba(33, 29, 24, 0.62);
+  }
+
+  /* przycisk CTA (zielony; warianty per sekcja) */
+  .kmp-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    align-self: flex-start;
+    background: var(--accent);
+    color: #f5efe3;
+    text-decoration: none;
+    font-family: var(--font-body), sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    padding: 13px 24px;
+    border-radius: 2px;
+    transition: background 0.2s ease;
+  }
+  .kmp-btn:hover {
+    background: var(--accent-ink);
+    color: #f5efe3;
+  }
+
+  /* ── fizyka budowli ── */
+  .eko-strip {
+    position: relative;
+    margin-top: 26px;
+    height: 224px;
+    overflow: hidden;
+    background: #171008;
+    -webkit-mask-image: linear-gradient(
+      rgba(0, 0, 0, 0) 0,
+      #000 12%,
+      #000 90%,
+      rgba(0, 0, 0, 0) 100%
+    );
+    mask-image: linear-gradient(
+      rgba(0, 0, 0, 0) 0,
+      #000 12%,
+      #000 90%,
+      rgba(0, 0, 0, 0) 100%
+    );
+  }
+  .eko-strip > img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 62%;
+    filter: sepia(0.08) saturate(0.92) contrast(1.03);
+  }
+  .eko-grid {
+    position: relative;
+  }
+  .eko-txt {
+    position: relative;
+    max-width: var(--wmax);
+    margin-inline: auto;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 8px 30px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .eko-pw {
+    position: relative;
+    margin-top: 4px;
+  }
+  .eko-ryc {
+    left: 0;
+    right: 0;
+    top: 8px;
+    height: 120px;
+  }
+  .eko-ryc > img {
+    right: -70px;
+    top: -12px;
+    width: 146px;
+  }
+  .eko-p {
+    position: relative;
+    margin: 0;
+    font-family: var(--font-body), sans-serif;
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+  .eko-card {
+    position: relative;
+    margin: 22px auto 0;
+    width: calc(100% - 60px);
+    max-width: 640px;
+    box-sizing: border-box;
+    border: 1px solid rgba(33, 29, 24, 0.18);
+    background: var(--bg-card);
+    box-shadow: 0 1px 3px rgba(33, 29, 24, 0.08);
+    padding: 18px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .eko-card-k {
+    margin: 0;
+    font-family: var(--font-mono), monospace;
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+  }
+  .eko-card-t {
+    margin: 0;
+    font-family: var(--font-body), sans-serif;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--faint);
+  }
+
+  /* ── instalacje ── */
+  .inst-panel {
+    position: relative;
+  }
+  .inst-body {
+    position: relative;
+    max-width: var(--wmax);
+    margin-inline: auto;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 6px 30px 0;
+  }
+  .inst-p1w {
+    position: relative;
+  }
+  .inst-ryc {
+    left: 0;
+    right: 0;
+    top: -8px;
+    height: 112px;
+  }
+  .inst-ryc > img {
+    right: -64px;
+    top: -14px;
+    width: 146px;
+  }
+  .inst-body p {
+    position: relative;
+    margin: 0;
+    font-family: var(--font-body), sans-serif;
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+  .inst-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-top: 20px;
+  }
+  .inst-row > p {
+    font-size: 13.5px;
+    line-height: 1.65;
+  }
+  .inst-pol {
+    margin: 0;
+    flex: none;
+    background: var(--bg-card);
+    border: 1px solid rgba(33, 29, 24, 0.18);
+    box-shadow: 0 1px 3px rgba(33, 29, 24, 0.08);
+    padding: 7px 7px 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .inst-pol-ph {
+    position: relative;
+    display: block;
+    width: 126px;
+    height: 162px;
+  }
+  .inst-pol-ph > img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 42%;
+    border: 1px solid rgba(33, 29, 24, 0.25);
+    filter: sepia(0.52) saturate(0.95) contrast(1.03);
+  }
+  .inst-pol figcaption {
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    color: rgba(33, 29, 24, 0.65);
+  }
+  .inst-para {
+    position: relative;
+    margin: 24px auto 0;
+    max-width: 1000px;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 0 30px;
+    display: flex;
+    align-items: stretch;
+    gap: 14px;
+    /* wysokość kadrów pary (eksport: clamp(90px, 44.4cqw − 18.7px, 300px);
+       cqw kontenera ≈ vw — odchyłka pomijalna, analiza §2.6) */
+    --iph: clamp(90px, 44.4vw - 18.7px, 300px);
+  }
+  .ip-card {
+    margin: 0;
+    background: var(--bg-card);
+    border: 1px solid rgba(33, 29, 24, 0.18);
+    box-shadow: 0 1px 3px rgba(33, 29, 24, 0.08);
+    padding: 7px 7px 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .ip-a {
+    flex: none;
+    /* jawna szerokość karty (eksport: 0.75·H + 16px ramki) — bez niej
+       karta rośnie do max-content jednolinijkowego podpisu */
+    width: calc(var(--iph) * 0.75 + 16px);
+    box-sizing: border-box;
+  }
+  .ip-a > img {
+    display: block;
+    height: var(--iph);
+    width: 100%;
+    object-fit: cover;
+    object-position: 50% 45%;
+    filter: sepia(0.42) saturate(0.9) contrast(1.04);
+  }
+  .ip-b {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .ip-b > img {
+    display: block;
+    height: var(--iph);
+    width: 100%;
+    object-fit: cover;
+    object-position: 50% 55%;
+    filter: sepia(0.52) saturate(0.95) contrast(1.03);
+  }
+  .ip-card figcaption {
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: clamp(8px, 2.6vw, 9.5px);
+    line-height: 1.35;
+    letter-spacing: 0.1em;
+    color: rgba(33, 29, 24, 0.65);
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+
+  /* ── świadome granice ── */
+  .kmp-gran {
+    position: relative;
+  }
+  .gran-head .kmp-sec-head-in {
+    padding-top: 64px;
+  }
+  .gran-ryc > img {
+    right: -74px;
+    top: -14px;
+    width: 146px;
+  }
+  .gf-in {
+    position: relative;
+    max-width: var(--wmax);
+    margin-inline: auto;
+    box-sizing: border-box;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .gran-sep {
+    display: block;
+    margin: 24px auto 0;
+    width: calc(100% - 52px);
+    max-width: 648px;
+    border-top: 1px dashed rgba(33, 29, 24, 0.3);
+  }
+  .gran-quote {
+    margin: 20px 34px 0;
+    text-align: center;
+    font-family: var(--font-serif), serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 18px;
+    line-height: 1.5;
+    color: var(--sepia);
+    text-wrap: pretty;
+  }
+  .gran-cta {
+    margin: 22px 30px 0;
+    padding: 15px 28px;
+  }
+  .gran-strip {
+    position: relative;
+    margin-top: 26px;
+    height: 280px;
+    overflow: hidden;
+  }
+  .gs-in {
+    position: absolute;
+    inset: 0;
+    background: #362b20;
+    -webkit-mask-image: linear-gradient(
+      rgba(0, 0, 0, 0) 0,
+      rgba(0, 0, 0, 0.4) 18%,
+      #000 46%
+    );
+    mask-image: linear-gradient(
+      rgba(0, 0, 0, 0) 0,
+      rgba(0, 0, 0, 0.4) 18%,
+      #000 46%
+    );
+  }
+  /* zapas kadru = ruch parallaxu (D-U1) */
+  .gs-in > img {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -9%;
+    width: 100%;
+    height: 118%;
+    max-width: none;
+    object-fit: cover;
+    object-position: 50% 58%;
+    filter: grayscale(1) contrast(1.05);
+    mix-blend-mode: luminosity;
+    opacity: 0.9;
+  }
+
+  /* ── odstępy sekcji (mobile) ── */
+  @media (max-width: 1023.98px) {
+    .kmp-cies,
+    .kmp-mur,
+    .kmp-skl,
+    .kmp-inst,
+    .kmp-gran {
+      margin-top: 34px;
+    }
+  }
+
+  /* ════ DESKTOP ≥1024 (para: CONTENT_DESKTOP_MIN_PX) ════ */
+  @media (min-width: 1024px) {
+    /* hero: obraz 62vh wystaje w dół pod płytę tytułową (rząd 2) */
+    .kmp-head {
+      grid-template-rows: calc(62vh - clamp(64px, 6.6vw, 106px)) auto;
+    }
+    .kmp-hero-ph {
+      grid-row: 1;
+      grid-column: 1;
+      align-self: start;
+      width: 100%;
+      height: 62vh;
+      -webkit-mask-image: none;
+      mask-image: none;
+    }
+    .kmp-hero-ph > img {
+      top: 0;
+      height: 100%;
+      object-position: 50% 40%;
+      filter: sepia(0.14) saturate(0.86);
+    }
+    .kmp-hero-top {
+      height: clamp(130px, 13.2vw, 210px);
+      background: linear-gradient(rgba(24, 19, 14, 0.62), rgba(24, 19, 14, 0));
+    }
+    .kmp-tt {
+      grid-row: 2;
+      grid-column: 1;
+      align-self: start;
+      justify-self: start;
+      width: auto;
+      max-width: clamp(600px, 62vw, 990px);
+      margin: 0 var(--g);
+      background: var(--bg-cream);
+      border: 1px solid rgba(33, 29, 24, 0.18);
+      box-shadow: 0 1px 3px rgba(33, 29, 24, 0.08);
+      padding: clamp(30px, 3vw, 48px) clamp(34px, 3.6vw, 58px);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(12px, 1.2vw, 19px);
+    }
+    .kmp-tt h1 {
+      font-size: clamp(40px, 3.75vw, 60px);
+      line-height: 1.04;
+      text-wrap: pretty;
+    }
+    .kmp-tt .kmp-lead {
+      font-size: clamp(21px, 1.83vw, 29px);
+      line-height: 1.28;
+    }
+    .kmp-kick {
+      font-size: var(--mono);
+    }
+
+    /* intro */
+    .int-rycw {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .int-rycw > img {
+      position: absolute;
+      left: -3.6vw;
+      top: clamp(10px, 1vw, 16px);
+      width: clamp(250px, 24vw, 384px);
+      max-width: none;
+      height: auto;
+      opacity: 0.2;
+      mix-blend-mode: multiply;
+    }
+    .int-in {
+      max-width: var(--wmax);
+      padding: clamp(36px, 3.6vw, 58px) var(--g) clamp(60px, 5.8vw, 94px);
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-end;
+    }
+    .int-p {
+      width: clamp(560px, 58vw, 930px);
+      font-size: var(--body);
+      line-height: var(--lhb);
+      color: var(--muted);
+      column-count: 2;
+      column-gap: clamp(36px, 4.2vw, 67px);
+      text-align: justify;
+      hyphens: auto;
+    }
+
+    /* wspólne klocki desktop */
+    .kmp-sec-head h2 {
+      font-size: var(--h2);
+      line-height: 1.12;
+    }
+    .kmp-ps {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(13px, 1.3vw, 21px);
+    }
+    .kmp-ps-sep {
+      border-top: 1px dashed rgba(33, 29, 24, 0.28);
+      padding-top: clamp(16px, 1.6vw, 26px);
+    }
+    .kmp-ps p {
+      margin: 0;
+      font-family: var(--font-body), sans-serif;
+      font-size: var(--body);
+      line-height: var(--lhb);
+      color: var(--muted);
+      text-align: justify;
+      hyphens: auto;
+    }
+    .kmp-ps em {
+      font-family: var(--font-serif), serif;
+      font-style: italic;
+      font-weight: 600;
+      font-size: calc(var(--body) + 1.5px);
+      color: var(--sepia);
+    }
+    .kmp-card {
+      padding: clamp(15px, 1.5vw, 24px) clamp(16px, 1.6vw, 26px);
+      gap: 6px;
+    }
+    .kmp-card-k {
+      font-size: var(--monos);
+    }
+    .kmp-card-t {
+      font-size: var(--body);
+      line-height: 1.55;
+    }
+    .kmp-badge {
+      font-size: var(--monos);
+      background: rgba(250, 247, 241, 0.92);
+      border: 1px solid rgba(33, 29, 24, 0.18);
+      padding: clamp(8px, 0.9vw, 14px) clamp(12px, 1.2vw, 19px);
+    }
+
+    /* ciesielstwo */
+    .cies-grid {
+      display: grid;
+      grid-template-columns: 1.04fr 0.96fr;
+      align-items: stretch;
+    }
+    .cies-txt {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(14px, 1.4vw, 22px);
+      padding: 0 clamp(40px, 4.4vw, 70px) clamp(44px, 4.4vw, 70px) var(--g);
+      box-sizing: border-box;
+    }
+    /* kicker+h2 płyną w kolumnie tekstu (mobile: pudło płyty z tłem) */
+    .cies-head,
+    .cies-head .kmp-sec-head-in {
+      display: contents;
+    }
+    .cies-photo {
+      position: relative;
+      overflow: hidden;
+      min-height: clamp(340px, 65vh, 560px);
+    }
+    .cies-photo > img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 34% 46%;
+      filter: sepia(0.24) saturate(0.82) contrast(1.05);
+    }
+    .cies-zakd {
+      position: relative;
+      max-width: var(--wmax);
+      margin-inline: auto;
+      box-sizing: border-box;
+      width: 100%;
+      padding: clamp(40px, 4vw, 64px) var(--g) clamp(70px, 7vw, 112px);
+    }
+    .zakd-rycw {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .zakd-rycw > img {
+      position: absolute;
+      right: -2.6vw;
+      top: clamp(8px, 0.9vw, 14px);
+      width: clamp(220px, 21vw, 336px);
+      max-width: none;
+      height: auto;
+      opacity: 0.2;
+      mix-blend-mode: multiply;
+    }
+    .zakd-in {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(13px, 1.3vw, 21px);
+      max-width: clamp(640px, 68vw, 1088px);
+    }
+    .cies-zakd .kmp-cards {
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(11px, 1.1vw, 18px);
+    }
+
+    /* murarstwo */
+    .mur-moz {
+      display: grid;
+      grid-template-columns: 1.32fr 0.68fr;
+      align-items: stretch;
+    }
+    .moz-a,
+    .moz-b {
+      position: relative;
+      overflow: hidden;
+      height: clamp(300px, 53vh, 460px);
+    }
+    .moz-b {
+      border-left: 1px solid rgba(250, 247, 241, 0.5);
+    }
+    .mur-moz img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: sepia(0.24) saturate(0.82) contrast(1.05);
+    }
+    .moz-a img {
+      object-position: 48% 46%;
+    }
+    .moz-b img {
+      object-position: 58% 50%;
+    }
+    .mur-head {
+      overflow: visible;
+      max-width: var(--wmax);
+      margin: calc(-1 * clamp(58px, 6vw, 96px)) auto 0;
+      box-sizing: border-box;
+      width: 100%;
+      padding: 0 var(--g);
+      z-index: 2;
+    }
+    .mur-head .kmp-sec-head-in {
+      max-width: clamp(560px, 58vw, 928px);
+      margin: 0;
+      padding: clamp(30px, 3vw, 48px) clamp(30px, 3.2vw, 51px);
+      gap: clamp(11px, 1.1vw, 18px);
+      background: var(--bg-cream);
+      border: 1px solid rgba(33, 29, 24, 0.18);
+      box-shadow: 0 1px 3px rgba(33, 29, 24, 0.08);
+    }
+    .mur-grid {
+      position: relative;
+      max-width: var(--wmax);
+      margin-inline: auto;
+      box-sizing: border-box;
+      width: 100%;
+      padding: clamp(44px, 4.4vw, 70px) var(--g) clamp(70px, 7vw, 112px);
+      display: grid;
+      grid-template-columns: 1.06fr 0.94fr;
+      gap: clamp(40px, 5.56vw, 89px);
+      align-items: start;
+    }
+    .mur-rycw {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .mur-rycw > img {
+      position: absolute;
+      left: -3.2vw;
+      bottom: clamp(-24px, -2.4vw, -16px);
+      width: clamp(220px, 21vw, 336px);
+      max-width: none;
+      height: auto;
+      opacity: 0.2;
+      mix-blend-mode: multiply;
+    }
+    .mur-zak {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(9px, 0.9vw, 14px);
+    }
+    .mur-zak .kmp-card {
+      padding: clamp(13px, 1.3vw, 21px) clamp(16px, 1.6vw, 26px);
+      gap: 5px;
+    }
+
+    /* sklepienia */
+    .skl-grid {
+      display: grid;
+      grid-template-columns: 1.04fr 0.96fr;
+      align-items: stretch;
+      padding: 0 0 clamp(54px, 5.4vw, 86px);
+    }
+    .skl-photo {
+      position: relative;
+      overflow: hidden;
+      min-height: clamp(330px, 60vh, 520px);
+    }
+    .skl-photo > img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 46%;
+      filter: sepia(0.24) saturate(0.82) contrast(1.05);
+    }
+    .skl-badge {
+      left: 0;
+      bottom: 0;
+      background: rgba(250, 247, 241, 0.94);
+      border: 0;
+      border-top: 1px solid rgba(33, 29, 24, 0.18);
+      border-right: 1px solid rgba(33, 29, 24, 0.18);
+      padding: clamp(9px, 0.9vw, 14px) clamp(14px, 1.4vw, 22px);
+    }
+    .skl-side {
+      position: relative;
+      display: flex;
+      align-items: center;
+      padding: 0 var(--g) 0 clamp(34px, 3.8vw, 60px);
+      box-sizing: border-box;
+    }
+    .skl-rycw {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .skl-rycw > img {
+      position: absolute;
+      right: -3vw;
+      bottom: clamp(-26px, -2.6vw, -18px);
+      width: clamp(220px, 21vw, 336px);
+      max-width: none;
+      height: auto;
+      opacity: 0.2;
+      mix-blend-mode: multiply;
+    }
+    .skl-card {
+      position: relative;
+      background: var(--bg-card);
+      border: 1px solid rgba(33, 29, 24, 0.18);
+      box-shadow: 0 1px 3px rgba(33, 29, 24, 0.08);
+      padding: clamp(34px, 3.4vw, 54px) clamp(26px, 2.8vw, 45px);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(15px, 1.5vw, 24px);
+    }
+    .skl-head,
+    .skl-head .kmp-sec-head-in {
+      display: contents;
+    }
+    .kmp-skl .kmp-ps-sep {
+      padding-top: clamp(16px, 1.6vw, 26px);
+    }
+    .kmp-skl .kmp-ps {
+      gap: clamp(14px, 1.4vw, 22px);
+    }
+
+    /* tworzymy i odtwarzamy — ciemny pas */
+    .kmp-two {
+      background: #211d18;
+    }
+    .two-in {
+      max-width: var(--wmax);
+      margin-inline: auto;
+      box-sizing: border-box;
+      width: 100%;
+      padding: clamp(44px, 4.4vw, 70px) var(--g) clamp(48px, 4.8vw, 77px);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(20px, 2vw, 32px);
+    }
+    .two-kick {
+      color: rgba(245, 239, 227, 0.72);
+    }
+    .two-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+    }
+    .two-col {
+      padding: 0 clamp(14px, 1.5vw, 24px);
+      border-left: 1px solid rgba(245, 239, 227, 0.22);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(10px, 1vw, 16px);
+    }
+    .two-col:first-child {
+      padding-left: 0;
+      border-left: 0;
+    }
+    .two-col:last-child {
+      padding-right: 0;
+    }
+    .two-col .two-num {
+      font-size: var(--monos);
+      color: rgba(160, 177, 140, 0.95);
+    }
+    .two-col .two-name {
+      font-size: clamp(19px, 1.6vw, 26px);
+      line-height: 1.2;
+      color: #f5efe3;
+    }
+
+    /* fizyka budowli */
+    .eko-grid {
+      display: grid;
+      grid-template-columns: 0.6fr 0.4fr;
+      padding: 0 0 clamp(60px, 6vw, 96px);
+    }
+    .eko-photo {
+      grid-column: 1;
+      grid-row: 1 / span 2;
+      position: relative;
+      overflow: hidden;
+      min-height: clamp(320px, 62vh, 560px);
+    }
+    .eko-photo > img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 48% 58%;
+      filter: sepia(0.24) saturate(0.82) contrast(1.05);
+    }
+    .eko-badge {
+      left: clamp(24px, 2.4vw, 38px);
+      top: clamp(24px, 2.4vw, 38px);
+      max-width: clamp(220px, 22vw, 352px);
+      color: rgba(33, 29, 24, 0.68);
+    }
+    .eko-txt {
+      grid-column: 2;
+      grid-row: 1;
+      max-width: none;
+      margin: 0;
+      padding: clamp(64px, 6.6vw, 106px) var(--g) clamp(30px, 3.2vw, 51px)
+        clamp(40px, 4.4vw, 70px);
+      gap: clamp(16px, 1.7vw, 27px);
+    }
+    .kmp-eko h2 {
+      font-size: var(--h2);
+      line-height: 1.12;
+    }
+    .eko-pw {
+      margin: 0;
+      border-top: 1px dashed rgba(33, 29, 24, 0.28);
+      padding-top: clamp(16px, 1.7vw, 27px);
+    }
+    .eko-p {
+      font-size: var(--body);
+      line-height: var(--lhb);
+    }
+    .eko-card {
+      grid-column: 2;
+      grid-row: 2;
+      align-self: start;
+      z-index: 2;
+      width: auto;
+      max-width: none;
+      margin: 0 var(--g) 0 calc(-1 * clamp(80px, 8.4vw, 134px));
+      padding: clamp(24px, 2.6vw, 42px) clamp(26px, 2.6vw, 42px);
+      gap: clamp(11px, 1.2vw, 19px);
+    }
+    .eko-card-k {
+      font-size: var(--mono);
+    }
+    .eko-card-t {
+      font-size: var(--body);
+    }
+    .eko-card .kmp-btn {
+      font-size: clamp(14px, 1.05vw, 17px);
+      padding: clamp(12px, 1.3vw, 21px) clamp(22px, 2.2vw, 35px);
+    }
+
+    /* instalacje */
+    .inst-grid {
+      display: grid;
+      grid-template-columns: 0.46fr 0.54fr;
+      align-items: start;
+      padding: 0 0 2vh;
+    }
+    .inst-photo {
+      position: relative;
+      overflow: hidden;
+      min-height: clamp(260px, 50vh, 660px);
+    }
+    .inst-photo > img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 42%;
+      filter: sepia(0.52) saturate(0.95) contrast(1.03);
+    }
+    .inst-badge {
+      left: clamp(20px, 2vw, 32px);
+      bottom: clamp(20px, 2vw, 32px);
+    }
+    .inst-panel {
+      z-index: 2;
+      margin: 4.6vh var(--g) 0 calc(-1 * clamp(70px, 7.4vw, 118px));
+      background: var(--bg-cream);
+      border: 1px solid rgba(33, 29, 24, 0.18);
+      box-shadow: 0 1px 3px rgba(33, 29, 24, 0.08);
+      padding: 3.4vh clamp(34px, 3.6vw, 58px);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(12px, 1.3vw, 21px);
+    }
+    .inst-rycw {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .inst-rycw > img {
+      position: absolute;
+      right: -6vw;
+      bottom: clamp(-20px, -1.6vw, -12px);
+      width: clamp(220px, 21vw, 336px);
+      max-width: none;
+      height: auto;
+      opacity: 0.2;
+      mix-blend-mode: multiply;
+    }
+    .inst-head,
+    .inst-head .kmp-sec-head-in {
+      display: contents;
+    }
+    .kmp-inst .kmp-sec-head h2 {
+      line-height: 1.06;
+    }
+    .inst-body {
+      max-width: none;
+      margin: 0;
+      padding: 0;
+      border-top: 1px dashed rgba(33, 29, 24, 0.28);
+      padding-top: clamp(14px, 1.5vw, 24px);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(11px, 1.2vw, 19px);
+    }
+    .inst-body p {
+      font-size: var(--body);
+      line-height: var(--lhb);
+      text-wrap: pretty;
+    }
+    .inst-row {
+      margin: 0;
+      gap: 0;
+    }
+    .inst-row > p {
+      font-size: var(--body);
+      line-height: var(--lhb);
+    }
+    .inst-para {
+      max-width: var(--wmax);
+      margin: 0 auto;
+      padding: 0 var(--g) 3.6vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(24px, 2.4vw, 38px);
+      --iph: clamp(220px, 38vh, 600px);
+    }
+    .ip-card {
+      padding: clamp(7px, 0.8vw, 12px) clamp(7px, 0.8vw, 12px)
+        clamp(6px, 0.65vw, 10px);
+      gap: clamp(6px, 0.7vw, 11px);
+    }
+    .ip-a {
+      width: auto;
+    }
+    .ip-a > img,
+    .ip-b > img {
+      width: 100%;
+      height: var(--iph);
+    }
+    .ip-card figcaption {
+      font-size: var(--monos);
+      letter-spacing: 0.14em;
+    }
+
+    /* świadome granice — ciemny blok */
+    .kmp-gran {
+      margin-top: 4vh;
+      background: #211d18;
+      overflow: hidden;
+    }
+    .gran-bg {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    .gran-bg > img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 52%;
+      filter: grayscale(1) contrast(1.05);
+      mix-blend-mode: luminosity;
+      opacity: 0.5;
+    }
+    .gran-shade {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to right,
+        rgba(33, 29, 24, 0.94),
+        rgba(33, 29, 24, 0.72)
+      );
+    }
+    .gran-top {
+      position: relative;
+      z-index: 1;
+      max-width: var(--wmax);
+      margin-inline: auto;
+      box-sizing: border-box;
+      width: 100%;
+      min-height: clamp(300px, 58vh, 520px);
+      padding: 7.2vh var(--g) 3.8vh;
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: clamp(46px, 5vw, 80px);
+      align-items: start;
+    }
+    .gran-head {
+      overflow: visible;
+      display: flex;
+      flex-direction: column;
+    }
+    .gran-head .kmp-sec-head-in {
+      max-width: none;
+      margin: 0;
+      padding: 0;
+      gap: clamp(9px, 0.9vw, 14px);
+    }
+    .gran-head .kmp-kick {
+      color: rgba(160, 177, 140, 0.95);
+    }
+    .gran-head h2 {
+      color: #f5efe3;
+      line-height: 1.06;
+    }
+    .kmp .gran-clp {
+      max-width: none;
+      margin: 0;
+      padding: 0 0 0 clamp(30px, 3.2vw, 51px);
+      border-left: 1px dashed rgba(245, 239, 227, 0.22);
+      gap: clamp(10px, 1vw, 16px);
+    }
+    .kmp .gran-clp .clp-body {
+      gap: clamp(10px, 1vw, 16px);
+    }
+    .kmp .gran-clp .clp-body p {
+      font-size: var(--body);
+      line-height: var(--lhb);
+      color: rgba(245, 239, 227, 0.82);
+      text-wrap: pretty;
+    }
+    .kmp .gran-clp .clp-body em {
+      font-size: calc(var(--body) + 1px);
+      color: rgba(160, 177, 140, 0.95);
+    }
+    .gran-foot {
+      position: relative;
+      z-index: 1;
+      max-width: var(--wmax);
+      margin-inline: auto;
+      box-sizing: border-box;
+      width: 100%;
+      padding: 0 var(--g) 6.2vh;
+    }
+    .gf-in {
+      max-width: none;
+      border-top: 1px dashed rgba(245, 239, 227, 0.22);
+      padding-top: 3.8vh;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: clamp(40px, 4.4vw, 70px);
+      align-items: center;
+    }
+    .gran-quote {
+      margin: 0;
+      text-align: left;
+      font-size: clamp(19px, 1.53vw, 24px);
+      color: #f5efe3;
+    }
+    .gran-cta {
+      margin: 0;
+      background: #f5efe3;
+      color: var(--ink);
+      font-size: 15px;
+      padding: clamp(13px, 1.3vw, 20px) 30px;
+      white-space: nowrap;
+    }
+    .gran-cta:hover {
+      background: #d8cfb8;
+      color: var(--ink);
+    }
+  }
+
+  /* ═══ RUCH (bramka js-motion; bez JS / przy reduce brak stanów
+     startowych = strona statyczna). Mobile: reveale + rysowanie rycin
+     maską + parallaxy; desktop: rysowanie [data-rycsb] + dryf tła.
+     Maska schodzi z elementu po animacji (content-motion.ts — lekcja
+     D-Q1). Wzorce i wartości 1:1 z 4.2/4.3/4.4 cz. 1. ═══ */
+  @media (max-width: 1023.98px) {
+    html.js-motion .kmp [data-rev] {
+      opacity: 0;
+      transform: translateY(22px);
+      transition:
+        opacity 0.7s ease,
+        transform 0.8s cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+    html.js-motion .kmp [data-rev].in {
+      opacity: 1;
+      transform: none;
+    }
+    html.js-motion .kmp [data-rev][data-rev-d="1"] {
+      transition-delay: 0.09s;
+    }
+    html.js-motion .kmp [data-ryc] {
+      -webkit-mask-repeat: no-repeat, no-repeat;
+      mask-repeat: no-repeat, no-repeat;
+      -webkit-mask-size:
+        280% 100%,
+        240% 100%;
+      mask-size:
+        280% 100%,
+        240% 100%;
+    }
+    html.js-motion .kmp [data-ryc="l"] {
+      -webkit-mask-image: var(--ryc-wedge-l), var(--ryc-lines-l);
+      mask-image: var(--ryc-wedge-l), var(--ryc-lines-l);
+      -webkit-mask-position:
+        100% 0,
+        100% 0;
+      mask-position:
+        100% 0,
+        100% 0;
+    }
+    html.js-motion .kmp [data-ryc="r"] {
+      -webkit-mask-image: var(--ryc-wedge-r), var(--ryc-lines-r);
+      mask-image: var(--ryc-wedge-r), var(--ryc-lines-r);
+      -webkit-mask-position:
+        0 0,
+        0 0;
+      mask-position:
+        0 0,
+        0 0;
+    }
+    html.js-motion .kmp [data-ryc="l"].in {
+      animation: kmpRycL 2.8s cubic-bezier(0.3, 0.05, 0.25, 1) both;
+    }
+    html.js-motion .kmp [data-ryc="r"].in {
+      animation: kmpRycR 2.8s cubic-bezier(0.3, 0.05, 0.25, 1) both;
+    }
+  }
+  @media (min-width: 1024px) {
+    html.js-motion .kmp [data-rycsb] {
+      -webkit-mask-repeat: no-repeat, no-repeat;
+      mask-repeat: no-repeat, no-repeat;
+      -webkit-mask-size:
+        280% 100%,
+        240% 100%;
+      mask-size:
+        280% 100%,
+        240% 100%;
+    }
+    html.js-motion .kmp [data-rycsb="l"] {
+      -webkit-mask-image: var(--ryc-wedge-l), var(--ryc-lines-l);
+      mask-image: var(--ryc-wedge-l), var(--ryc-lines-l);
+      -webkit-mask-position:
+        100% 0,
+        100% 0;
+      mask-position:
+        100% 0,
+        100% 0;
+    }
+    html.js-motion .kmp [data-rycsb="r"] {
+      -webkit-mask-image: var(--ryc-wedge-r), var(--ryc-lines-r);
+      mask-image: var(--ryc-wedge-r), var(--ryc-lines-r);
+      -webkit-mask-position:
+        0 0,
+        0 0;
+      mask-position:
+        0 0,
+        0 0;
+    }
+    html.js-motion .kmp [data-rycsb="l"].in {
+      animation: kmpRycL 2s cubic-bezier(0.3, 0.05, 0.25, 1) both;
+    }
+    html.js-motion .kmp [data-rycsb="r"].in {
+      animation: kmpRycR 2s cubic-bezier(0.3, 0.05, 0.25, 1) both;
+    }
+  }
+
+  /* gradienty masek „rysowania" (eksport: klin 105°/255° + smugi) */
+  .kmp {
+    --ryc-wedge-l: linear-gradient(105deg, #000 40%, rgba(0, 0, 0, 0) 52%);
+    --ryc-wedge-r: linear-gradient(255deg, #000 40%, rgba(0, 0, 0, 0) 52%);
+    --ryc-lines-l: linear-gradient(
+      105deg,
+      rgba(0, 0, 0, 0) 0 34%,
+      rgba(0, 0, 0, 0.85) 34% 36.5%,
+      rgba(0, 0, 0, 0) 36.5% 40%,
+      rgba(0, 0, 0, 0.85) 40% 42.5%,
+      rgba(0, 0, 0, 0) 42.5% 46.5%,
+      rgba(0, 0, 0, 0.85) 46.5% 49%,
+      rgba(0, 0, 0, 0) 49% 100%
+    );
+    --ryc-lines-r: linear-gradient(
+      255deg,
+      rgba(0, 0, 0, 0) 0 34%,
+      rgba(0, 0, 0, 0.85) 34% 36.5%,
+      rgba(0, 0, 0, 0) 36.5% 40%,
+      rgba(0, 0, 0, 0.85) 40% 42.5%,
+      rgba(0, 0, 0, 0) 42.5% 46.5%,
+      rgba(0, 0, 0, 0.85) 46.5% 49%,
+      rgba(0, 0, 0, 0) 49% 100%
+    );
+  }
+  @keyframes kmpRycL {
+    0% {
+      filter: opacity(0.55);
+    }
+    75% {
+      filter: opacity(0.85);
+    }
+    100% {
+      -webkit-mask-position:
+        0 0,
+        0 0;
+      mask-position:
+        0 0,
+        0 0;
+      filter: opacity(1);
+    }
+  }
+  @keyframes kmpRycR {
+    0% {
+      filter: opacity(0.55);
+    }
+    75% {
+      filter: opacity(0.85);
+    }
+    100% {
+      -webkit-mask-position:
+        100% 0,
+        100% 0;
+      mask-position:
+        100% 0,
+        100% 0;
+      filter: opacity(1);
+    }
+  }
+</style>
+
+<script>
+  // Zwijane akapity — funkcja, nie dekoracja: ładowane ZAWSZE (działa
+  // też przy prefers-reduced-motion). SSR ma pełny tekst, initCollapsibles
+  // uzbraja przyciski i zwija (progressive enhancement jak paginacja E5).
+  import { initCollapsibles } from "@/components/sections/collapsible";
+
+  initCollapsibles();
+
+  // Ruch — dynamicznie, tylko przy motion OK (sections.md).
+  if (matchMedia("(prefers-reduced-motion: no-preference)").matches) {
+    import("@/components/sections/content-motion");
+  }
+</script>
