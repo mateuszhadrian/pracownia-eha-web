@@ -17,6 +17,9 @@ export const ui = {
     "tradycjaPage.title": "Tradycja i ekologia — Pracownia EH/A",
     "tradycjaPage.description":
       "Tradycyjne techniki budowlane i ekologia w remontach domów z historią — podejście Pracowni EH/A.",
+    "obslugaPage.title": "Obsługa budowy — Pracownia EH/A",
+    "obslugaPage.description":
+      "Obsługa budowy z jednym punktem kontaktu — logistyka, dostawy i harmonogram po naszej stronie. Pełna kontrola remontu z dystansu. Pracownia EH/A.",
     "workPage.title": "Realizacje — Pracownia EH/A",
     "workPage.description":
       "Realizacje Pracowni EH/A — remonty domów z historią: ciesielstwo, murarstwo, sklepienia, fizyka budowli i instalacje.",
