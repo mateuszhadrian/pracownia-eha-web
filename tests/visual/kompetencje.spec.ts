@@ -43,6 +43,17 @@ const FULLPAGE_SHOT_TIMEOUT_MS = 20_000;
  *  zapas na szum, a realna regresja layoutu to TYSIĄCE px; globalny
  *  próg w playwright.config.ts zostaje 0.0005. */
 const FULLPAGE_MAX_DIFF_RATIO = 0.001;
+/** Tolerancja zrzutu *-full-open (decyzja Mateusza, 4.5 cz. 1): na
+ *  webkit-iphone-14 rozwinięte akapity wydłużają stronę o ~2 ekrany
+ *  i do kadru wchodzi KOMPLET kadrów [data-plx] — pętla parallaxu
+ *  potrafi wylądować o jedną klatkę rAF inaczej i wtedy KAŻDE zdjęcie
+ *  dostaje subpikselowe przesunięcie (zachowanie dwustanowe: czysto
+ *  albo ~0.002, nigdy pomiędzy; rzadki rozsyp ~8–10 px na wiersz po
+ *  krawędziach detalu, nie zwarte bloki). 0.0025 daje zapas na ten
+ *  stan; realna regresja layoutu to zwarte bloki rzędu dziesiątek
+ *  tysięcy px. Zrzuty *-full zostają na FULLPAGE_MAX_DIFF_RATIO,
+ *  globalny próg w playwright.config.ts na 0.0005. */
+const FULLOPEN_MAX_DIFF_RATIO = 0.0025;
 
 test("kompetencje: widok startowy (hero + kremowy pasek) vs baseline", async ({
   page,
@@ -89,6 +100,6 @@ test("kompetencje: pełna strona z rozwiniętymi akapitami (mobile)", async ({
     fullPage: true,
     mask: mask(page),
     timeout: FULLPAGE_SHOT_TIMEOUT_MS,
-    maxDiffPixelRatio: FULLPAGE_MAX_DIFF_RATIO,
+    maxDiffPixelRatio: FULLOPEN_MAX_DIFF_RATIO,
   });
 });
