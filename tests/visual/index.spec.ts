@@ -52,8 +52,26 @@ const PATH = "/";
  *  Wartość 0.0025 = ta sama klasa co `*-full-open` w kompetencjach
  *  i tradycji. Realna regresja layoutu na tej stronie to DZIESIĄTKI
  *  tysięcy px (0.02–0.05), więc próg jej nie przepuści; globalny
- *  0.0005 w playwright.config.ts zostaje NIETKNIĘTY. */
-const FULLPAGE_MAX_DIFF_RATIO = 0.0025;
+ *  0.0005 w playwright.config.ts zostaje NIETKNIĘTY.
+ *
+ *  ETAP 5 — podniesienie 0.0025 → 0.006 (decyzja Mateusza). Objaw:
+ *  9923 px = 0.00435 na webkit-iphone-se w CI. Rozpoznanie (pełny
+ *  łańcuch w CLAUDE.md): render `/` z buildu gałęzi i z buildu
+ *  origin/main na tej samej maszynie jest identyczny CO DO PIKSELA
+ *  (0 różnic), actual z CI jest bajt-w-bajt równy zrzutowi z workflow
+ *  baseline'ów (więc to nie losowy flake), a poprzednie CI na main
+ *  było z tym baseline'em ZIELONE (więc baseline nie jest
+ *  przeterminowany). W paśmie różnicy tekst stoi piksel w piksel —
+ *  przesuwa się WYŁĄCZNIE zdjęcie w tle, czyli pętla parallaxu
+ *  [data-plx] osiadła na innej klatce przy zszywaniu fullPage.
+ *  Punkt osiadania zależy od obciążenia, a to zmienia się przy KAŻDEJ
+ *  zmianie składu zestawu wizualnego (tu: zniknął skeleton.spec.ts,
+ *  doszedł kontakt.spec.ts → inny przydział na 4 workerów). Próg
+ *  pokrywa całą tę klasę, zachowując 3–8× zapasu do realnej regresji.
+ *  Lekarstwo strukturalne (zamrożenie transformów [data-plx] przed
+ *  zrzutem fullPage w revealSweep) unieważniłoby baseline'y wszystkich
+ *  widoków z kadrami — kandydat na Etap 6, nie na ten PR. */
+const FULLPAGE_MAX_DIFF_RATIO = 0.006;
 
 test("strona główna: widok startowy (hero + pasek) vs baseline", async ({
   page,

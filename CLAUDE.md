@@ -1107,6 +1107,41 @@ start` (lekcja spisu treści z polityki). Hero NISKIE
   - **`tests/visual/skeleton.spec.ts` SKASOWANY** razem z baseline'ami
     `skeleton-kontakt-*` (24 pliki, `git rm`) — była to ostatnia trasa
     szkieletu. Plik znika z repo.
+  - **Próg `index-full` podniesiony 0.0025 → 0.006** (decyzja Mateusza;
+    stała `FULLPAGE_MAX_DIFF_RATIO` w `tests/visual/index.spec.ts`,
+    globalny 0.0005 NIETKNIĘTY). Objaw: `webkit-iphone-se/index-full`
+    czerwony w CI na 9923 px = 0.00435. Rozpoznanie przeprowadzone do
+    końca, bo trzy zastane heurystyki dawały tu SPRZECZNE odpowiedzi:
+    (1) render `/` z buildu gałęzi i z buildu `origin/main` na TEJ SAMEJ
+    maszynie jest identyczny CO DO PIKSELA (0 różnic, 640×12272 — build
+    main w osobnym `git worktree`), więc PR nie jest przyczyną;
+    (2) actual z CI jest **bajt-w-bajt równy** zrzutowi z workflow
+    baseline'ów, a dwa niezależne przebiegi nie powtórzyłyby losowego
+    stanu — więc to NIE jest flake w rozumieniu „raz tak, raz siak";
+    (3) poprzednie CI na main było z tym baseline'em ZIELONE, więc
+    baseline nie jest przeterminowany. Rozstrzygnęły OGLĘDZINY pasma:
+    tekst stoi piksel w piksel, przesuwa się WYŁĄCZNIE zdjęcie w tle —
+    pętla parallaxu `[data-plx]` osiadła na innej klatce przy zszywaniu
+    fullPage. Punkt osiadania zależy od obciążenia runnera, a to zmienia
+    się przy KAŻDEJ zmianie składu zestawu wizualnego (tu: zniknął
+    `skeleton.spec.ts`, doszedł `kontakt.spec.ts` → inny przydział na
+    4 workerów). Stąd próg na całą klasę zamiast przyjmowania zrzutu
+    bota: zapas do realnej regresji (0,02–0,05) zostaje 3–8×.
+    ⚠️ **Uwaga interpretacyjna na przyszłość**: surowy diff tego zrzutu
+    to 220 103 px, a Playwright raportuje 9 923 — liczy PERCEPCYJNIE
+    (próg koloru), więc „liczba różnych pikseli" z własnego skryptu
+    i liczba z logu Playwrighta to DWIE RÓŻNE metryki i nie wolno ich
+    porównywać. Lekarstwo strukturalne (zamrożenie transformów
+    `[data-plx]` przed zrzutem fullPage w `revealSweep`) unieważniłoby
+    baseline'y wszystkich widoków z kadrami — kandydat na Etap 6.
+  - **`/` zmienia się w buildzie, ale NIE w renderze** (sprawdzone przy
+    powyższej diagnozie i przy fail'u LHCI): odkąd `kontakt.astro` jest
+    DRUGIM konsumentem `PaperBackdrop`, Astro przenosi jego CSS
+    z inline'owego `<style>` do już linkowanego `BaseLayout.css`.
+    Lista skryptów `/` bez zmian, łączne bajty HTML+CSS 96 256 → 96 239
+    (−17 B), render identyczny co do piksela. Przy każdym przyszłym
+    czerwonym LHCI na `/` zaczynaj od tego porównania — hash
+    `BaseLayout.*.css` MOŻE się zmienić bez żadnego wpływu na wynik.
   - Bramki 2026-08-25: format/lint/typecheck/unit(**86**, było 80)/
     build/e2e(**598 passed / 482 skipped**, było 485/457)/visual
     `--ignore-snapshots`(**126 z 156 zaplanowanych**, było 120 ze 150 —
