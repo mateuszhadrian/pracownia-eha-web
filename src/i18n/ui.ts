@@ -14,6 +14,9 @@ export const ui = {
     "kompetencjePage.title": "Kompetencje i technologie — Pracownia EH/A",
     "kompetencjePage.description":
       "Ciesielstwo, murarstwo, sklepienia, fizyka budowli i instalacje — kompetencje i technologie Pracowni EH/A.",
+    "tradycjaPage.title": "Tradycja i ekologia — Pracownia EH/A",
+    "tradycjaPage.description":
+      "Tradycyjne techniki budowlane i ekologia w remontach domów z historią — podejście Pracowni EH/A.",
     "workPage.title": "Realizacje — Pracownia EH/A",
     "workPage.description":
       "Realizacje Pracowni EH/A — remonty domów z historią: ciesielstwo, murarstwo, sklepienia, fizyka budowli i instalacje.",

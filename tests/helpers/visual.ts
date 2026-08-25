@@ -76,8 +76,11 @@ export async function revealSweep(page: Page): Promise<void> {
   // Każdy wciąż uzbrojony element wjeżdża do kadru na pełne settle;
   // elementy nieodhaczalne (schowane pod zwiniętym max-height — IO tnie
   // intersectionRect po overflow przodka) odpuszczamy po 3 przebiegach.
+  // [data-diag]/[data-kolek] = jednorazowe wejścia diagramu i kolka
+  // /tradycja-i-ekologia/ (tradycja-motion.ts) — rozszerzenie czysto
+  // addytywne: pozostałe trasy nie mają tych atrybutów.
   const armed = page.locator(
-    "html.js-motion [data-rev]:not(.in), html.js-motion [data-ryc]:not(.in), html.js-motion [data-rycsb]:not(.in)",
+    "html.js-motion [data-rev]:not(.in), html.js-motion [data-ryc]:not(.in), html.js-motion [data-rycsb]:not(.in), html.js-motion [data-diag]:not(.in), html.js-motion [data-kolek]:not(.in)",
   );
   for (let pass = 0; pass < 3 && (await armed.count()) > 0; pass++) {
     for (const el of await armed.all()) {

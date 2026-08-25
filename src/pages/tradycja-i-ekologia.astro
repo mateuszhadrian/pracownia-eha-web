@@ -1,9 +1,1885 @@
 ---
-import SkeletonPage from "@/components/SkeletonPage.astro";
+// Podstrona /tradycja-i-ekologia/ (Etap 4.5, część 1) — port
+// docs/design/export/tradycja-i-ekologia.html; decyzje:
+// docs/analiza-tradycja.md. Konsumuje moduły 4.4 BEZ zmian ich mechanik:
+// CollapsibleText + collapsible.ts (zwijane akapity mobile ×3, SSR
+// z pełnym tekstem), content-motion.ts (reveale/rysowanie/parallaxy/
+// dryf tła za bramką js-motion), Navbar tone="dark", PaperBackdrop.
+// JEDYNA nowość mechaniki = ANIMOWANY DIAGRAM warstw + efekt kolka —
+// osobny mały moduł tradycja-motion.ts (analiza §2.8): port na CSS
+// TRANSITIONS (freeze.css sadza stany końcowe bez księgowości
+// animationend), stany startowe wyłącznie pod html.js-motion i @media
+// <1024 (animacja mobile-only jak w eksporcie; desktopowa kopia
+// diagramu statyczna). Sekcje fizyka/upcycling/trwałość mają na obu
+// progach realnie różne kompozycje — akapity/kadry/diagram świadomie
+// zduplikowane dOnly/mOnly (treści w stałych frontmattera); manifest,
+// mikroklimat i CTA = jeden markup.
+import ceglaRozb from "@/assets/cegla-rozbiorkowa.webp";
+import house2 from "@/assets/dom-ryc-house2.webp";
+import house3 from "@/assets/dom-ryc-house3.webp";
+import house5 from "@/assets/dom-ryc-house5.webp";
+import bala3 from "@/assets/dom-z-bala3.webp";
+import bala4 from "@/assets/dom-z-bala4.webp";
+import kolekM from "@/assets/eha-kolek-ryc-m.webp";
+import ekologia from "@/assets/ekologia-techno.webp";
+import hero from "@/assets/hero-tradycja-i-ekologia1.webp";
+import houseOld from "@/assets/house-old1.webp";
+import lisc from "@/assets/lisc-rycina1.webp";
+import drewnoAi from "@/assets/tradycja-i-ekologia-drewno-ai1.webp";
+import Footer from "@/components/Footer.astro";
+import Navbar from "@/components/navbar/Navbar.astro";
+import PaperBackdrop from "@/components/PaperBackdrop.astro";
+import CollapsibleText from "@/components/sections/CollapsibleText.astro";
+import { ui } from "@/i18n/ui";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { CONTACT_PATH } from "@/lib/routes";
+
+// Treści powtarzane dOnly/mOnly — jedno źródło, żeby kopie nie mogły
+// się rozjechać (akapity z <em> siedzą inline w markupie — mikroklimat
+// ma jeden markup, więc nie duplikuje).
+const MAN_P = [
+  "W dzisiejszym budownictwie słowo „ekologia” zostało sprowadzone do pustego sloganu, który najczęściej oznacza zamykanie domów w szczelnych termosach ze styropianu, plastiku i folii. W Pracowni EH/A rozumiemy ekologię zupełnie inaczej. Dla nas to powrót do praw fizyki, poszanowanie geologicznej natury materiałów oraz inżynieria, która współpracuje z prawami natury, zamiast z nimi walczyć.",
+  "Tradycja, z której czerpiemy, nie jest dla nas sentymentalnym powrotem do przeszłości – jest zbiorem wybitnych technologii budowlanych, które przetrwały próbę czasu.",
+];
+const FIZ_P = [
+  "Zrozumienie materii zaczyna się u podstaw. Wykorzystując nasze zaplecze w dziedzinach takich jak geologia i systemowe zarządzanie technologią, traktujemy budynek jako żywy, fizyczny organizm. Zamiast izolować go syntetyczną chemią, pozwalamy mu swobodnie regulować parametry.",
+  "Stosujemy ocieplenia i termomodernizacje oparte wyłącznie na materiałach otwartych dyfuzyjnie. Wykorzystujemy do tego najwyższej jakości wełnę drzewną oraz tradycyjne tynki wapienne. Taki układ warstw sprawia, że ściana w naturalny sposób przyjmuje, a następnie oddaje nadmiar wilgoci z wnętrza. Historyczna konstrukcja zyskuje odpowiednie środowisko do długowiecznego funkcjonowania, chroniąc więźby i mury przed ukrytą degradacją i gniciem, które często towarzyszą nowoczesnym, „szczelnym” technologiom.",
+];
+const UP_P = [
+  "Najbardziej ekologicznym materiałem jest ten, który już istnieje. W naszej pracy doprowadziliśmy recykling architektoniczny do poziomu sztuki. Zamiast generować nowy ślad węglowy, ratujemy przed zniszczeniem potężne ilości historycznej substancji.",
+  "Z ogromną satysfakcją wznosimy konstrukcje i trudne sklepienia ze starej cegły rozbiórkowej, łącząc ją z nowym surowcem.",
+  "Podejmujemy się również zadań bezkompromisowych, takich jak relokacja budynków – na naszym koncie znajduje się między innymi budowa rozebranego domu z bala, który przywieźliśmy z innej lokalizacji i zrekonstruowaliśmy w miejscowości Czernica. To nie tylko hołd dla rzemiosła, ale przede wszystkim najwyższa możliwa forma szacunku dla środowiska.",
+];
+const TRW_P = [
+  "Wierzymy, że najbardziej ekologiczny dom to ten, którego nie trzeba wyburzać i budować od nowa po kilkudziesięciu latach. Trwałość jest fundamentem naszej filozofii. Odnawiając ściany szachulcowe czy wznosząc ustroje przysłupowe, korzystamy ze sprawdzonych, ciesielskich rozwiązań.",
+  "Elementy nośne łączymy za pomocą drewnianych kołków i tradycyjnych złączy ciesielskich. Nie używamy metalowych śrub, które z czasem korodują i niszczą strukturę surowca.",
+  "Odpowiednio dobrane, starannie wyselekcjonowane drewno w połączeniu z tradycyjną techniką wiązania tworzy strukturę elastyczną, zdolną oprzeć się potężnym siłom naprężeń przez setki lat.",
+];
+const MIKRO_CARDS = [
+  {
+    k: "BEZ PLEŚNI",
+    t: "Ściana otwarta dyfuzyjnie nie zatrzymuje wilgoci — grzyb nie ma się gdzie zadomowić.",
+  },
+  {
+    k: "BEZ TOKSYCZNYCH OPARÓW",
+    t: "Wełna drzewna i wapno zamiast klejów, pianek i syntetycznych folii.",
+  },
+  {
+    k: "STABILNA WILGOTNOŚĆ",
+    t: "Mury same regulują poziom pary wodnej — powietrze pozostaje rześkie przez cały rok.",
+  },
+];
+// diagram warstw otwartych dyfuzyjnie (dwie kopie: mOnly animowana
+// [data-diag] + dOnly statyczna — analiza §2.5/§2.8)
+const DIAG_LAYERS = [
+  { label: "WNĘTRZE", cls: "dg-edge" },
+  { label: "TYNK WAPIENNY", cls: "dg-tynk" },
+  { label: "WEŁNA DRZEWNA", cls: "dg-welna" },
+  { label: "MUR HISTORYCZNY", cls: "dg-mur" },
+  { label: "ZEWNĘTRZE", cls: "dg-edge" },
+];
+const DIAG_KICK = "UKŁAD WARSTW OTWARTYCH DYFUZYJNIE";
+const DIAG_CAP = "PARA WODNA — ŚCIANA PRZYJMUJE I ODDAJE WILGOĆ";
+const FIZ_BADGE = "WAPIEŃ · WEŁNA DRZEWNA · STARE DREWNO";
+const UP_BADGE = "BEZKOMPROMISOWO · RELOKACJA BUDYNKÓW";
+const UP_CAP1 = "CZERNICA — REKONSTRUKCJA PRZEWIEZIONEGO ZRĘBU";
+const UP_CAP2 = "NOWA WIĘŹBA NAD STULETNIM ZRĘBEM";
+const BALA4_ALT = "Zrąb domu z bala zrekonstruowany w Czernicy";
+const BALA3_ALT = "Nowa więźba dachowa nad stuletnim zrębem";
 ---
 
-<SkeletonPage
-  title="Tradycja i ekologia — Pracownia EH/A"
-  heading="Tradycja i ekologia"
-  description="Tradycyjne techniki budowlane i ekologia w remontach domów z historią — podejście Pracowni EH/A."
-/>
+<BaseLayout
+  title={ui.pl["tradycjaPage.title"]}
+  description={ui.pl["tradycjaPage.description"]}
+>
+  <script is:inline slot="head">
+    // PRZED paintem: motion OK → html.js-motion (uzbraja stany startowe
+    // revealów/rysowania/diagramu — reszta w content-motion.ts
+    // i tradycja-motion.ts, ładowanych niżej).
+    if (window.matchMedia("(prefers-reduced-motion: no-preference)").matches) {
+      document.documentElement.classList.add("js-motion");
+    }
+  </script>
+
+  <Navbar tone="dark" />
+
+  <main class="trd">
+    <PaperBackdrop />
+
+    {/* ── hero: kadr łąki, h1 na dole (mobile atrament / desktop krem) ── */}
+    <header class="trd-hero" data-navref>
+      <div class="trd-hero-ph">
+        <img
+          data-plx
+          src={hero.src}
+          width={hero.width}
+          height={hero.height}
+          alt="Poranna łąka z chatą na skraju lasu"
+          loading="eager"
+          fetchpriority="high"
+          decoding="async"
+        />
+        {/* gradient czytelności kremowego paska (tone="dark") */}
+        <span class="trd-hero-top" aria-hidden="true"></span>
+        <span class="trd-hero-bot dOnly" aria-hidden="true"></span>
+      </div>
+      <div class="trd-hero-tt">
+        <h1>Tradycja i ekologia.</h1>
+        <span class="trd-hero-tag dOnly"
+          >PRACOWNIA EH/A<br />REMONTY DOMÓW Z HISTORIĄ</span
+        >
+      </div>
+    </header>
+
+    {/* ── manifest (mobile: lead + scalony akapit; desktop: rycina + 2) ── */}
+    <section class="trd-man">
+      <div class="man-grid">
+        <img
+          class="man-rycm mOnly"
+          data-ryc="r"
+          data-plxr
+          src={house3.src}
+          width={house3.width}
+          height={house3.height}
+          alt=""
+          loading="lazy"
+          decoding="async"
+        />
+        <div class="man-rycw dOnly" aria-hidden="true">
+          <img
+            data-rycsb="l"
+            src={lisc.src}
+            width={lisc.width}
+            height={lisc.height}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+        <p class="trd-lead mOnly">Manifest pragmatyczny.</p>
+        <p class="man-p mOnly">{MAN_P.join(" ")}</p>
+        {MAN_P.map((t) => <p class="man-p man-col dOnly">{t}</p>)}
+      </div>
+    </section>
+
+    {/* ── ciemny pas materiałów (mobile) ── */}
+    <div class="trd-band mOnly" aria-hidden="true">
+      <div class="band-msk">
+        <img
+          data-plx
+          src={ekologia.src}
+          width={ekologia.width}
+          height={ekologia.height}
+          alt=""
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
+    </div>
+
+    {/* ── FIZYKA BUDOWLI (diagram w zwijanym pudle / desktop w gridzie) ── */}
+    <section class="trd-fiz">
+      <div class="fiz-g1">
+        <div class="fiz-txt">
+          <div class="fiz-head">
+            <p class="trd-kick" data-rev>FIZYKA BUDOWLI</p>
+            <h2 data-rev data-rev-d="1">
+              Fizyka budowli. Dom, który naprawdę oddycha
+            </h2>
+          </div>
+          <p class="trd-p dOnly">{FIZ_P[0]}</p>
+        </div>
+        <div class="fiz-photo dOnly">
+          <img
+            src={ekologia.src}
+            width={ekologia.width}
+            height={ekologia.height}
+            alt="Wapień, wełna drzewna i stare drewno"
+            loading="lazy"
+            decoding="async"
+          />
+          <p class="trd-badge fiz-badge">{FIZ_BADGE}</p>
+        </div>
+      </div>
+      <CollapsibleText
+        id="sec-fizyka"
+        collapsedMax="132px"
+        class="trd-clp mOnly"
+      >
+        <p>{FIZ_P[0]}</p>
+        <div class="trd-diag" data-diag>
+          <p class="trd-kick dg-kick">{DIAG_KICK}</p>
+          <div class="dg-card">
+            <div class="dg-box">
+              {
+                DIAG_LAYERS.map((l) => (
+                  <div class:list={["dg-lay", l.cls]}>
+                    <span>{l.label}</span>
+                  </div>
+                ))
+              }
+              <span class="dg-arw" aria-hidden="true"></span>
+              <span class="dg-arwh dg-arwh-l" aria-hidden="true"></span>
+              <span class="dg-arwh dg-arwh-r" aria-hidden="true"></span>
+            </div>
+            <p class="dg-cap">{DIAG_CAP}</p>
+          </div>
+        </div>
+        <p>{FIZ_P[1]}</p>
+      </CollapsibleText>
+      <div class="fiz-g2 dOnly">
+        <div class="trd-diag">
+          <p class="trd-kick dg-kick">{DIAG_KICK}</p>
+          <div class="dg-card">
+            <div class="dg-box">
+              {
+                DIAG_LAYERS.map((l) => (
+                  <div class:list={["dg-lay", l.cls]}>
+                    <span>{l.label}</span>
+                  </div>
+                ))
+              }
+              <span class="dg-arw" aria-hidden="true"></span>
+              <span class="dg-arwh dg-arwh-l" aria-hidden="true"></span>
+              <span class="dg-arwh dg-arwh-r" aria-hidden="true"></span>
+            </div>
+            <p class="dg-cap">{DIAG_CAP}</p>
+          </div>
+        </div>
+        <p class="trd-p">{FIZ_P[1]}</p>
+      </div>
+    </section>
+
+    {/* ── UPCYCLING ── */}
+    <section class="trd-up">
+      <div class="up-g1">
+        <div class="up-txt">
+          <div class="trd-sec-head up-head">
+            <div class="trd-plbg mOnly" aria-hidden="true">
+              <img
+                data-plx
+                src={ceglaRozb.src}
+                width={ceglaRozb.width}
+                height={ceglaRozb.height}
+                alt=""
+                loading="lazy"
+                decoding="async"
+              />
+              <span class="trd-fog"></span>
+            </div>
+            <div class="trd-sec-head-in">
+              <p class="trd-kick" data-rev>UPCYCLING</p>
+              <h2 data-rev data-rev-d="1">
+                Upcycling na wielką skalę. Drugie życie architektury
+              </h2>
+            </div>
+          </div>
+          <p class="trd-p dOnly">{UP_P[0]}</p>
+        </div>
+        <div class="up-photo dOnly">
+          <img
+            src={bala4.src}
+            width={bala4.width}
+            height={bala4.height}
+            alt={BALA4_ALT}
+            loading="lazy"
+            decoding="async"
+          />
+          <p class="trd-badge trd-badge-go up-badge-top">{UP_BADGE}</p>
+          <p class="trd-badge up-badge-bot">{UP_CAP1}</p>
+        </div>
+      </div>
+      <CollapsibleText
+        id="sec-upcycling"
+        collapsedMax="132px"
+        class="trd-clp mOnly"
+      >
+        <div class="trd-clp-ryc up-ryc" aria-hidden="true">
+          <img
+            data-ryc="r"
+            src={house5.src}
+            width={house5.width}
+            height={house5.height}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+        <p>{UP_P[0]}</p>
+        <figure class="up-kadr">
+          <div class="trd-bandclp up-band1">
+            <img
+              data-plx
+              src={bala4.src}
+              width={bala4.width}
+              height={bala4.height}
+              alt={BALA4_ALT}
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+          <figcaption>{UP_CAP1}</figcaption>
+        </figure>
+        <p>{UP_P[1]}</p>
+        <div class="up-sub">
+          <p class="trd-kick up-sub-k">{UP_BADGE}</p>
+          <p>{UP_P[2]}</p>
+        </div>
+        <figure class="up-kadr">
+          <div class="trd-bandclp up-band2">
+            <img
+              data-plx
+              src={bala3.src}
+              width={bala3.width}
+              height={bala3.height}
+              alt={BALA3_ALT}
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+          <figcaption>{UP_CAP2}</figcaption>
+        </figure>
+      </CollapsibleText>
+      <div class="up-g2 dOnly">
+        <div class="up-photo up-photo2">
+          <img
+            src={bala3.src}
+            width={bala3.width}
+            height={bala3.height}
+            alt={BALA3_ALT}
+            loading="lazy"
+            decoding="async"
+          />
+          <p class="trd-badge up-badge-bot">{UP_CAP2}</p>
+        </div>
+        <div class="up-ps">
+          <p class="trd-p">{UP_P[1]}</p>
+          <p class="trd-p">{UP_P[2]}</p>
+        </div>
+      </div>
+    </section>
+
+    {/* ── TRWAŁOŚĆ (kolek w zwijanym pudle) ── */}
+    <section class="trd-tw">
+      <div class="tw-pas">
+        <div class="tw-pas-msk" aria-hidden="true">
+          <img
+            data-plx
+            src={drewnoAi.src}
+            width={drewnoAi.width}
+            height={drewnoAi.height}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+        <div class="trd-sec-head-in tw-head">
+          <p class="trd-kick" data-rev>TRWAŁOŚĆ</p>
+          <h2 data-rev data-rev-d="1">Trwałość. Prawdziwa miara ekologii</h2>
+        </div>
+      </div>
+      <CollapsibleText
+        id="sec-trwalosc"
+        collapsedMax="132px"
+        class="trd-clp mOnly"
+      >
+        <img
+          class="tw-kolek"
+          data-kolek
+          src={kolekM.src}
+          width={kolekM.width}
+          height={kolekM.height}
+          alt=""
+          loading="lazy"
+          decoding="async"
+        />
+        {TRW_P.map((t) => <p>{t}</p>)}
+      </CollapsibleText>
+      <div class="tw-grid dOnly">
+        {TRW_P.map((t) => <p class="trd-p">{t}</p>)}
+      </div>
+    </section>
+
+    {/* ── MIKROKLIMAT (jeden markup; bez zwijania) ── */}
+    <section class="trd-mik">
+      <div class="mik-pas">
+        <div class="mik-pas-msk" aria-hidden="true">
+          <img
+            data-plx
+            src={hero.src}
+            width={hero.width}
+            height={hero.height}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+          <span class="trd-fog"></span>
+        </div>
+        <div class="trd-sec-head-in mik-head">
+          <p class="trd-kick" data-rev>MIKROKLIMAT</p>
+          <h2 data-rev data-rev-d="1">
+            Zdrowy mikroklimat i bezpieczna przystań
+          </h2>
+        </div>
+      </div>
+      <div class="mik-body">
+        <div class="trd-clp-ryc mik-rycm mOnly" aria-hidden="true">
+          <img
+            data-ryc="r"
+            data-plxr
+            src={house2.src}
+            width={house2.width}
+            height={house2.height}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+        <img
+          class="mik-rycd dOnly"
+          data-rycsb="r"
+          src={house2.src}
+          width={house2.width}
+          height={house2.height}
+          alt=""
+          loading="lazy"
+          decoding="async"
+        />
+        <div class="mik-ps">
+          <p class="mik-p1">
+            Ekologia w naszym wydaniu to również troska o to, co dom daje
+            fizycznie swoim mieszkańcom. Uciekając przed miejskim zgiełkiem,
+            inwestorzy szukają nie tylko ciszy, ale i zdrowia.
+          </p>
+          <p class="mik-p2">
+            Zastosowanie wełny drzewnej i tynków wapiennych eliminuje problem
+            pleśni i toksycznych oparów wydzielanych przez współczesne kleje czy
+            pianki. Tworzymy wnętrza o unikalnym, <em
+              >antyalergicznym mikroklimacie</em
+            >, w którym powietrze jest zawsze rześkie, a wilgotność utrzymuje
+            się na optymalnym dla człowieka poziomie.
+          </p>
+        </div>
+        <div class="mik-cards">
+          {
+            MIKRO_CARDS.map((c) => (
+              <div class="trd-card">
+                <p class="trd-card-k">{c.k}</p>
+                <p class="trd-card-t">{c.t}</p>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+      <div class="mik-sepw" aria-hidden="true">
+        <span class="mik-sep"></span>
+      </div>
+    </section>
+
+    {/* ── CTA ── */}
+    <section class="trd-cta">
+      <div class="cta-msk" aria-hidden="true">
+        <img
+          data-plx
+          src={houseOld.src}
+          width={houseOld.width}
+          height={houseOld.height}
+          alt=""
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
+      <span class="cta-shade" aria-hidden="true"></span>
+      <div class="cta-in">
+        <a class="cta-btn" href={CONTACT_PATH}>Porozmawiajmy o Twoim domu →</a>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</BaseLayout>
+
+<style is:global>
+  /* ── Tokeny widoku (odczyty z eksportu — analiza §1). Mobile w bazie,
+     desktop w @media 1024 (para: CONTENT_DESKTOP_MIN_PX). Tokeny
+     typograficzne desktop identyczne z .kmp/.eka (te same formuły
+     eksportów). ── */
+  .trd {
+    /* kontener mobile eksportu: 700/30 */
+    --wmax: 700px;
+    /* ryciny/kadry wystają za krawędź — clip bez tworzenia scrollera */
+    overflow-x: clip;
+    /* tło jak pozostałe trasy treściowe: baza kremowa + skan papieru
+       (PaperBackdrop, z-index -1 — stąd isolation) */
+    position: relative;
+    isolation: isolate;
+    background: var(--bg-cream);
+  }
+  @media (min-width: 1024px) {
+    .trd {
+      --wmax: 1600px;
+      --body: clamp(13.5px, 1.08vw, 17px);
+      --lhb: 1.72;
+      --mono: clamp(10px, 0.76vw, 12px);
+      --monos: clamp(9px, 0.66vw, 10.5px);
+      --h2: clamp(31px, 2.78vw, 44px);
+      /* paddingi sekcji liczone z vh (eksport §1b) */
+      --pad: max(30px, 5.2vh);
+      --pad-s: max(22px, 3.8vh);
+    }
+  }
+
+  /* warianty per breakpoint (wzorzec dOnly/mOnly z 4.1–4.4) */
+  @media (max-width: 1023.98px) {
+    .trd .dOnly {
+      display: none !important;
+    }
+  }
+  @media (min-width: 1024px) {
+    .trd .mOnly {
+      display: none !important;
+    }
+  }
+
+  /* ── hero ── */
+  .trd-hero {
+    position: relative;
+    height: 430px;
+  }
+  .trd-hero-ph {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    background: #3a3428;
+    /* kadr wygasa w papier ku dołowi (mobile) */
+    -webkit-mask-image: linear-gradient(#000 60%, rgba(0, 0, 0, 0) 100%);
+    mask-image: linear-gradient(#000 60%, rgba(0, 0, 0, 0) 100%);
+  }
+  /* zapas kadru = ruch parallaxu [data-plx] (D-U1; PLX_AMT 0.18) */
+  .trd-hero-ph > img {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -9%;
+    width: 100%;
+    height: 118%;
+    max-width: none;
+    object-fit: cover;
+    object-position: 70% 38%;
+    filter: sepia(0.15) saturate(0.85);
+  }
+  /* gradient czytelności kremowego paska (tone="dark") */
+  .trd-hero-top {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 118px;
+    background: linear-gradient(rgba(24, 19, 14, 0.5), rgba(24, 19, 14, 0));
+  }
+  .trd-hero-tt {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-width: var(--wmax);
+    margin-inline: auto;
+    box-sizing: border-box;
+    padding: 0 30px 22px;
+  }
+  .trd-hero-tt h1 {
+    margin: 0;
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: 42px;
+    line-height: 1.1;
+    color: var(--ink);
+  }
+
+  /* ── wspólne klocki typograficzne ── */
+  .trd-kick {
+    margin: 0;
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: rgba(87, 101, 74, 0.95);
+  }
+  .trd h2 {
+    margin: 0;
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: 28px;
+    line-height: 1.2;
+    color: var(--ink);
+    text-wrap: pretty;
+  }
+  .trd-lead {
+    margin: 0;
+    font-family: var(--font-serif), serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 19px;
+    line-height: 1.35;
+    color: var(--sepia);
+  }
+
+  /* ── manifest ── */
+  .man-grid {
+    position: relative;
+    max-width: var(--wmax);
+    margin-inline: auto;
+    box-sizing: border-box;
+    padding: 4px 30px 34px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .man-rycm {
+    position: absolute;
+    right: -38px;
+    top: 118px;
+    width: 128px;
+    max-width: none;
+    height: auto;
+    opacity: 0.5;
+    pointer-events: none;
+  }
+  .man-p {
+    position: relative;
+    margin: 0;
+    font-family: var(--font-body), sans-serif;
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: var(--faint);
+  }
+
+  /* ── ciemny pas materiałów (mobile) ── */
+  .trd-band {
+    position: relative;
+    height: 236px;
+    overflow: hidden;
+    background: #14100b;
+  }
+  .band-msk {
+    position: absolute;
+    inset: 0;
+    -webkit-mask-image: linear-gradient(
+      rgba(0, 0, 0, 0) 0,
+      #000 10%,
+      #000 92%,
+      rgba(0, 0, 0, 0) 100%
+    );
+    mask-image: linear-gradient(
+      rgba(0, 0, 0, 0) 0,
+      #000 10%,
+      #000 92%,
+      rgba(0, 0, 0, 0) 100%
+    );
+  }
+  /* zapas kadru = ruch parallaxu (D-U1) */
+  .band-msk > img {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -9%;
+    width: 100%;
+    height: 118%;
+    max-width: none;
+    object-fit: cover;
+    object-position: 50% 52%;
+    filter: sepia(0.08) saturate(0.95);
+  }
+
+  /* ── wspólne klocki sekcji (wzorce .kmp) ── */
+  .trd-sec-head {
+    position: relative;
+    overflow: hidden;
+  }
+  .trd-plbg {
+    position: absolute;
+    inset: 0;
+    -webkit-mask-image: linear-gradient(#000 40%, rgba(0, 0, 0, 0) 100%);
+    mask-image: linear-gradient(#000 40%, rgba(0, 0, 0, 0) 100%);
+  }
+  /* zapas kadru = ruch parallaxu (D-U1) */
+  .trd-plbg > img {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -9%;
+    width: 100%;
+    height: 118%;
+    max-width: none;
+    object-fit: cover;
+    object-position: 50% 55%;
+    filter: sepia(0.14) saturate(0.88);
+  }
+  .trd-fog {
+    position: absolute;
+    inset: 0;
+    background: rgba(250, 247, 241, 0.66);
+  }
+  .trd-sec-head-in {
+    position: relative;
+    max-width: var(--wmax);
+    margin-inline: auto;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 56px 30px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* zwijane pudła: host = kontener 700/30 (przycisk „Czytaj dalej"
+     w osi kontenera — eksportowy „osobny kontener" ma te same
+     współrzędne); kadry full-bleed łamią kontener breakoutem */
+  .trd .trd-clp {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-width: var(--wmax);
+    margin-inline: auto;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 14px 30px 0;
+  }
+  .trd .clp-body {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .trd .clp-body p {
+    position: relative;
+    margin: 0;
+    font-family: var(--font-body), sans-serif;
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+  /* ryciny w treści (absolute — zwinięte pudło przycina je z maską) */
+  .trd-clp-ryc {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 112px;
+    pointer-events: none;
+  }
+  .trd-clp-ryc > img {
+    position: absolute;
+    max-width: none;
+    height: auto;
+    mix-blend-mode: multiply;
+  }
+  .up-ryc > img {
+    right: -98px;
+    top: 0;
+    width: 142px;
+    opacity: 0.28;
+  }
+
+  /* kadry full-bleed wewnątrz zwijanych pudeł */
+  .trd-bandclp {
+    position: relative;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    height: 212px;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(
+      rgba(0, 0, 0, 0) 0,
+      #000 16%,
+      #000 84%,
+      rgba(0, 0, 0, 0) 100%
+    );
+    mask-image: linear-gradient(
+      rgba(0, 0, 0, 0) 0,
+      #000 16%,
+      #000 84%,
+      rgba(0, 0, 0, 0) 100%
+    );
+  }
+  /* zapas kadru = ruch parallaxu (D-U1) */
+  .trd-bandclp > img {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -9%;
+    width: 100%;
+    height: 118%;
+    max-width: none;
+    object-fit: cover;
+    filter: sepia(0.18) saturate(0.92);
+  }
+  .up-band1 > img {
+    object-position: 50% 58%;
+  }
+  .up-band2 > img {
+    object-position: 50% 40%;
+  }
+  .up-kadr {
+    margin: 6px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  /* eksportowe .5 na papierze nie łapało AA — korekta .65
+     (klasa decyzji a11y z 4.4, ratchet axe od pustej allowlisty) */
+  .up-kadr figcaption {
+    text-align: center;
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    color: rgba(33, 29, 24, 0.65);
+  }
+  .up-sub {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 2px;
+  }
+  .up-sub-k {
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    color: var(--accent);
+  }
+
+  /* ── diagram warstw (dwie kopie — analiza §2.5/§2.8) ── */
+  .trd-diag {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 8px;
+  }
+  .dg-card {
+    border: 1px solid rgba(33, 29, 24, 0.22);
+    background: var(--bg-card);
+    box-shadow: 0 1px 3px rgba(33, 29, 24, 0.08);
+    padding: 12px;
+  }
+  .dg-box {
+    position: relative;
+    display: flex;
+    height: 148px;
+  }
+  .dg-lay {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .dg-lay span {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-family: var(--font-mono), monospace;
+    font-weight: 600;
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    color: var(--sepia);
+  }
+  .dg-edge {
+    width: 52px;
+  }
+  /* eksportowe .5 → .65 (korekta a11y jak podpisy kadrów) */
+  .dg-edge span {
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    color: rgba(33, 29, 24, 0.65);
+  }
+  .dg-edge:first-of-type {
+    border-right: 1px dashed rgba(33, 29, 24, 0.3);
+  }
+  .dg-edge:last-of-type {
+    border-left: 1px dashed rgba(33, 29, 24, 0.3);
+  }
+  .dg-tynk {
+    flex: 1;
+    background: #eae2cc;
+    border-right: 1px solid rgba(33, 29, 24, 0.22);
+  }
+  .dg-welna {
+    flex: 1.25;
+    background: repeating-linear-gradient(
+      45deg,
+      #e0d4b5 0,
+      #e0d4b5 5px,
+      #dacba7 5px,
+      #dacba7 10px
+    );
+    border-right: 1px solid rgba(33, 29, 24, 0.22);
+  }
+  .dg-mur {
+    flex: 1.4;
+    background: repeating-linear-gradient(
+      #d5c2a4 0,
+      #d5c2a4 16px,
+      #ccb690 16px,
+      #ccb690 18px
+    );
+  }
+  .dg-arw {
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    top: 50%;
+    height: 0;
+    border-top: 1.5px dashed rgba(33, 29, 24, 0.6);
+  }
+  .dg-arwh {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-style: solid;
+  }
+  .dg-arwh-l {
+    left: 6px;
+    border-width: 4.5px 8px 4.5px 0;
+    border-color: transparent rgba(33, 29, 24, 0.6) transparent transparent;
+  }
+  .dg-arwh-r {
+    right: 6px;
+    border-width: 4.5px 0 4.5px 8px;
+    border-color: transparent transparent transparent rgba(33, 29, 24, 0.6);
+  }
+  /* eksportowe .55 → .65 (korekta a11y) */
+  .dg-cap {
+    margin: 10px 0 0;
+    text-align: center;
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    color: rgba(33, 29, 24, 0.65);
+  }
+
+  /* ── fizyka: nagłówek mobile bez płyty-tła ── */
+  .fiz-head {
+    position: relative;
+    max-width: var(--wmax);
+    margin-inline: auto;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 12px 30px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* ── trwałość: pas + kolek ── */
+  .trd-tw {
+    margin-top: 26px;
+  }
+  .tw-pas {
+    position: relative;
+    overflow: hidden;
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+  .tw-pas-msk {
+    position: absolute;
+    inset: 0;
+    -webkit-mask-image: linear-gradient(#000 40%, rgba(0, 0, 0, 0) 100%);
+    mask-image: linear-gradient(#000 40%, rgba(0, 0, 0, 0) 100%);
+  }
+  /* zapas kadru = ruch parallaxu (D-U1) */
+  .tw-pas-msk > img {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -9%;
+    width: 100%;
+    height: 118%;
+    max-width: none;
+    object-fit: cover;
+    object-position: 56% 50%;
+    filter: sepia(0.18) saturate(0.92);
+    opacity: 0.34;
+  }
+  .tw-head {
+    padding: 0 30px 20px;
+  }
+  .tw-kolek {
+    position: absolute;
+    left: 50%;
+    top: 44px;
+    width: 330px;
+    max-width: none;
+    height: auto;
+    transform: translateX(-50%);
+    opacity: 0.14;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+
+  /* ── mikroklimat ── */
+  .trd-mik {
+    margin-top: 34px;
+  }
+  .mik-pas {
+    position: relative;
+    overflow: hidden;
+  }
+  .mik-pas-msk {
+    position: absolute;
+    inset: 0;
+    -webkit-mask-image: linear-gradient(#000 40%, rgba(0, 0, 0, 0) 100%);
+    mask-image: linear-gradient(#000 40%, rgba(0, 0, 0, 0) 100%);
+  }
+  /* zapas kadru = ruch parallaxu (D-U1) */
+  .mik-pas-msk > img {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -9%;
+    width: 100%;
+    height: 118%;
+    max-width: none;
+    object-fit: cover;
+    object-position: 32% 62%;
+    filter: sepia(0.15) saturate(0.85);
+  }
+  .mik-body {
+    position: relative;
+    max-width: var(--wmax);
+    margin-inline: auto;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 6px 30px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .mik-rycm {
+    top: -10px;
+  }
+  .mik-rycm > img {
+    right: -72px;
+    top: 0;
+    width: 132px;
+    opacity: 0.24;
+  }
+  .mik-ps {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .mik-ps p {
+    position: relative;
+    margin: 0;
+    font-family: var(--font-body), sans-serif;
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+  .mik-ps em {
+    font-family: var(--font-serif), serif;
+    font-style: italic;
+    font-weight: 600;
+    font-size: 15.5px;
+    color: var(--sepia);
+  }
+  .mik-cards {
+    margin-top: 6px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    gap: 10px;
+  }
+  .trd-card {
+    border: 1px solid rgba(33, 29, 24, 0.18);
+    background: var(--bg-card);
+    box-shadow: 0 1px 3px rgba(33, 29, 24, 0.08);
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .trd-card-k {
+    margin: 0;
+    font-family: var(--font-mono), monospace;
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+  }
+  .trd-card-t {
+    margin: 0;
+    font-family: var(--font-body), sans-serif;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--faint);
+  }
+  .mik-sep {
+    display: block;
+    margin: 26px auto 0;
+    width: calc(100% - 52px);
+    max-width: 648px;
+    border-top: 1px dashed rgba(33, 29, 24, 0.3);
+  }
+
+  /* ── CTA ── */
+  .trd-cta {
+    position: relative;
+    overflow: hidden;
+    height: 320px;
+    margin-top: 26px;
+    background: #362b20;
+  }
+  .cta-msk {
+    position: absolute;
+    inset: 0;
+    -webkit-mask-image: linear-gradient(
+      rgba(0, 0, 0, 0) 0,
+      rgba(0, 0, 0, 0.4) 18%,
+      #000 42%
+    );
+    mask-image: linear-gradient(
+      rgba(0, 0, 0, 0) 0,
+      rgba(0, 0, 0, 0.4) 18%,
+      #000 42%
+    );
+  }
+  /* zapas kadru = ruch parallaxu (D-U1) */
+  .cta-msk > img {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -9%;
+    width: 100%;
+    height: 118%;
+    max-width: none;
+    object-fit: cover;
+    object-position: 50% 46%;
+    filter: grayscale(1) contrast(1.05);
+    mix-blend-mode: luminosity;
+    opacity: 0.9;
+  }
+  .cta-shade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      rgba(24, 19, 14, 0) 45%,
+      rgba(24, 19, 14, 0.62)
+    );
+  }
+  .cta-in {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-width: var(--wmax);
+    margin-inline: auto;
+    box-sizing: border-box;
+    padding: 0 30px 30px;
+    display: flex;
+  }
+  .cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: #ece8dd;
+    color: #26221b;
+    text-decoration: none;
+    font-family: var(--font-body), sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    padding: 15px 28px;
+    border-radius: 2px;
+    transition: background 0.2s ease;
+  }
+  .cta-btn:hover {
+    background: #f5efe3;
+    color: #26221b;
+  }
+
+  /* badge na kadrach (desktop) */
+  .trd-badge {
+    position: absolute;
+    margin: 0;
+    background: rgba(250, 247, 241, 0.92);
+    border: 1px solid rgba(33, 29, 24, 0.2);
+    padding: 6px 11px;
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    color: rgba(33, 29, 24, 0.72);
+  }
+  .trd-badge-go {
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  /* ── odstępy sekcji (mobile) ── */
+  @media (max-width: 1023.98px) {
+    .trd-fiz {
+      margin-top: 12px;
+    }
+    .trd-up {
+      margin-top: 34px;
+    }
+  }
+
+  /* ════ DESKTOP ≥1024 (para: CONTENT_DESKTOP_MIN_PX) ════ */
+  @media (min-width: 1024px) {
+    /* hero 68vh, statyczny kadr, h1 krem na dolnym gradiencie */
+    .trd-hero {
+      height: 68vh;
+    }
+    .trd-hero-ph {
+      -webkit-mask-image: none;
+      mask-image: none;
+    }
+    .trd-hero-ph > img {
+      top: 0;
+      height: 100%;
+      object-position: 60% 40%;
+    }
+    .trd-hero-top {
+      height: clamp(130px, 13.2vw, 210px);
+      background: linear-gradient(rgba(24, 19, 14, 0.6), rgba(24, 19, 14, 0));
+    }
+    .trd-hero-bot {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: clamp(200px, 20vw, 320px);
+      background: linear-gradient(rgba(24, 19, 14, 0), rgba(24, 19, 14, 0.55));
+    }
+    .trd-hero-tt {
+      padding: 0 var(--g) clamp(38px, 3.8vw, 60px);
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 40px;
+    }
+    .trd-hero-tt h1 {
+      font-size: clamp(40px, 4.4vw, 70px);
+      line-height: 1.02;
+      color: #f5efe3;
+      text-wrap: pretty;
+    }
+    .trd-hero-tag {
+      flex: none;
+      padding-bottom: 10px;
+      font-family: var(--font-mono), monospace;
+      font-weight: 500;
+      font-size: var(--monos);
+      letter-spacing: 0.18em;
+      color: rgba(245, 239, 227, 0.72);
+      text-align: right;
+    }
+    .trd-kick {
+      font-size: var(--mono);
+    }
+    .trd h2 {
+      font-size: var(--h2);
+      line-height: 1.08;
+    }
+    .trd-p {
+      margin: 0;
+      font-family: var(--font-body), sans-serif;
+      font-size: var(--body);
+      line-height: var(--lhb);
+      color: var(--muted);
+      text-align: justify;
+      hyphens: auto;
+    }
+
+    /* manifest: rycina liścia + 2 akapity nad kreskowanymi liniami */
+    .man-grid {
+      max-width: var(--wmax);
+      padding: max(26px, 4.2vh) var(--g);
+      display: grid;
+      grid-template-columns: 0.62fr 1fr 1fr;
+      gap: clamp(30px, 3.4vw, 54px);
+      align-items: start;
+    }
+    .man-rycw,
+    .man-col {
+      border-top: 1px dashed rgba(33, 29, 24, 0.28);
+      padding-top: clamp(14px, 1.4vw, 22px);
+    }
+    .man-rycw {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+    }
+    .man-rycw > img {
+      display: block;
+      width: 100%;
+      max-width: clamp(190px, 19vw, 300px);
+      height: auto;
+      opacity: 0.42;
+      mix-blend-mode: multiply;
+    }
+    .man-col {
+      font-size: var(--body);
+      line-height: var(--lhb);
+      color: var(--muted);
+      text-align: justify;
+      hyphens: auto;
+    }
+
+    /* fizyka: grid tekst|kadr, potem diagram|akapit */
+    .fiz-g1 {
+      max-width: var(--wmax);
+      margin-inline: auto;
+      box-sizing: border-box;
+      width: 100%;
+      padding: var(--pad) var(--g) var(--pad-s);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(40px, 4.6vw, 74px);
+      align-items: center;
+    }
+    .fiz-txt {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(12px, 1.15vw, 18px);
+    }
+    .fiz-head {
+      max-width: none;
+      margin: 0;
+      padding: 0;
+      display: contents;
+    }
+    .fiz-txt > .trd-p {
+      max-width: clamp(374px, 36.1vw, 578px);
+    }
+    .fiz-photo {
+      position: relative;
+      height: clamp(220px, 42vh, 420px);
+      overflow: hidden;
+      background: #14100b;
+    }
+    .fiz-photo > img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 52%;
+      filter: sepia(0.15) saturate(0.85);
+    }
+    .fiz-badge {
+      left: 14px;
+      bottom: 14px;
+      font-size: var(--monos);
+    }
+    .fiz-g2 {
+      max-width: var(--wmax);
+      margin-inline: auto;
+      box-sizing: border-box;
+      width: 100%;
+      border-top: 1px dashed rgba(33, 29, 24, 0.28);
+      padding: var(--pad-s) var(--g) var(--pad);
+      display: grid;
+      grid-template-columns: 1.45fr 1fr;
+      gap: clamp(40px, 4.6vw, 74px);
+      align-items: center;
+    }
+    .fiz-g2 .trd-diag {
+      margin-top: 0;
+      gap: clamp(8px, 0.76vw, 12px);
+    }
+
+    /* diagram — geometria desktopu (eksport §1b.3) */
+    .dg-card {
+      padding: clamp(11px, 1.11vw, 18px);
+    }
+    .dg-box {
+      height: clamp(150px, 24vh, 250px);
+    }
+    .dg-edge {
+      width: 9%;
+    }
+    .dg-edge span {
+      font-size: var(--monos);
+    }
+    /* środkowe etykiety poziome (mobile wszystkie pionowe) */
+    .dg-tynk span,
+    .dg-welna span,
+    .dg-mur span {
+      writing-mode: initial;
+      transform: none;
+      font-size: var(--mono);
+    }
+    .dg-welna {
+      flex: 1.3;
+      background: repeating-linear-gradient(
+        45deg,
+        #e0d4b5 0,
+        #e0d4b5 7px,
+        #dacba7 7px,
+        #dacba7 14px
+      );
+    }
+    .dg-mur {
+      flex: 1.5;
+      background: repeating-linear-gradient(
+        #d5c2a4 0,
+        #d5c2a4 22px,
+        #ccb690 22px,
+        #ccb690 25px
+      );
+    }
+    .dg-arw {
+      left: 18px;
+      right: 18px;
+      top: 74%;
+    }
+    .dg-arwh {
+      top: 74%;
+    }
+    .dg-arwh-l {
+      border-width: 5px 9px 5px 0;
+    }
+    .dg-arwh-r {
+      border-width: 5px 0 5px 9px;
+    }
+    .dg-cap {
+      margin-top: clamp(7px, 0.7vw, 11px);
+      text-align: left;
+      font-size: var(--monos);
+      letter-spacing: 0.16em;
+    }
+
+    /* upcycling: dwa gridy z kadrami i badge'ami */
+    .up-g1,
+    .up-g2 {
+      max-width: var(--wmax);
+      margin-inline: auto;
+      box-sizing: border-box;
+      width: 100%;
+      border-top: 1px dashed rgba(33, 29, 24, 0.28);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(40px, 4.6vw, 74px);
+      align-items: center;
+    }
+    .up-g1 {
+      padding: var(--pad) var(--g) var(--pad-s);
+    }
+    .up-g2 {
+      padding: var(--pad-s) var(--g) var(--pad);
+    }
+    .up-txt {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(12px, 1.15vw, 18px);
+    }
+    .up-head {
+      overflow: visible;
+    }
+    .up-head .trd-sec-head-in {
+      max-width: none;
+      margin: 0;
+      padding: 0;
+      gap: clamp(12px, 1.15vw, 18px);
+    }
+    .up-txt > .trd-p {
+      max-width: clamp(374px, 36.1vw, 578px);
+    }
+    .up-photo {
+      position: relative;
+      height: clamp(220px, 42vh, 420px);
+      overflow: hidden;
+      background: #3a3428;
+    }
+    .up-photo > img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 58%;
+      filter: sepia(0.18) saturate(0.92);
+    }
+    .up-photo2 > img {
+      object-position: 50% 40%;
+    }
+    .up-badge-top {
+      left: 14px;
+      top: 14px;
+      font-size: var(--monos);
+    }
+    .up-badge-bot {
+      left: 14px;
+      bottom: 14px;
+      font-size: var(--monos);
+    }
+    .up-ps {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(11px, 1.05vw, 17px);
+    }
+
+    /* trwałość: pas + 3 kolumny */
+    .trd-tw {
+      margin-top: 0;
+    }
+    .tw-pas {
+      height: clamp(170px, 29vh, 300px);
+    }
+    .tw-pas-msk {
+      -webkit-mask-image: linear-gradient(#000 42%, rgba(0, 0, 0, 0) 100%);
+      mask-image: linear-gradient(#000 42%, rgba(0, 0, 0, 0) 100%);
+    }
+    .tw-head {
+      padding: 0 var(--g) max(20px, 3.4vh);
+      gap: clamp(12px, 1.15vw, 18px);
+    }
+    .tw-head h2 {
+      max-width: clamp(600px, 58vw, 930px);
+    }
+    .tw-grid {
+      max-width: var(--wmax);
+      margin-inline: auto;
+      box-sizing: border-box;
+      width: 100%;
+      border-top: 1px dashed rgba(33, 29, 24, 0.28);
+      padding: max(20px, 3.4vh) var(--g) var(--pad);
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: clamp(36px, 4.2vw, 67px);
+      align-items: start;
+    }
+
+    /* mikroklimat: pas + grid akapitów + 3 karty */
+    .trd-mik {
+      margin-top: 0;
+    }
+    .mik-pas {
+      height: clamp(170px, 29vh, 300px);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    .mik-head {
+      padding: 0 var(--g) var(--pad-s);
+      gap: clamp(12px, 1.15vw, 18px);
+    }
+    .mik-head h2 {
+      max-width: clamp(600px, 58vw, 930px);
+    }
+    .mik-body {
+      max-width: var(--wmax);
+      padding: var(--pad-s) var(--g) var(--pad);
+      gap: var(--pad);
+    }
+    .mik-rycd {
+      position: absolute;
+      right: calc(var(--g) * 0.18);
+      top: -46px;
+      width: clamp(190px, 17.4vw, 278px);
+      max-width: none;
+      height: auto;
+      opacity: 0.2;
+      mix-blend-mode: multiply;
+      pointer-events: none;
+    }
+    .mik-ps {
+      display: grid;
+      grid-template-columns: 1.08fr 1fr;
+      gap: clamp(44px, 5vw, 80px);
+      align-items: start;
+    }
+    .mik-ps p {
+      font-size: var(--body);
+      line-height: var(--lhb);
+      text-align: justify;
+      hyphens: auto;
+    }
+    .mik-ps .mik-p1 {
+      font-size: clamp(17px, 1.46vw, 23px);
+      line-height: 1.35;
+    }
+    .mik-ps em {
+      font-size: calc(var(--body) * 1.12);
+    }
+    .mik-cards {
+      margin-top: 0;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: clamp(20px, 2.2vw, 34px);
+    }
+    .trd-card {
+      padding: clamp(14px, 1.2vw, 19px) clamp(15px, 1.32vw, 21px);
+      gap: clamp(6px, 0.55vw, 9px);
+    }
+    .trd-card-k {
+      font-size: var(--monos);
+    }
+    .trd-card-t {
+      font-size: clamp(12.5px, 0.97vw, 15.5px);
+    }
+    .mik-sepw {
+      max-width: var(--wmax);
+      margin-inline: auto;
+      box-sizing: border-box;
+      padding: 0 var(--g);
+    }
+    .mik-sep {
+      margin: 0;
+      width: 100%;
+      max-width: none;
+    }
+
+    /* CTA: wyśrodkowany przycisk */
+    .trd-cta {
+      height: clamp(280px, 36vh, 380px);
+      margin-top: var(--pad);
+    }
+    .cta-msk {
+      -webkit-mask-image: linear-gradient(
+        rgba(0, 0, 0, 0) 0,
+        rgba(0, 0, 0, 0.4) 16%,
+        #000 42%
+      );
+      mask-image: linear-gradient(
+        rgba(0, 0, 0, 0) 0,
+        rgba(0, 0, 0, 0.4) 16%,
+        #000 42%
+      );
+    }
+    .cta-msk > img {
+      top: 0;
+      height: 100%;
+    }
+    .cta-shade {
+      background: linear-gradient(
+        rgba(24, 19, 14, 0) 40%,
+        rgba(24, 19, 14, 0.62)
+      );
+    }
+    .cta-in {
+      max-width: var(--wmax);
+      padding: 0 var(--g) var(--pad);
+      justify-content: center;
+    }
+    .cta-btn {
+      font-size: var(--body);
+      padding: clamp(13px, 1.1vw, 17px) clamp(26px, 2.2vw, 34px);
+    }
+  }
+
+  /* ═══ RUCH (bramka js-motion; bez JS / przy reduce brak stanów
+     startowych = strona statyczna i kompletna). Mobile: reveale +
+     rysowanie rycin maską + parallaxy + DIAGRAM/KOLEK (transitions —
+     analiza §2.8: freeze.css sadza stany końcowe natychmiast po `.in`);
+     desktop: rysowanie [data-rycsb] + dryf tła. Wzorce i wartości 1:1
+     z 4.2/4.3/4.4. ═══ */
+  @media (max-width: 1023.98px) {
+    html.js-motion .trd [data-rev] {
+      opacity: 0;
+      transform: translateY(22px);
+      transition:
+        opacity 0.7s ease,
+        transform 0.8s cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+    html.js-motion .trd [data-rev].in {
+      opacity: 1;
+      transform: none;
+    }
+    html.js-motion .trd [data-rev][data-rev-d="1"] {
+      transition-delay: 0.09s;
+    }
+    html.js-motion .trd [data-ryc] {
+      -webkit-mask-repeat: no-repeat, no-repeat;
+      mask-repeat: no-repeat, no-repeat;
+      -webkit-mask-size:
+        280% 100%,
+        240% 100%;
+      mask-size:
+        280% 100%,
+        240% 100%;
+    }
+    html.js-motion .trd [data-ryc="r"] {
+      -webkit-mask-image: var(--ryc-wedge-r), var(--ryc-lines-r);
+      mask-image: var(--ryc-wedge-r), var(--ryc-lines-r);
+      -webkit-mask-position:
+        0 0,
+        0 0;
+      mask-position:
+        0 0,
+        0 0;
+    }
+    html.js-motion .trd [data-ryc="r"].in {
+      animation: trdRycR 2.8s cubic-bezier(0.3, 0.05, 0.25, 1) both;
+    }
+
+    /* diagram: kaskada warstw → strzałka scaleX → groty (delaye 1:1
+       z eksportu; transitions zamiast keyframes — freeze-friendly) */
+    html.js-motion .trd [data-diag] .dg-lay {
+      opacity: 0;
+      transform: translateY(9px);
+      transition:
+        opacity 0.62s cubic-bezier(0.22, 0.6, 0.2, 1),
+        transform 0.62s cubic-bezier(0.22, 0.6, 0.2, 1);
+    }
+    html.js-motion .trd [data-diag] .dg-lay:nth-of-type(2) {
+      transition-delay: 0.08s;
+    }
+    html.js-motion .trd [data-diag] .dg-lay:nth-of-type(3) {
+      transition-delay: 0.16s;
+    }
+    html.js-motion .trd [data-diag] .dg-lay:nth-of-type(4) {
+      transition-delay: 0.24s;
+    }
+    html.js-motion .trd [data-diag] .dg-lay:nth-of-type(5) {
+      transition-delay: 0.32s;
+    }
+    html.js-motion .trd [data-diag] .dg-arw {
+      transform: scaleX(0);
+      transform-origin: left center;
+      transition: transform 0.9s cubic-bezier(0.3, 0.05, 0.25, 1) 0.42s;
+    }
+    html.js-motion .trd [data-diag] .dg-arwh {
+      opacity: 0;
+      transition: opacity 0.4s ease 1.3s;
+    }
+    html.js-motion .trd [data-diag].in .dg-lay {
+      opacity: 1;
+      transform: none;
+    }
+    html.js-motion .trd [data-diag].in .dg-arw {
+      transform: scaleX(1);
+    }
+    html.js-motion .trd [data-diag].in .dg-arwh {
+      opacity: 1;
+    }
+
+    /* kolek: wjazd znaku wodnego (eksport: kolekIn 2.2 s) */
+    html.js-motion .trd [data-kolek] {
+      opacity: 0;
+      transform: translate(-50%, 10px) scale(0.965);
+      transition:
+        opacity 2.2s cubic-bezier(0.22, 0.6, 0.2, 1),
+        transform 2.2s cubic-bezier(0.22, 0.6, 0.2, 1);
+    }
+    html.js-motion .trd [data-kolek].in {
+      opacity: 0.14;
+      transform: translate(-50%, 0) scale(1);
+    }
+  }
+  @media (min-width: 1024px) {
+    html.js-motion .trd [data-rycsb] {
+      -webkit-mask-repeat: no-repeat, no-repeat;
+      mask-repeat: no-repeat, no-repeat;
+      -webkit-mask-size:
+        280% 100%,
+        240% 100%;
+      mask-size:
+        280% 100%,
+        240% 100%;
+    }
+    html.js-motion .trd [data-rycsb="l"] {
+      -webkit-mask-image: var(--ryc-wedge-l), var(--ryc-lines-l);
+      mask-image: var(--ryc-wedge-l), var(--ryc-lines-l);
+      -webkit-mask-position:
+        100% 0,
+        100% 0;
+      mask-position:
+        100% 0,
+        100% 0;
+    }
+    html.js-motion .trd [data-rycsb="r"] {
+      -webkit-mask-image: var(--ryc-wedge-r), var(--ryc-lines-r);
+      mask-image: var(--ryc-wedge-r), var(--ryc-lines-r);
+      -webkit-mask-position:
+        0 0,
+        0 0;
+      mask-position:
+        0 0,
+        0 0;
+    }
+    html.js-motion .trd [data-rycsb="l"].in {
+      animation: trdRycL 2s cubic-bezier(0.3, 0.05, 0.25, 1) both;
+    }
+    html.js-motion .trd [data-rycsb="r"].in {
+      animation: trdRycR 2s cubic-bezier(0.3, 0.05, 0.25, 1) both;
+    }
+  }
+
+  /* gradienty masek „rysowania" (eksport: klin 105°/255° + smugi) */
+  .trd {
+    --ryc-wedge-l: linear-gradient(105deg, #000 40%, rgba(0, 0, 0, 0) 52%);
+    --ryc-wedge-r: linear-gradient(255deg, #000 40%, rgba(0, 0, 0, 0) 52%);
+    --ryc-lines-l: linear-gradient(
+      105deg,
+      rgba(0, 0, 0, 0) 0 34%,
+      rgba(0, 0, 0, 0.85) 34% 36.5%,
+      rgba(0, 0, 0, 0) 36.5% 40%,
+      rgba(0, 0, 0, 0.85) 40% 42.5%,
+      rgba(0, 0, 0, 0) 42.5% 46.5%,
+      rgba(0, 0, 0, 0.85) 46.5% 49%,
+      rgba(0, 0, 0, 0) 49% 100%
+    );
+    --ryc-lines-r: linear-gradient(
+      255deg,
+      rgba(0, 0, 0, 0) 0 34%,
+      rgba(0, 0, 0, 0.85) 34% 36.5%,
+      rgba(0, 0, 0, 0) 36.5% 40%,
+      rgba(0, 0, 0, 0.85) 40% 42.5%,
+      rgba(0, 0, 0, 0) 42.5% 46.5%,
+      rgba(0, 0, 0, 0.85) 46.5% 49%,
+      rgba(0, 0, 0, 0) 49% 100%
+    );
+  }
+  @keyframes trdRycL {
+    0% {
+      filter: opacity(0.55);
+    }
+    75% {
+      filter: opacity(0.85);
+    }
+    100% {
+      -webkit-mask-position:
+        0 0,
+        0 0;
+      mask-position:
+        0 0,
+        0 0;
+      filter: opacity(1);
+    }
+  }
+  @keyframes trdRycR {
+    0% {
+      filter: opacity(0.55);
+    }
+    75% {
+      filter: opacity(0.85);
+    }
+    100% {
+      -webkit-mask-position:
+        100% 0,
+        100% 0;
+      mask-position:
+        100% 0,
+        100% 0;
+      filter: opacity(1);
+    }
+  }
+</style>
+
+<script>
+  // Zwijane akapity — funkcja, nie dekoracja: ładowane ZAWSZE (działa
+  // też przy prefers-reduced-motion). SSR ma pełny tekst, initCollapsibles
+  // uzbraja przyciski i zwija (progressive enhancement jak paginacja E5).
+  import { initCollapsibles } from "@/components/sections/collapsible";
+
+  initCollapsibles();
+
+  // Ruch — dynamicznie, tylko przy motion OK (sections.md); diagram
+  // i kolek obsługuje osobny moduł widoku (analiza §2.8).
+  if (matchMedia("(prefers-reduced-motion: no-preference)").matches) {
+    import("@/components/sections/content-motion");
+    import("@/components/sections/tradycja-motion");
+  }
+</script>
