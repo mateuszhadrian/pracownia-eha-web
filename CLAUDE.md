@@ -477,6 +477,77 @@ zostają, widoki budowane od nowa wg `docs/design/` — patrz
     granice" = nowość (wzorzec HomeKontakt/wk-cta); ocenić na
     telefonie, czy ryciny ekipy nie są za blade (ewent. token
     `--ryc-vis` jak na `/` — analiza §4).
+- **Etap 4.4 cz. 2 (/kompetencje-i-technologie/) — WYKONANY**
+  (2026-08-25, kod+testy; mini-analiza i decyzje portu:
+  `docs/analiza-kompetencje.md`):
+  - Widok wg eksportu, prefiks `.kmp`, moduły cz. 1 KONSUMOWANE bez
+    zmian mechanik (CollapsibleText/collapsible.ts, content-motion.ts,
+    content-config.ts, `Navbar tone="dark"`, PaperBackdrop — dryf
+    `PAPER_BG_SPEED`, kontrakt e2e). Hero jasne, ale pasek kremowy —
+    czytelność robi górny gradient przyciemniający (mobile 118 px,
+    desktop clamp(130,13vw,210)); `[data-navref]` na WRAPPERZE OBRAZU
+    hero (430 px mobile / 62vh desktop — płyta tytułowa się nie
+    wlicza). **Hero z JEDNYM h1 przez grid-overlap**: mobile obraz
+    i tytuł w tej samej komórce (align-self:end), desktop rzędy
+    `calc(62vh − overlap) auto` — obraz z jawną wysokością wystaje
+    pod papierową płytę tytułową (kicker+lead dOnly; lead mobile =
+    mOnly kopia w intro).
+  - Sekcje: ciesielstwo / murarstwo / sklepienia (zwijane 132 px),
+    ciemny pas TWORZYMY I ODTWARZAMY (desktop) / karty w pudle
+    sklepień (mobile), fizyka budowli (bez zwijania, karta TRADYCJA
+    I EKOLOGIA → /tradycja-i-ekologia/), instalacje (polaroid mobile,
+    para kadrów — mobile flex z kartą 3:4 przez `--iph`, GOTCHA:
+    karta 3:4 wymaga JAWNEJ szerokości `calc(--iph·0.75+16px)`,
+    inaczej rośnie do max-content jednolinijkowego podpisu),
+    świadome granice (zwijane 128 px; mobile JASNA sekcja + kadr
+    końcowy czernica, desktop CIEMNY blok — czysty CSS na wspólnym
+    markupie, pudło zwijane WSPÓLNE dla obu progów).
+  - **Sekcje rzemiosł = świadome duplikacje dOnly/mOnly** (eksport ma
+    dla nich realnie różne kompozycje): kicker+h2 wspólne (desktop
+    często przez `display: contents` wewnątrz kart/kolumn), akapity/
+    kadry/karty zduplikowane — treści powtarzane siedzą w stałych
+    frontmattera (`CIES_P`/`MUR_P`/`*_CARDS`/`TWORZYMY`), żeby kopie
+    nie mogły się rozjechać. Fizyka/instalacje/granice = jeden markup
+    (grid-areas + @media).
+  - Korekta a11y (ratchet axe, klasa z cz. 1): podpisy kadrów
+    rgba .55 → .65 (eksportowe .55 na `#F3EDE1` = color-contrast
+    serious).
+  - Assety: 18 nowych WebP (hero 1456 eager+fetchpriority 76 KB;
+    kadry `-full` 1456 = duże warianty assetów zajawek `/` — małe
+    ZOSTAJĄ nietknięte, baseline'y `/` bez zmian; tła płyt ai 1200
+    q40–42 pod mgłą .66/opacity .16; `dom-ryc-house5/7` Z ALFĄ,
+    sharp alphaQuality 45); reużyte: ekologia-techno (1300),
+    instalacje (polaroid), house2/3/4/6, paper-background. JS widoku:
+    skrypt strony 0,4 KB + wspólne chunki collapsible 0,5 KB +
+    content-motion 2,2 KB (≈3,2 KB ponad chrome).
+  - Testy: e2e `kompetencje.spec.ts` (wzorzec ekipy; SSR bez JS
+    z asercjami `:visible` tam, gdzie treść zduplikowana, [data-clp]
+    ×4 z wysokościami 132/128, zwijanie bez skoku ±2 px, tone="dark"
+    przez expect.poll, DWA CTA — tradycja+kontakt, reveal granic,
+    dryf tła, strażnik scrolla, breakpoint flip); visual
+    `kompetencje.spec.ts` na `usePreviewGuard` + WSPÓLNYM
+    `revealSweep` (kompetencje-top / -full / -full-open mobile;
+    fullPage timeout 20 s + per-shot 0.001 — klasa decyzji z cz. 1);
+    trasa wycięta ze `skeleton.spec.ts` z baseline'ami
+    `skeleton-kompetencje-i-technologie-*` (24 pliki). Bramki
+    2026-08-25: format/lint/typecheck/unit(80)/build/e2e(317)/visual
+    `--ignore-snapshots`(99) zielone.
+  - UWAGA: baseline'y `kompetencje-*` NIE istnieją — komplety
+    linux+darwin generuje Mateusz (workflow z kontrolą intruzów →
+    darwin na końcu; znani intruzi bot-commitów: ekipa-top SE,
+    index-full SE/14, work-index-full SE — przywracać
+    `git checkout <sha-przed-botem> -- <plik>`).
+  - UWAGI dla 4.5 (tradycja-i-ekologia + obsluga-budowy): wzorzec
+    strony = kompetencje/ekipa (prefiks per widok, PaperBackdrop,
+    tone navbara wg eksportu); tradycja = jedyna strona z ANIMOWANYM
+    diagramEM (wjazd warstw + scaleX strzałek — port na CSS za bramką
+    js-motion, wzorzec content-motion do rozszerzenia albo lokalny
+    moduł) + efekt `.kolek`; obsługa budowy = najlżejsza (hero +
+    3 sekcje + CTA); assety tradycji częściowo już w repo
+    (ekologia-techno, eha-kolek-ryc, lisc/szkielet/wnetrze-ryc) +
+    eksportowe `hero-tradycja-i-ekologia1`, `tradycja-i-ekologia-
+drewno-ai1`, `cegla-rozbiorkowa`; grid-overlap hero z kompetencji
+    do reużycia, jeśli eksport ma płytę tytułową na hero.
 
 ## Dokumentacja
 
