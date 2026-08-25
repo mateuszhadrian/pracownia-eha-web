@@ -93,19 +93,41 @@ która przeżyła kopię w całości (work) i mechaniki formularza (contact).
   stopka sheeta: dwa telefony MACIEK/ŁUKASZ przez sloty
   `contact-details.ts` (antyscraping!).
 
-## Contact (`kt`) — /kontakt/ (Etap 5)
+## Contact (`kt`) — /kontakt/ (Etap 5, WYKONANY)
 
 - Mechanika formularza w `contact-ui.ts` (ładowana ZAWSZE — to funkcja,
-  nie dekoracja); markup sekcji powstaje w Etapie 5 wg `kontakt.html`.
+  nie dekoracja); markup i skin w `src/pages/kontakt.astro` (prefiks
+  `.kt`, decyzje portu: `docs/analiza-kontakt.md`).
 - Telefony i e-mail: sloty `a[data-tel="maciek|lukasz"]`/`[data-mail]`
   - `[data-slot]` wypełniane przez `fillContactSlots`
     (`src/lib/contact-details.ts`, wołane przez skrypt Navbara) — nie
     „upraszczaj" do jawnego `tel:`/`mailto:` w markupie (D-CH5).
+    Na `/kontakt/` kotwice startują **BEZ `href`**, z czytelną etykietą
+    zastępczą w `[data-slot]` (decyzja Mateusza: znikające kafle byłyby
+    na stronie kontaktowej gorsze niż etykieta) — stąd punktowy
+    `eslint-disable astro/jsx-a11y/anchor-is-valid` przy tych trzech
+    kotwicach i `<noscript>` tłumaczący, dlaczego numeru nie widać.
 - Pola wg E9: **4 pola wszędzie** (5. pole desktopu z eksportu = pomyłka):
   imię i nazwisko, **telefon LUB e-mail** (jedno pole, walidacja
-  alternatywna po OBU stronach), lokalizacja inwestycji, opis.
+  alternatywna po OBU stronach), lokalizacja inwestycji (OPCJONALNA),
+  opis. Kontrakt multipart: `name` / `contact` / `place` / `message`
+  (+ `firma`, `elapsed`, `lang`, `cf-turnstile-response`) — pola `email`,
+  `phone` i `temat` odeszły razem z formularzem delunga.
+  Rozbiór pola 02 robi `classifyContact()` z `src/lib/contact-form.ts` —
+  JEDNO źródło prawdy dla klienta i serwera, nie duplikuj regexpów.
   Auto-potwierdzenie (mail #2) TYLKO gdy podano e-mail. Bez checkboxa
   RODO — notka z linkiem do polityki.
+- **Zestaw pól deklaruje opublikowana polityka prywatności** (sekcja 02
+  wylicza dane, sekcja 04 obiecuje potwierdzenie „jeśli podasz adres
+  e-mail") — zmiana pól albo przepływu maili wymaga przeglądu
+  `/polityka-prywatnosci/`, nie tylko kodu.
+- Komunikaty walidacji siedzą w SSR (`<span class="kt-err">`) i pokazuje
+  je CSS przy klasie `.err`; `contact-ui.ts` zapala tylko klasę — zero
+  tekstów w JS.
+- Układ: JEDEN markup na oba progi. Kolumna kontaktowa jest na desktopie
+  sticky kartą (`top` MUSI doliczać `var(--hdr-h)` — pasek jest FIXED),
+  a na mobile rozsypuje się na osobne sekcje przez `display: contents`
+  na `.kt-card`/`.kt-main` + `order` w kolejności eksportu mobile.
 - Honeypot jest `readonly` (autofill Chrome'a nie wypełnia readonly;
   focus zdejmuje atrybut w `contact-ui.ts`) — nie usuwaj atrybutu.
 - Turnstile ładowany leniwie (pierwszy `focusin` w formularzu) — nie
