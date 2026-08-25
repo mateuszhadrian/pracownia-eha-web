@@ -23,6 +23,11 @@ export const ui = {
     "workPage.title": "Realizacje — Pracownia EH/A",
     "workPage.description":
       "Realizacje Pracowni EH/A — remonty domów z historią: ciesielstwo, murarstwo, sklepienia, fizyka budowli i instalacje.",
+    // Tytuł polityki jest KONTRAKTEM testu (tests/e2e/policy.spec.ts,
+    // Etap 3) — zmiana wymaga poprawki w spechu.
+    "policyPage.title": "Polityka prywatności — Pracownia EH/A",
+    "policyPage.description":
+      "Polityka prywatności serwisu pracownia-eha.pl — kto jest administratorem danych, jakie dane przetwarzamy, na jakiej podstawie, jak długo i jakie masz prawa.",
     "contactPage.title": "Kontakt — Pracownia EH/A",
     "contactPage.description":
       "Skontaktuj się z Pracownią EH/A — formularz kontaktowy, telefon i e-mail. Opisz dom i zakres prac, odezwiemy się, aby porozmawiać o remoncie.",
