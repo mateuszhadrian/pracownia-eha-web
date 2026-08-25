@@ -21,7 +21,6 @@
 import { expect, test } from "@playwright/test";
 import {
   CONTACT_PATH,
-  KOMPETENCJE_PATH,
   OBSLUGA_PATH,
   POLICY_PATH,
   TRADYCJA_PATH,
@@ -35,9 +34,9 @@ usePreviewGuard();
 // Nazwa pliku baseline'u = slug trasy. Trasa `/` wypadła w Etapie 4.2
 // (własny spec: tests/visual/index.spec.ts), `/realizacje/` w 4.3
 // (tests/visual/work-index.spec.ts), `/ekipa-eha/` w 4.4 cz. 1
-// (tests/visual/ekipa.spec.ts).
+// (tests/visual/ekipa.spec.ts), `/kompetencje-i-technologie/` w 4.4
+// cz. 2 (tests/visual/kompetencje.spec.ts).
 const ROUTES: { path: string; name: string }[] = [
-  { path: KOMPETENCJE_PATH, name: "kompetencje-i-technologie" },
   { path: TRADYCJA_PATH, name: "tradycja-i-ekologia" },
   { path: OBSLUGA_PATH, name: "obsluga-budowy" },
   { path: CONTACT_PATH, name: "kontakt" },
