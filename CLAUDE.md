@@ -608,16 +608,31 @@ drewno-ai1`, `cegla-rozbiorkowa`; grid-overlap hero z kompetencji
     CTA, reveal, dryf tła, strażnik scrolla, breakpoint flip); visual
     `tradycja.spec.ts` na `usePreviewGuard` + wspólnym `revealSweep`
     (tradycja-top / -full / -full-open mobile; fullPage timeout 20 s +
-    per-shot 0.001 — klasa decyzji 4.4); trasa wycięta ze
+    per-shot 0.001, full-open 0.0025 — patrz niżej); trasa wycięta ze
     `skeleton.spec.ts` z baseline'ami
     `skeleton-tradycja-i-ekologia-*` (24 pliki). Bramki 2026-08-25:
     format/lint/typecheck/unit(80)/build/e2e(359)/visual
     `--ignore-snapshots`(108) zielone.
-  - UWAGA: baseline'y `tradycja-*` NIE istnieją — komplety linux+darwin
-    generuje Mateusz (PR → workflow z kontrolą intruzów → darwin na
-    końcu; znani intruzi bot-commitów: ekipa-top SE, index-full SE/14,
-    work-index-full SE — przywracać `git checkout <sha-przed-botem> --
-<plik>`).
+  - Baseline'y `tradycja-*` KOMPLETNE (2026-08-25): 15 linux
+    (workflow) + 15 darwin (top+full × 6 profili, full-open × 3
+    mobile); bot-commit nadpisał 3 znanych intruzów (index-full SE/14,
+    ekipa-top SE) — przywrócone `git checkout <sha-przed-botem> --
+<plik>` i zweryfikowane `cmp` bajt-w-bajt.
+  - **Próg `*-full-open` podniesiony do 0.0025** (decyzja Mateusza;
+    `FULLOPEN_MAX_DIFF_RATIO` w `kompetencje.spec.ts` i
+    `tradycja.spec.ts`; zrzuty `*-full` zostają na 0.001, globalny
+    0.0005 nietknięty): na webkit-iphone-14 rozwinięte akapity
+    wpuszczają do kadru KOMPLET kadrów `[data-plx]` i pętla parallaxu
+    ląduje o jedną klatkę rAF inaczej — zachowanie DWUSTANOWE (czysto
+    albo dokładnie 6134 px = 0.00197 na kompetencjach, nigdy pomiędzy;
+    tradycja otarła się raz o 2494 px = 0.00107). Diff = rzadki rozsyp
+    ~8–10 px/wiersz po krawędziach detalu ZDJĘĆ w 8 pasmach, nie zwarte
+    bloki — nie regresja layoutu. Stan zastany z 4.4 cz. 2, nie skutek
+    PR-a tradycji (`revealSweep` rozszerzony czysto addytywnie).
+  - `index-full` SE dalej BYWA graniczny w pełnym przebiegu, zielony
+    w izolacji — `index.spec.ts` jako jedyny siedzi na STARYM lokalnym
+    sweepie; przełączenie na wspólny `revealSweep` to wciąż otwarty
+    kandydat (dotyka baseline'ów `/` — wymaga decyzji).
   - UWAGI dla 4.5 cz. 2 (obsluga-budowy): najlżejsza strona (hero +
     3 sekcje + CTA) — wzorzec strony = tradycja/kompetencje (własny
     prefiks, PaperBackdrop, tone navbara wg eksportu, moduły 4.4);
