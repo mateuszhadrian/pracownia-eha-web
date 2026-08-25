@@ -33,6 +33,28 @@ useVisualFixtureGuard();
 
 const PATH = "/";
 
+/** Tolerancja pikselowa zrzutu `index-full` (decyzja Mateusza przy
+ *  poprawkach wizualnych po 4.6 — kandydat odkładany od 4.5 cz. 2).
+ *  Do tej pory `index-full.png` był JEDYNYM zrzutem fullPage w projekcie
+ *  BEZ per-shot progu: jechał na globalnym 0.0005, podczas gdy wszystkie
+ *  pozostałe fullPage mają 0.001–0.0025. Skutek: ten jeden zrzut
+ *  regularnie świecił na czerwono na webkit-iphone-se przy różnicach
+ *  rzędu 0.0008–0.0015, których żaden inny widok by nie zgłosił —
+ *  kosztowało to trzy sesje diagnostyczne (4.5 cz. 2, PR polityki,
+ *  poprawki po 4.6).
+ *  Źródła szumu są dwa i oba są NIEWIZUALNE: (1) subpikselowy szum
+ *  resamplingu WebKita przy dpr=2 na krawędziach detalu ZDJĘĆ
+ *  (rozsyp 1–6 px na wiersz); (2) zaokrąglenie rastra przy dpr=2, które
+ *  potrafi przesunąć pojedyncze wiersze tekstu o 1 px, gdy geometria
+ *  zmieni się o setne części piksela (przy tej zmianie: 0,016 px na
+ *  wysokości logo stojącego na podłodze 80 px — jedyny taki przypadek
+ *  w serwisie, SE).
+ *  Wartość 0.0025 = ta sama klasa co `*-full-open` w kompetencjach
+ *  i tradycji. Realna regresja layoutu na tej stronie to DZIESIĄTKI
+ *  tysięcy px (0.02–0.05), więc próg jej nie przepuści; globalny
+ *  0.0005 w playwright.config.ts zostaje NIETKNIĘTY. */
+const FULLPAGE_MAX_DIFF_RATIO = 0.0025;
+
 test("strona główna: widok startowy (hero + pasek) vs baseline", async ({
   page,
 }) => {
@@ -54,5 +76,6 @@ test("strona główna: pełna strona vs baseline", async ({ page }) => {
   await expect(page).toHaveScreenshot("index-full.png", {
     fullPage: true,
     mask,
+    maxDiffPixelRatio: FULLPAGE_MAX_DIFF_RATIO,
   });
 });
