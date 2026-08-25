@@ -8,9 +8,6 @@
 // wektora nie może siedzieć inline w HTML-u).
 import logoFull from "@/assets/logo/eha-logo.svg";
 
-// proporcja szerokość/wysokość logo — mobile liczy szerokość z BUDŻETU
-// WYSOKOŚCI pierwszego ekranu (patrz .hero-logo niżej)
-const logoWH = (logoFull.width / logoFull.height).toFixed(4);
 import house1 from "@/assets/dom-ryc-house1.webp";
 import house2 from "@/assets/dom-ryc-house2.webp";
 import house3 from "@/assets/dom-ryc-house3.webp";
@@ -117,7 +114,7 @@ import { CONTACT_PATH, WORK_INDEX_PATH } from "@/lib/routes";
       class="hero-logo"
       role="img"
       aria-label="Pracownia EH/A"
-      style={`--logo:url('${logoFull.src}');aspect-ratio:${logoFull.width}/${logoFull.height};--logo-wh:${logoWH}`}
+      style={`--logo:url('${logoFull.src}');aspect-ratio:${logoFull.width}/${logoFull.height}`}
     ></span>
     <h1>Dom z historią zasługuje na spokojny remont.</h1>
     <p class="hero-lead">
@@ -181,28 +178,39 @@ import { CONTACT_PATH, WORK_INDEX_PATH } from "@/lib/routes";
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    /* Mobile: treść opiera się o DOLNY margines pierwszego ekranu (CTA
+       jak najniżej), a całą nadwyżkę wysokości wchłania logo — patrz
+       .hero-logo. Desktop wraca do wyśrodkowania niżej. */
+    justify-content: flex-end;
     text-align: center;
     padding: 24px var(--sp) 44px;
     gap: clamp(24px, 3.3vw, 34px);
   }
   .hero-logo {
     display: block;
-    flex: none;
-    /* Korekta Mateusza po testach: na niskich smartfonach hero ma się
-       MIEŚCIĆ w pierwszym ekranie — kurczy się logo, nie ucieka dół hero.
-       Środkowy człon = budżet wysokości ekranu minus reszta treści hero
-       (paddingi+gapy+h1+lead+CTA), przeliczony na szerokość proporcją
-       logo. Reszta treści ROŚNIE na węższych ekranach (tekst łamie się
-       częściej): pomiary 390 px → 455 px i 375 px → 483 px dają model
-       liniowy (1208px − 190vw) z ~12 px zapasu. Górny cap = rozmiar
-       projektowy, dolna podłoga 80 px chroni czytelność znaku (poniżej
-       hero rośnie przez min-height zamiast się nakładać). */
-    width: clamp(
-      calc(80px * var(--logo-wh)),
-      calc((var(--svh) - var(--hdr-h) - 1208px + 190vw) * var(--logo-wh)),
-      clamp(234px, 33vw, 300px)
-    );
+    /* Korekta Mateusza (poprawki wizualne po 4.6): logo ma być TAK DUŻE,
+       jak pozwala wolna przestrzeń pierwszego ekranu — małe na niskim
+       telefonie, większe na wysokim (iPhone 15 Pro).
+       Poprzednia wersja SZACOWAŁA wysokość reszty treści modelem
+       liniowym (1208px − 190vw) wykalibrowanym na 390 i 375 px. Każde
+       urządzenie odbiegające od modelu dostawało jednocześnie za małe
+       logo i pustkę pod CTA (zgłoszone z iPhone'a 15 Pro), a górny cap
+       `clamp(234px, 33vw, 300px)` przy szerokościach telefonów redukował
+       się do PŁASKICH 234 px — więc logo i tak nie mogło urosnąć od
+       wysokości ekranu.
+       Teraz zamiast szacunku jest pomiar: logo to jedyny rosnący element
+       kolumny (`flex: 1 1 0`), więc dostaje dokładnie tyle, ile zostało
+       po h1, leadzie, CTA, gapach i paddingach — cokolwiek przeglądarka
+       naprawdę zmierzy. Proporcje trzyma `aspect-ratio` (inline z SVG),
+       więc szerokość wynika z wysokości. `min-height` chroni czytelność
+       znaku (przy ujemnej nadwyżce hero rośnie ponad pierwszy ekran, jak
+       poprzednio), `max-height` to cap rozmiaru projektowego.
+       D-Q2 zostaje nienaruszone: wysokość hero dalej liczy się
+       z przypinanego `--svh`, więc chowany pasek URL nie rusza logo. */
+    flex: 1 1 0;
+    width: auto;
+    min-height: 80px;
+    max-height: min(248px, 63vw);
     background: #4c3b2b; /* sepia logotypu z designu */
     -webkit-mask: var(--logo) no-repeat center / contain;
     mask: var(--logo) no-repeat center / contain;
@@ -264,9 +272,15 @@ import { CONTACT_PATH, WORK_INDEX_PATH } from "@/lib/routes";
     .hero-in {
       padding: clamp(40px, 4vw, 64px) var(--g) clamp(30px, 2.8vw, 44px);
       gap: clamp(18px, 1.81vw, 29px);
+      /* desktop bez zmian: blok hero pozostaje wyśrodkowany w pionie
+         (rosnące logo i kotwiczenie CTA to zachowanie mobilne) */
+      justify-content: center;
     }
     .hero-logo {
+      flex: none;
       width: clamp(230px, 22.2vw, 355px);
+      min-height: 0;
+      max-height: none;
     }
     .hero h1 {
       font-size: clamp(40px, 3.75vw, 60px);
