@@ -292,28 +292,75 @@ test("ryciny hero rysują się sekwencyjnie po wejściu (mobile)", async ({
   ]);
 });
 
-// ── hero na niskich ekranach: kurczy się logo, nie ucieka dół (korekta
-// Mateusza po testach na telefonach) ──
-test("hero mieści się w całości na niskim ekranie — logo się skaluje", async ({
-  page,
-  isMobile,
-}) => {
-  test.skip(!isMobile, "skalowanie logo budżetem wysokości jest mobile-only");
-  const vp = page.viewportSize()!;
-  await page.setViewportSize({ width: vp.width, height: 680 });
-  await gotoReady(page, PATH);
-  const m = await page.evaluate(() => ({
-    heroBottom: Math.round(
-      document.querySelector("[data-navref]")!.getBoundingClientRect().bottom,
-    ),
-    vh: window.innerHeight,
-    logoW: document.querySelector(".hero-logo")!.getBoundingClientRect().width,
-  }));
-  // cały hero w pierwszym ekranie…
-  expect(m.heroBottom).toBeLessThanOrEqual(m.vh + 2);
-  // …bo logo zeszło poniżej projektowego minimum (234), ale nie do zera
-  expect(m.logoW).toBeLessThan(234);
-  expect(m.logoW).toBeGreaterThanOrEqual(78);
+// ── hero mobile: logo wchłania wolną przestrzeń pierwszego ekranu,
+// CTA kotwiczy się przy dolnej krawędzi (poprawki wizualne po 4.6 —
+// zgłoszenie z iPhone'a 15 Pro; poprzedni model SZACOWAŁ wysokość reszty
+// treści wzorem liniowym wykalibrowanym na dwóch telefonach i na
+// urządzeniu spoza kalibracji dawał ZARAZEM za małe logo i pustkę pod
+// CTA). Mechanizm: .hero-logo to jedyny rosnący element kolumny. ──
+test.describe("hero mobile: logo skaluje się wolną przestrzenią", () => {
+  test.skip(({ isMobile }) => !isMobile, "model wysokościowy jest mobile-only");
+
+  /** Geometria hero po ZAŁADOWANIU przy zadanej wysokości okna. Wysokość
+   *  ustawiamy PRZED nawigacją — zmiana po załadowaniu przypina `--svh`
+   *  (D-Q2) i layout celowo przestaje na nią reagować. */
+  const heroPrzy = async (page: Page, height: number) => {
+    const vp = page.viewportSize()!;
+    await page.setViewportSize({ width: vp.width, height });
+    await gotoReady(page, PATH);
+    return page.evaluate(() => {
+      const hero = document
+        .querySelector<HTMLElement>("[data-navref]")!
+        .getBoundingClientRect();
+      const cta = document
+        .querySelector<HTMLElement>(".hero-cta")!
+        .getBoundingClientRect();
+      const logo = document
+        .querySelector<HTMLElement>(".hero-logo")!
+        .getBoundingClientRect();
+      return {
+        heroBottom: Math.round(hero.bottom),
+        odstepCtaOdDolu: Math.round(hero.bottom - cta.bottom),
+        logoW: Math.round(logo.width),
+        vh: window.innerHeight,
+      };
+    });
+  };
+
+  test("na niskim ekranie hero mieści się w całości — kurczy się logo", async ({
+    page,
+  }) => {
+    const m = await heroPrzy(page, 680);
+    expect(m.heroBottom).toBeLessThanOrEqual(m.vh + 2);
+    // logo zeszło poniżej rozmiaru projektowego, ale nie do zera
+    expect(m.logoW).toBeLessThan(234);
+    expect(m.logoW).toBeGreaterThanOrEqual(78);
+  });
+
+  test("CTA kotwiczy się przy dolnej krawędzi pierwszego ekranu", async ({
+    page,
+  }) => {
+    // Sedno zgłoszenia: pod CTA ma być tylko dolny margines hero (44 px),
+    // a nie kilkadziesiąt/kilkaset px pustki — to ta pustka odbierała
+    // logo miejsce na wzrost.
+    for (const h of [680, 800]) {
+      const m = await heroPrzy(page, h);
+      expect(m.odstepCtaOdDolu, `wysokość okna ${h}`).toBeLessThanOrEqual(48);
+      expect(m.odstepCtaOdDolu, `wysokość okna ${h}`).toBeGreaterThanOrEqual(
+        40,
+      );
+    }
+  });
+
+  test("wyższy ekran = większe logo (do capa rozmiaru projektowego)", async ({
+    page,
+  }) => {
+    const niski = await heroPrzy(page, 660);
+    const wysoki = await heroPrzy(page, 800);
+    // 140 px więcej ekranu musi trafić do logo — dokładnie to nie działało
+    // przed poprawką (płaski cap 234 px i szacunek zamiast pomiaru)
+    expect(wysoki.logoW).toBeGreaterThan(niski.logoW);
+  });
 });
 
 // ── karuzela realizacji: scroll-snap (korekta Mateusza — brak snapa
