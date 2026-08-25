@@ -830,6 +830,29 @@ secs"` (mobile: kolumna w kolejności DOM). Jedyna duplikacja
     flagi**, więc Playwright DOPISAŁ 12 brakujących baseline'ów darwin
     (usunięte; żadne istniejące nie zostało ruszone). Filtrować
     wyłącznie przez `npx playwright test …`.
+  - Baseline'y `polityka-*` KOMPLETNE (2026-08-25): 12 linux
+    (workflow) + 12 darwin (top + full × 6 profili). Bot ruszył JEDNEGO
+    intruza (`webkit-iphone-se/ekipa-top-linux`), a lokalny
+    `test:visual:update` przepisał `webkit-iphone-se/index-full-darwin`
+    — oba przywrócone z SHA ostatniego commita CZŁOWIEKA i zweryfikowane
+    `cmp` bajt-w-bajt.
+  - **KOREKTA skali znanego flake'a `index-full` SE**: zapis z 4.5 cz. 2
+    („diff ≈ 1827 px = ratio 0.0008, rozsyp 1,2–6,3 px na wiersz")
+    opisuje TYLKO jeden z jego przebiegów. W tej sesji ten sam zrzut
+    przepisał się z różnicą **104 112 px = ratio 0.0457**, 1404 wiersze,
+    do **227 px na wiersz przy szerokości 320** — czyli ZWARTE PASMA,
+    które wg przepisu diagnostycznego czyta się jako „realna regresja
+    layoutu". Regresji NIE BYŁO: wysokość dokumentu identyczna co do
+    piksela (320×7124), a test w IZOLACJI przeszedł względem
+    przywróconego baseline'u — czyli renderu `/` nic nie zmieniło
+    (PR nie dotyka ani jednego pliku, od którego zależy `/`; jedyny
+    wspólny to `ui.ts`, gdzie doszły same klucze `policyPage.*`).
+    Mechanizm: transientny stan pętli ruchu (parallaxy `[data-plx]`
+    kadrów) w momencie zszywania fullPage pod obciążeniem — pasma
+    pokrywają się ze ZDJĘCIAMI, nie z tekstem. **Wniosek operacyjny:
+    przy `index-full` SE gęstość pasm NIE rozstrzyga — rozstrzyga
+    przebieg w izolacji. Nigdy nie przyjmować przepisanego baseline'u
+    „bo ratio duże, więc pewnie realne".**
   - UWAGI dla Etapu 5 (/kontakt/): formularz E9 — 4 pola wszędzie
     (5. pole desktopu eksportu = pomyłka), walidacja alternatywna
     telefon LUB e-mail po OBU stronach, honeypot `readonly`, Turnstile
