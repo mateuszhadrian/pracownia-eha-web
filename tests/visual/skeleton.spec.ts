@@ -19,7 +19,7 @@
 // Do tego czasu fixture pilnuje test kontraktu (visual-fixture.test.ts)
 // i `pnpm build:visual` (walidacja Zod w buildzie).
 import { expect, test } from "@playwright/test";
-import { CONTACT_PATH, OBSLUGA_PATH, POLICY_PATH } from "../../src/lib/routes";
+import { CONTACT_PATH, POLICY_PATH } from "../../src/lib/routes";
 import { usePreviewGuard } from "../helpers/guards";
 import { scrollPageTo, settle } from "../helpers/scroll";
 import { prepareSweep } from "../helpers/visual";
@@ -31,9 +31,11 @@ usePreviewGuard();
 // (tests/visual/work-index.spec.ts), `/ekipa-eha/` w 4.4 cz. 1
 // (tests/visual/ekipa.spec.ts), `/kompetencje-i-technologie/` w 4.4
 // cz. 2 (tests/visual/kompetencje.spec.ts), `/tradycja-i-ekologia/`
-// w 4.5 cz. 1 (tests/visual/tradycja.spec.ts).
+// w 4.5 cz. 1 (tests/visual/tradycja.spec.ts), a `/obsluga-budowy/`
+// w 4.5 cz. 2 (tests/visual/obsluga.spec.ts). Zostały DWIE trasy:
+// `/kontakt/` wypadnie w Etapie 5, `/polityka-prywatnosci/` w 4.6 —
+// wtedy plik znika.
 const ROUTES: { path: string; name: string }[] = [
-  { path: OBSLUGA_PATH, name: "obsluga-budowy" },
   { path: CONTACT_PATH, name: "kontakt" },
   { path: POLICY_PATH, name: "polityka-prywatnosci" },
 ];
