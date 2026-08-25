@@ -263,21 +263,25 @@ const t = {
 
   /* ── wariant tone="dark" (Etap 4.4 — /ekipa-eha/): nad ciemnym hero
      treść paska jest KREMOWA (eksport: navColor/logoCol #F5EFE3),
-     atrament wraca ze stanem solid; przy otwartym sheecie ([data-open])
-     ikona X też wraca do atramentu — sheet jest papierowy. ── */
-  .hdr[data-tone="dark"]:not([data-solid]):not([data-open]) {
+     atrament wraca ze stanem solid.
+     KOREKTA (poprawki wizualne po 4.6, decyzja Mateusza): stan
+     [data-open] NIE zdejmuje już tonu. Pierwotne uzasadnienie („sheet
+     jest papierowy, więc ikona X wraca do atramentu") się nie broni —
+     sheet to DOLNA szuflada, a pasek zostaje nad ciemnym hero, w dodatku
+     POD zasłoną `.sheet-ov` (z-index 100 > 50 paska). Atramentowy znak
+     lądował więc na ciemnym tle pod ciemną zasłoną. Nad papierem pasek
+     ma w tym momencie [data-solid], które i tak wyłącza ten wariant. ── */
+  .hdr[data-tone="dark"]:not([data-solid]) {
     --hdr-ink: #f5efe3;
   }
-  .hdr[data-tone="dark"]:not([data-solid]):not([data-open]) .hdr-logo {
+  .hdr[data-tone="dark"]:not([data-solid]) .hdr-logo {
     color: #f5efe3;
   }
   /* hover/otwarty dropdown na ciemnym: zamiast zieleni akcentu (ginie na
      zdjęciu) przygaszony krem — eksportowe style-hover „opacity .72" */
-  .hdr[data-tone="dark"]:not([data-solid]):not([data-open]) .nav-link:hover,
-  .hdr[data-tone="dark"]:not([data-solid]):not([data-open])
-    .nav-link:focus-visible,
-  .hdr[data-tone="dark"][data-onas]:not([data-solid]):not([data-open])
-    .nav-about-btn {
+  .hdr[data-tone="dark"]:not([data-solid]) .nav-link:hover,
+  .hdr[data-tone="dark"]:not([data-solid]) .nav-link:focus-visible,
+  .hdr[data-tone="dark"][data-onas]:not([data-solid]) .nav-about-btn {
     color: rgba(245, 239, 227, 0.72);
   }
 
@@ -809,6 +813,14 @@ const t = {
     let upAcc = 0;
     let cursorTop = false;
     let hidden = false;
+    // Sheet menu blokuje scroll przez `body{position:fixed;top:-scrollY}`
+    // (overlay.ts, D-Q1) — to ZERUJE window.scrollY i odpala zdarzenie
+    // `scroll`, więc bez tej flagi setSolid() gasiłby papierowe tło paska
+    // dokładnie w chwili otwarcia menu (i zapalał je z powrotem przy
+    // zamknięciu). Stan „solid" zamrażamy więc na czas otwartego sheeta;
+    // deklaracja MUSI stać przed onScroll — pierwsze wywołanie leci
+    // jeszcze przed sekcją menu (TDZ). Korekta po 4.6, decyzja Mateusza.
+    let sheetOpen = false;
     function setHidden(h: boolean) {
       if (h === hidden) return;
       hidden = h;
@@ -858,8 +870,9 @@ const t = {
       const d = y - lastY;
       lastY = y;
       // stan solid działa na OBU progach (korekta 4.2 — mobile dostaje
-      // to samo papierowe tło zamiast dawnego glow)
-      setSolid(y > solidAt());
+      // to samo papierowe tło zamiast dawnego glow); przy otwartym
+      // sheecie zamrożony — patrz `sheetOpen`
+      if (!sheetOpen) setSolid(y > solidAt());
       if (!desktopMQ.matches) return;
       if (y <= NAV_TOP_ALWAYS_PX) {
         upAcc = 0;
@@ -886,6 +899,11 @@ const t = {
     let isOpen = false;
     function setMenuState(open: boolean) {
       isOpen = open;
+      // zamrożenie stanu „solid" na czas sheeta (patrz `sheetOpen` wyżej):
+      // podnosimy flagę PRZED blokadą scrolla i zdejmujemy PO jej zdjęciu,
+      // żeby żadne z dwóch zdarzeń `scroll` wywołanych przez overlay.ts nie
+      // przeliczyło progu na pozycji 0
+      sheetOpen = open;
       hdr!.toggleAttribute("data-open", open);
       burger.setAttribute("aria-expanded", String(open));
       burger.setAttribute(

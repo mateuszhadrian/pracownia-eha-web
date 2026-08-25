@@ -217,6 +217,63 @@ test.describe("nawigacja mobile (bottom sheet)", () => {
     // bez twardej asercji: WebKit nie fokusuje buttonów po kliku myszą.
   });
 
+  // ── poprawki wizualne po 4.6 (zgłoszenie Mateusza z telefonu) ──
+  test("papierowe tło paska PRZEŻYWA otwarcie menu", async ({ page }) => {
+    // overlay.ts blokuje scroll przez `body{position:fixed;top:-scrollY}`,
+    // co ZERUJE window.scrollY i odpala `scroll`. Bez zamrożenia stanu
+    // (Navbar: `sheetOpen`) próg przeliczał się na pozycji 0 i tło gasło
+    // dokładnie w chwili otwarcia menu.
+    await gotoReady(page);
+    await ensureScrollRoom(page);
+    await scrollPageTo(page, 1200);
+    const root = page.locator("[data-nav]");
+    await expect(root).toHaveAttribute("data-solid", "");
+
+    await page.locator("[data-burger]").click();
+    await expect(page.locator("#nav-sheet")).toHaveClass(/is-open/);
+    await expect(root).toHaveAttribute("data-solid", "");
+    await expect(page.locator(".hdr-bg")).toHaveCSS("opacity", "1");
+
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#nav-sheet")).toBeHidden();
+    await expect(root).toHaveAttribute("data-solid", "");
+  });
+
+  test("na górze strony otwarcie menu NIE zapala tła paska", async ({
+    page,
+  }) => {
+    // Druga strona kontraktu: zamrażamy stan zastany, a nie wymuszamy tło.
+    await gotoReady(page);
+    const root = page.locator("[data-nav]");
+    await expect(root).not.toHaveAttribute("data-solid", "");
+    await page.locator("[data-burger]").click();
+    await expect(page.locator("#nav-sheet")).toHaveClass(/is-open/);
+    await expect(root).not.toHaveAttribute("data-solid", "");
+  });
+
+  test("na ciemnym hero logo i burger zostają kremowe po otwarciu menu", async ({
+    page,
+  }) => {
+    // Wcześniej reguła tonu miała `:not([data-open])`, więc znak wracał do
+    // atramentu — na ciemnym hero, pod ciemną zasłoną sheeta (z-index 100
+    // > 50 paska). Kolor czytamy przez expect.poll: przejście trwa 0.3 s.
+    await gotoReady(page, OBSLUGA_PATH);
+    const inkOf = () =>
+      page.evaluate(() =>
+        getComputedStyle(document.querySelector(".mbtn")!).getPropertyValue(
+          "color",
+        ),
+      );
+    await expect(page.locator("[data-nav]")).toHaveAttribute(
+      "data-tone",
+      "dark",
+    );
+    await expect.poll(inkOf).toBe("rgb(245, 239, 227)");
+    await page.locator("[data-burger]").click();
+    await expect(page.locator("#nav-sheet")).toHaveClass(/is-open/);
+    await expect.poll(inkOf).toBe("rgb(245, 239, 227)");
+  });
+
   test("klik w scrim (nad panelem) zamyka sheet", async ({ page }) => {
     await gotoReady(page);
     await page.locator("[data-burger]").click();
