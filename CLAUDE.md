@@ -921,6 +921,61 @@ secs"` (mobile: kolumna w kolejności DOM). Jedyna duplikacja
     zmiany, a treść i tak przerasta pierwszy ekran; różnica na
     `webkit-iphone-se/index-full` (1674 px) to ZNANY flake tego zrzutu,
     nie skutek PR-a.
+  - **Bot-commit ruszył 7 plików zamiast 4 — trzej intruzi, w tym JEDEN
+    NOWY** (przywrócone z SHA ostatniego commita człowieka, `cmp`
+    bajt-w-bajt):
+    - **`firefox-desktop/kompetencje-full-linux` — NOWY intruz, dopisz
+      do listy**: zmienił się sam WYMIAR dokumentu, 1920×**7355 →
+      7354** (1 px na 7,4 tys.). Trasa niezwiązana ze zmianą, a 1 px to
+      akumulacja zaokrągleń sub-pikselowych Firefoksa.
+    - `webkit-iphone-se/ekipa-top-linux` — stary znajomy (5575 px
+      w JEDNYM paśmie y 454–555, dokładnie tam, gdzie siedzi rycina).
+    - `webkit-iphone-se/index-full-linux` — **flake w wersji „dużej":
+      110 405 px = ratio 0,048**, 11 pasm, do 73 px/wiersz. Rozstrzyga
+      NIE gęstość pasm, tylko dwa fakty: (1) `index-top` na SE bot
+      ZOSTAWIŁ nietknięty, więc statyczny układ hero się nie zmienił;
+      (2) wysokość dokumentu identyczna co do piksela (320×7124) —
+      realna zmiana hero przesunęłaby całą stronę i zmieniła wysokość.
+      Dwa z pasm (y 2978–3087 i 3199–3308) mają POZYCJE identyczne
+      z darwinowym przebiegiem tego flake'a z PR-a polityki. To ta sama
+      klasa zjawiska co zapisane wyżej 0,0457 — teraz potwierdzona
+      także na linuksie.
+      ⚠️ **SPROSTOWANIE (ta sama sesja, po przebiegu kontrolnym):**
+      `webkit-iphone-se/index-full` NIE był tu czystym intruzem —
+      przywrócenie go było BŁĘDEM, cofniętym. Szczegóły w lekcji niżej.
+  - **LEKCJA: podłoga logo jako WYSOKOŚĆ vs SZEROKOŚĆ = mierzalny
+    sub-piksel** (kosztowała jeden fałszywy alarm „to flake"). Objaw:
+    po przywróceniu starego baseline'u `index-full`/SE przebieg
+    kontrolny dał 3495 px (ratio 0,0015) i — kluczowe — **był czerwony
+    TAKŻE W IZOLACJI**, czyli wypadł z definicji flake'a. Rozstrzygnął
+    go **test przesunięcia o 1 px**, szybszy niż analiza pasm: diff
+    liczony z przesunięciem `+1` spadał w pasmach do ZERA (1380 → 0,
+    1258 → 0), czyli treść jest identyczna, a część strony jedzie o
+    piksel niżej. Pomiar DOM na WebKicie 320×568 (`main` vs PR) podał
+    przyczynę co do setnych: wysokość logo **79,984 → 80,000 px**
+    (+0,016), hero 560,813 → 560,828, sekcja 01 652,813 → 652,828,
+    wysokość dokumentu BEZ ZMIAN (7124). Powód: stara podłoga była
+    podana jako SZEROKOŚĆ (`80px × proporcja` ⇒ wysokość 79,984), nowa
+    jako WYSOKOŚĆ (równe 80). Przy dpr=2 te 16 tysięcznych piksela
+    przewracają zaokrąglenie rastra i kilka wierszy tekstu ląduje 1 px
+    niżej. Dotyczy WYŁĄCZNIE iPhone'a SE — jedynego profilu, na którym
+    logo w ogóle stoi na podłodze.
+    **Wnioski operacyjne:** (1) przy podejrzeniu flake'a na fullPage
+    rób NAJPIERW test przesunięcia ±1 px — rozstrzyga w sekundy;
+    (2) „czerwone w izolacji" wyklucza flake, nawet gdy ratio jest
+    mikroskopijne; (3) zmiana wymiaru wiodącego (width ↔ height) przy
+    `aspect-ratio` to realna zmiana renderu, nie kosmetyka.
+  - **Próg `index-full` = 0.0025** (decyzja Mateusza; wariant B).
+    `index-full.png` był JEDYNYM zrzutem fullPage w projekcie BEZ
+    per-shot `maxDiffPixelRatio` — jechał na globalnym 0.0005, gdy
+    wszystkie pozostałe fullPage mają 0.001–0.0025, i regularnie świecił
+    na czerwono na webkit-iphone-se przy różnicach, których żaden inny
+    widok by nie zgłosił (trzy sesje diagnostyczne: 4.5 cz. 2, PR
+    polityki, poprawki po 4.6). Wartość = ta sama klasa co
+    `*-full-open`; realna regresja layoutu na `/` to DZIESIĄTKI tysięcy
+    px (0,02–0,05), więc próg jej nie przepuści. Globalny 0.0005
+    w `playwright.config.ts` NIETKNIĘTY. Kandydat odkładany od 4.5 cz. 2
+    — zamknięty.
 
 ## Dokumentacja
 
