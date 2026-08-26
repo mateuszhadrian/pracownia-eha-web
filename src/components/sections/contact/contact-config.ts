@@ -10,11 +10,12 @@ export const CONTACT_DESKTOP_MIN_PX = 1024;
 export const CONTACT_ENDPOINT = "/api/kontakt";
 
 /** Klucz PUBLICZNY widgetu Turnstile `eha-kontakt` (Managed; hostname
- *  pracownia-eha.pl + pracownia-eha-web.pages.dev). Widget powstaje
- *  w Etapie 5 — do tego czasu placeholder (formularza jeszcze nie ma).
- *  Sekret żyje wyłącznie w zmiennych projektu Pages jako
- *  TURNSTILE_SECRET_KEY. */
-export const TURNSTILE_SITE_KEY = "<TURNSTILE_SITE_KEY>";
+ *  pracownia-eha.pl + pracownia-eha-web.pages.dev) — wchodzi do HTML-u
+ *  produkcji, więc jego miejsce jest w repo. Sekret tego samego widgetu
+ *  żyje WYŁĄCZNIE w zmiennych projektu Pages jako TURNSTILE_SECRET_KEY
+ *  (Production + Preview, Encrypt) i weryfikuje token po stronie
+ *  functions/api/kontakt.ts. */
+export const TURNSTILE_SITE_KEY = "0x4AAAAAAEcp-bAu_UYwreRg";
 export const TURNSTILE_SRC =
   "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 
