@@ -112,7 +112,8 @@ zostają, widoki budowane od nowa wg `docs/design/` — patrz
   renderowane (podpięcie + geo = Etap 6); specy sekcji szablonu
   skasowane — wracają z widokami w Etapie 4 (mechanizm work bez
   własnych speców do 4.3; przy porcie zajrzyj do speców work
-  w repo delung-web); `TURNSTILE_SITE_KEY` = placeholder `<...>` (Etap 5).
+  w repo delung-web); `TURNSTILE_SITE_KEY` = placeholder `<...>`
+  (WYPEŁNIONY prawdziwym site keyem w Etapie 5, 2026-08-26).
 - **Etap 1A (repo + Pages) — WYKONANY** (2026-08-22): repo publiczne
   `mateuszhadrian/pracownia-eha-web`, ruleset `main-protection`
   (id 21158063; required check `quality`), Cloudflare Pages
@@ -978,9 +979,9 @@ secs"` (mobile: kolumna w kolejności DOM). Jedyna duplikacja
     — zamknięty.
 - **Etap 5 (/kontakt/ + formularz E9) — WYKONANY (kod)** (2026-08-25;
   mini-analiza i decyzje portu: `docs/analiza-kontakt.md`).
-  ⚠️ **Infrastruktura Etapu 5 NIE jest jeszcze zrobiona** — kod stoi na
-  placeholderze `TURNSTILE_SITE_KEY = "<TURNSTILE_SITE_KEY>"`; lista
-  kroków do klikniecia niżej.
+  ⚠️ **Infrastruktura Etapu 5 zrobiona W POŁOWIE** (2026-08-26, Faza A):
+  Turnstile, KV i WAF stoją, site key jest w repo — brakuje WYŁĄCZNIE
+  Resenda, który wymaga obecności klienta (Faza B niżej).
   - OSTATNI widok serwisu i jedyny z FUNKCJĄ. Warstwa wizualna =
     zwykły port w klasie 4.4–4.6: prefiks `.kt`, ZERO nowych mechanik
     (konsumuje `content-motion.ts`, `content-config.ts`,
@@ -1151,18 +1152,51 @@ start` (lekcja spisu treści z polityki). Hero NISKIE
     znani intruzi bot-commitów: `ekipa-top` SE, `index-full` SE/14,
     `work-index-full` SE oraz `kompetencje-full` firefox-desktop —
     przywracać `git checkout <sha-przed-botem> -- <plik>`).
-  - **DO KLIKNIĘCIA przez Mateusza (Część B pkt 5.1–5.5)**: konto
-    Resend na `eha@` + domena `send.pracownia-eha.pl` (region EU,
-    rekordy DNS only, apeks NIETKNIĘTY) → `RESEND_API_KEY`; widget
-    Turnstile `eha-kontakt` (Managed, `pracownia-eha.pl` +
-    `pracownia-eha-web.pages.dev`) → **site key do
-    `src/components/sections/contact/contact-config.ts`, stała
-    `TURNSTILE_SITE_KEY`** (dziś `<TURNSTILE_SITE_KEY>`), secret do
-    Pages; KV `eha-kontakt-quota` + binding `KONTAKT_KV`; zmienne Pages
-    `RESEND_API_KEY` i `TURNSTILE_SECRET_KEY` (Production + Preview,
-    Encrypt); reguła WAF `kontakt-form-burst` (3 POST-y/10 s na
-    `/api/kontakt`). Do czasu wdrożenia formularz odpowiada błędem
-    `.kt-srv` (403 z Turnstile) — telefony i mail działają.
+  - **FAZA A infrastruktury — WYKONANA** (2026-08-26; wszystko, co dało
+    się zrobić bez klienta): - widget Turnstile **`eha-kontakt`** (Managed, hostname
+    `pracownia-eha.pl` + `pracownia-eha-web.pages.dev`, bez
+    pre-clearance; `localhost` CELOWO nie dodany — e2e stubuje
+    `window.turnstile`); site key w repo
+    (`contact-config.ts`, commit „feat(kontakt): real turnstile site
+    key"), secret w zmiennych Pages jako `TURNSTILE_SECRET_KEY`
+    (Production + Preview, Encrypt). - KV **`eha-kontakt-quota`** (id `0663ed39…`) + binding
+    **`KONTAKT_KV`** w Pages (Production + Preview). - WAF strefy `pracownia-eha.pl`: reguła **`kontakt-form-burst`** —
+    wyrażenie `(http.request.uri.path eq "/api/kontakt" and
+http.request.method eq "POST")`, 3 requesty / 10 s, charakterystyka
+    IP (na free jedyna, select wyszarzony), akcja Block 10 s.
+    Reguła NIE obejmuje `pages.dev` (to nie jest strefa w koncie) —
+    preview chroni sam bezpiecznik KV. - **Weryfikacja na produkcji** (2026-08-26): formularz → POST
+    `/api/kontakt` → **502 `{"ok":false,"error":"send"}`** z logiem
+    `kontakt: mail #1 nie wyszedł (HTTP 401)` — czyli Turnstile
+    i secret DZIAŁAJĄ, wywraca się dopiero brak `RESEND_API_KEY`;
+    klucz `quota:RRRR-MM-DD` w KV nalicza się poprawnie; seria POST-ów
+    dała 3× 200 → 429 i sama puściła po 10 s (te z 429 NIE dotarły do
+    Function — WAF tnie na brzegu). - **LEKCJE**: (1) `wrangler kv key list/get` w v4 czyta DOMYŚLNIE
+    LOKALNY magazyn i pokazuje pustkę — do produkcji ZAWSZE
+    `--remote`, inaczej wyciągniesz fałszywy wniosek „binding nie
+    działa"; (2) `wrangler pages deployment tail` w trybie
+    nieinteraktywnym wymaga ID deploymentu (`pages deployment list`),
+    samo `--environment production` nie wystarczy; (3) `timeout(1)`
+    nie istnieje na darwinie; (4) jednorazowy 502 od Cloudflare
+    (HTML z `retry-after: 60`, „Host: Error") to NIE nasz kod —
+    transient brzegu; nasz 502 jest zawsze JSON-em. Rozstrzyga
+    `content-type` odpowiedzi. - Sonda diagnostyczna bez skutków ubocznych: POST z `elapsed=0`
+    idzie ścieżką bot-trapa (200, przed Turnstile/KV/Resendem) —
+    bezpieczne do testowania WAF-a; POST z pustym
+    `cf-turnstile-response` i `elapsed>4000` daje 403 i dowodzi, że
+    Function w ogóle wstaje.
+  - **FAZA B — CZEKA NA KLIENTA** (dostęp do skrzynki `eha@`): konto
+    Resend na `eha@pracownia-eha.pl` (osobne, plan free = 1 domena/konto;
+    link weryfikacyjny idzie na tę skrzynkę) → domena
+    `send.pracownia-eha.pl`, **region EU**, rekordy MX/SPF/DKIM
+    **DNS only**, apeks (poczta The Camels) NIETKNIĘTY → `RESEND_API_KEY`
+    w zmiennych Pages (Production + Preview, Encrypt) → **NOWY
+    deployment** (zmienne działają dopiero od kolejnego builda) → test
+    obu wariantów (sam telefon = 1 mail; e-mail = 2 maile) →
+    potwierdzenie od klienta, że powiadomienie doszło do `eha@` i nie
+    wpadło do spamu → test na fizycznym telefonie.
+    Do tego czasu formularz odpowiada `.kt-srv` (502 z Resenda, nie 403)
+    — telefony i mail działają.
   - UWAGI dla Etapu 6: JSON-LD `HomeAndConstructionBusiness` na
     `/kontakt/` (węzeł JEST w `jsonld.ts`, ale NIE jest renderowany) +
     geo i `@graph` na `/`; **Cloudflare Web Analytics — polityka JUŻ go
