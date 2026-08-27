@@ -1,7 +1,9 @@
 // Strona główna (Etap 4.2, docs/analiza-home.md §4) — kontrakty widoku:
 // SSR bez JS (pełna treść w HTML-u), [data-navref] steruje stanem „solid"
 // paska (4.1 czekał na hero), nawigacja CTA hero i pasków zajawek,
-// zajawka realizacji z kolekcji (odporna na liczbę wpisów), sloty
+// zajawka realizacji z kolekcji (odporna na liczbę wpisów) OTWIERAJĄCA
+// detal w miejscu (korekta Mateusza — unieważnia analiza-realizacje
+// §2 pkt 4), sloty
 // telefonów 06 (antyscraping D-CH5), reveale za bramką js-motion,
 // strażnik „scroll jest natywny" (D-Q1 — wraca ze specami widoków)
 // i kontrakt breakpointu HOME_DESKTOP_MIN_PX.
@@ -22,7 +24,7 @@ import {
 } from "../../src/lib/routes";
 import { expectBreakpointFlip } from "../helpers/breakpoint";
 import { usePreviewGuard } from "../helpers/guards";
-import { realizacjeFiles } from "../helpers/realizacje";
+import { readRealizacje } from "../helpers/realizacje";
 import { gotoReady, scrollPageTo, settle } from "../helpers/scroll";
 
 usePreviewGuard();
@@ -32,7 +34,15 @@ const PATH = "/";
 // Zajawka 02 czyta kolekcję (analiza H1) — panel pozwala usunąć wszystkie
 // wpisy i strona to przeżywa (pusta zajawka = stan dopuszczalny); sygnałem
 // braku treści jest kontrakt CMS w tests/unit/cms-contract.test.ts.
-const WPISY = realizacjeFiles().length;
+const ENTRIES = readRealizacje<{
+  order: number;
+  slug: string;
+  title: string;
+}>();
+const WPISY = ENTRIES.length;
+/** Ile kart pokazuje zajawka — tyle samo templatów detalu i tyle liczy
+ *  projnav (kontekst zajawki, NIE pełnej listy jak na /realizacje/). */
+const KART = Math.min(HOME_REALIZACJE_MAX, WPISY);
 const BRAK_REALIZACJI = WPISY === 0;
 const POWOD_BRAKU = "brak realizacji w kolekcji — zajawka nie ma kart";
 
@@ -161,7 +171,7 @@ test("każda zajawka linkuje na swoją trasę (wariant bieżącego profilu)", as
 test.describe("zajawka realizacji czyta kolekcję", () => {
   test.skip(BRAK_REALIZACJI, POWOD_BRAKU);
 
-  test("liczba kart = min(kap, wpisy); wszystkie linkują na /realizacje/", async ({
+  test("liczba kart = min(kap, wpisy); każda niesie kontrakt detalu i href-fallback", async ({
     page,
     isMobile,
   }) => {
@@ -169,9 +179,13 @@ test.describe("zajawka realizacji czyta kolekcję", () => {
     const cards = isMobile
       ? page.locator(".re-track .re-card:not(.re-morecard)")
       : page.locator(".re-pol");
-    await expect(cards).toHaveCount(Math.min(HOME_REALIZACJE_MAX, WPISY));
-    for (const card of await cards.all()) {
+    await expect(cards).toHaveCount(KART);
+    for (const [i, card] of (await cards.all()).entries()) {
+      // href ZOSTAJE — bez JS (i gdyby detal nie wstał) kafel musi
+      // dowieźć użytkownika do treści; JS robi preventDefault
       await expect(card).toHaveAttribute("href", WORK_INDEX_PATH);
+      await expect(card).toHaveAttribute("data-work-slug", ENTRIES[i].slug);
+      await expect(card).toHaveAttribute("aria-haspopup", "dialog");
     }
   });
 
@@ -190,6 +204,118 @@ test.describe("zajawka realizacji czyta kolekcję", () => {
     } else {
       await expect(more).toHaveCount(0);
     }
+  });
+});
+
+// ── detal realizacji PROSTO z zajawki (korekta Mateusza; unieważnia
+// analiza-realizacje §2 pkt 4 „karty zajawki zostają płaskimi linkami").
+// Mechanizm ten sam co na /realizacje/ — tu pilnujemy wyłącznie tego, co
+// jest NOWE na stronie głównej: templaty w SSR, otwarcie bez nawigacji,
+// kontekst licznika = zajawka, i że na listę dalej prowadzą CTA oraz
+// kafel-licznik. Kompletna mechanika detalu: work-index.spec.ts. ──
+test.describe("kafel zajawki otwiera detal w miejscu", () => {
+  test.skip(BRAK_REALIZACJI, POWOD_BRAKU);
+
+  test("SSR ma template detalu na kartę i ZAMKNIĘTĄ nakładkę", async ({
+    page,
+  }) => {
+    await gotoReady(page, PATH);
+    await expect(page.locator("template[data-work-detail]")).toHaveCount(KART);
+    await expect(page.locator("#work-detail")).toBeHidden();
+  });
+
+  test("nakładka stoi POZA main.home (isolation) — inaczej pasek ją zakrywa", async ({
+    page,
+  }) => {
+    await gotoReady(page, PATH);
+    // .home ma isolation: isolate, więc .dt-ov (z-index 100) wewnątrz
+    // trafiłby do JEGO kontekstu układania i .hdr (z-index 50, rodzeństwo
+    // main) malowałby się NA modalu. Kontrakt strukturalny, nie pixel-diff.
+    const outside = await page.evaluate(
+      () =>
+        !document
+          .querySelector("main.home")
+          ?.contains(document.getElementById("work-detail")),
+    );
+    expect(outside).toBe(true);
+  });
+
+  test("klik w kafel otwiera detal BEZ nawigacji; licznik liczy zajawkę; Esc zamyka", async ({
+    page,
+    isMobile,
+  }) => {
+    await gotoReady(page, PATH);
+    const card = (
+      isMobile
+        ? page.locator(".re-track .re-card:not(.re-morecard)")
+        : page.locator(".re-pol")
+    ).first();
+    await card.scrollIntoViewIfNeeded();
+    await settle(page, 300);
+    await card.click();
+
+    const detail = page.locator("#work-detail");
+    await expect(detail).toHaveClass(/is-open/);
+    await settle(page, 600);
+    // NIE nawigujemy — preventDefault wchodzi dopiero po udanym otwarciu
+    expect(new URL(page.url()).pathname).toBe(PATH);
+    await expect(detail.locator(".dt-title")).toHaveText(ENTRIES[0].title);
+    // kontekst projnav = kafle zajawki (na /realizacje/ to PEŁNA lista)
+    await expect(detail.locator("[data-projcount]")).toHaveText(
+      `REALIZACJA 01 / ${String(KART).padStart(2, "0")}`,
+    );
+
+    await page.keyboard.press("Escape");
+    await expect(detail).toBeHidden();
+    // host czyszczony po zamknięciu (zwalnia obrazy/DOM)
+    await expect(detail.locator(".dt-title")).toHaveCount(0);
+    expect(new URL(page.url()).pathname).toBe(PATH);
+  });
+
+  test("papierowe tło paska PRZEŻYWA otwarcie detalu", async ({
+    page,
+    isMobile,
+  }) => {
+    // Ta sama klasa co „tło przeżywa otwarcie menu" (navigation.spec,
+    // poprawki po 4.6): overlay.ts blokuje scroll przez
+    // `body{position:fixed;top:-scrollY}`, co ZERUJE window.scrollY
+    // i odpala `scroll`. Flaga `sheetOpen` Navbara wstaje TYLKO dla menu,
+    // więc detal wymagał drugiej bramki — Navbar czyta teraz wprost
+    // blokadę z overlay.ts i zamraża CAŁY stan (razem z `lastY`, inaczej
+    // powrót z 0 do zapamiętanej pozycji chowałby pasek po zamknięciu).
+    await gotoReady(page, PATH);
+    const nav = page.locator("[data-nav]");
+    await scrollPageTo(page, (await heroH(page)) + 600);
+    await expect(nav).toHaveAttribute("data-solid", "");
+
+    const card = (
+      isMobile
+        ? page.locator(".re-track .re-card:not(.re-morecard)")
+        : page.locator(".re-pol")
+    ).first();
+    await card.scrollIntoViewIfNeeded();
+    await settle(page, 300);
+    await card.click();
+    await expect(page.locator("#work-detail")).toHaveClass(/is-open/);
+    await expect(nav).toHaveAttribute("data-solid", "");
+
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#work-detail")).toBeHidden();
+    await expect(nav).toHaveAttribute("data-solid", "");
+  });
+
+  test("kafel-licznik „JESZCZE N” NAWIGUJE na listę (mobile)", async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!isMobile, "kafel-licznik istnieje tylko w karuzeli mobile");
+    test.skip(WPISY <= HOME_REALIZACJE_MAX, "brak nadwyżki wpisów");
+    await gotoReady(page, PATH);
+    const more = page.locator("[data-re-more]");
+    await more.scrollIntoViewIfNeeded();
+    await settle(page, 300);
+    await more.click();
+    await expect(page).toHaveURL(new RegExp(`${WORK_INDEX_PATH}$`));
   });
 });
 
@@ -363,6 +489,44 @@ test.describe("hero mobile: logo skaluje się wolną przestrzenią", () => {
   });
 });
 
+// ── ryciny hero vs kicker zajawki 01 (sesja poprawek; zgłoszenie
+// Mateusza z telefonu). `.hr-m2`/`.hr-m3` są kotwiczone do DOŁU hero
+// i CELOWO zeń wystają (bottom −92 / −70 px), więc lądowały na
+// „01 · EKIPA EH/A". Osadzenie rycin zostaje — odsunięta jest treść
+// (`.ek-txt` padding-top 74 → 106 px). Sonda układu, nie pixel-diff:
+// mierzymy najgorszy przypadek przez CAŁY przejazd scrolla, bo ryciny
+// mają parallax [data-plxr] ±15 px i pojedynczy pomiar go przegapia.
+test("ryciny hero nie nachodzą na kicker zajawki 01 (mobile)", async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(!isMobile, "ryciny .hr-m* żyją tylko w układzie mobile");
+  await gotoReady(page, PATH);
+  const base = await page.evaluate(
+    () =>
+      document
+        .querySelector<HTMLElement>(".ek .s-eyebrow")!
+        .getBoundingClientRect().top + window.scrollY,
+  );
+  const vh = page.viewportSize()!.height;
+  let worst = { m2: Number.POSITIVE_INFINITY, m3: Number.POSITIVE_INFINITY };
+  for (let off = vh - 60; off >= 60; off -= 20) {
+    await scrollPageTo(page, Math.max(0, Math.round(base - off)));
+    const gap = await page.evaluate(() => {
+      const box = (sel: string) =>
+        document.querySelector<HTMLElement>(sel)!.getBoundingClientRect();
+      const k = box(".ek .s-eyebrow");
+      return {
+        m2: k.top - box(".hr-m2").bottom,
+        m3: k.top - box(".hr-m3").bottom,
+      };
+    });
+    worst = { m2: Math.min(worst.m2, gap.m2), m3: Math.min(worst.m3, gap.m3) };
+  }
+  expect(worst.m2, "dolna krawędź .hr-m2 nad kickerem 01").toBeGreaterThan(0);
+  expect(worst.m3, "dolna krawędź .hr-m3 nad kickerem 01").toBeGreaterThan(0);
+});
+
 // ── karuzela realizacji: scroll-snap (korekta Mateusza — brak snapa
 // w eksporcie to niedoróbka; kontrakt karuzel projektu = sections.md) ──
 test.describe("karuzela realizacji przyciąga kafle", () => {
@@ -417,6 +581,45 @@ test.describe("karuzela realizacji przyciąga kafle", () => {
     });
     expect(Math.abs(m.cardLeft - m.padLeft)).toBeLessThanOrEqual(1);
   });
+});
+
+// ── tag godzin zajawki 06 (sesja poprawek; ten sam defekt i to samo
+// lekarstwo co na /kontakt/). Jeden ciąg zawijał się na KAŻDEJ
+// szerokości mobilnej i zrzucał sierotę: przy 430 px samo „16",
+// a na desktopie 1366/1440 — „8–16" i „16". Teraz to dwa człony
+// z `nowrap`, więc łamanie zawsze wypada na kropce. ──
+test("tag godzin 06 nie zostawia sieroty (człony łamią się na kropce)", async ({
+  page,
+  isMobile,
+}) => {
+  await gotoReady(page, PATH);
+  await page.locator(".sec.kt").scrollIntoViewIfNeeded();
+  await settle(page, 400);
+  const geo = await page.evaluate(() => {
+    const el = [
+      ...document.querySelectorAll<HTMLElement>(".sec.kt .kt-hours"),
+    ].find((x) => x.offsetParent !== null)!;
+    const czlony = [
+      ...el.querySelectorAll<HTMLElement>(":scope > span"),
+    ].filter((x) => !x.classList.contains("kt-hours-sep"));
+    const sep = el.querySelector<HTMLElement>(".kt-hours-sep")!;
+    return {
+      czlonow: czlony.length,
+      nowrap: czlony.map((x) => getComputedStyle(x).whiteSpace),
+      // każdy człon w JEDNYM wierszu — sierota staje się niemożliwa
+      wysokosci: czlony.map((x) =>
+        Math.round(x.getBoundingClientRect().height),
+      ),
+      sep: getComputedStyle(sep).display,
+      tekst: el.innerText.replace(/\s+/g, " ").trim(),
+    };
+  });
+  expect(geo.czlonow).toBe(2);
+  expect(geo.nowrap).toEqual(["nowrap", "nowrap"]);
+  expect(geo.wysokosci[1]).toBe(geo.wysokosci[0]);
+  expect(geo.sep).toBe(isMobile ? "none" : "inline");
+  expect(geo.tekst).toContain("KONTAKT 7 DNI W TYGODNIU");
+  expect(geo.tekst).toContain("BUDOWA PN–PT 8–16");
 });
 
 // ── sloty kontaktu 06 (antyscraping D-CH5) ──

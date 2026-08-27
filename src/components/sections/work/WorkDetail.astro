@@ -130,6 +130,31 @@ const showDashes = p.gallery.length <= WORK_GALLERY_DASHES_MAX;
                 <span class="dt-hint" data-cam-hint aria-hidden="true">
                   <span class="dt-hint-d">Kliknij, aby obejrzeć</span>
                   <span class="dt-hint-m">Stuknij, aby obejrzeć</span>
+                  {/* Trzeci wariant tej samej plakietki: WSKAŹNIK
+                      ŁADOWANIA (sesja poprawek wizualnych). Pokazuje go
+                      klasa `.is-loading` na slajdzie podglądu — reguły
+                      w WorkDetailOverlay.astro, stan pilnuje
+                      open-detail.ts. Powód: hint znikał przy zdarzeniu
+                      `play` (65 ms), a obraz ruszał dopiero na `playing`
+                      — zmierzone 0,65 s bez throttlingu, 2,0 s na Fast
+                      3G i 7,5 s na Slow 3G. Przez ten czas użytkownik
+                      widział nieruchomy kadr bez żadnego znaku i brał go
+                      za zdjęcie. Kropki są osobnymi elementami, bo
+                      animuje je CSS (delayem), nie JS. */}
+                  {/* Kropki rysuje `content: "."` z ::before, a nie tekst
+                      w DOM: między sąsiednimi <b> prettier wstawia białe
+                      znaki, które przeglądarka renderuje jako spacje —
+                      wyszłoby „. . ." zamiast „...". Są dekoracją
+                      (aria-hidden), więc pseudoelement jest tu na miejscu;
+                      testy liczą <b>, a tekstu szukają bez kropek. */}
+                  <span class="dt-hint-load">
+                    Poczekaj, ładuję wideo
+                    <i class="dt-dots" aria-hidden="true">
+                      <b />
+                      <b />
+                      <b />
+                    </i>
+                  </span>
                 </span>
                 <span class="dt-cam" data-cam aria-hidden="true">
                   <svg viewBox="0 0 21 14" fill="none">
@@ -391,6 +416,25 @@ const showDashes = p.gallery.length <= WORK_GALLERY_DASHES_MAX;
   }
   .dt-hint-d {
     display: none;
+  }
+  /* Wariant „ładuję" siedzi w SSR obok dwóch pozostałych i domyślnie
+     jest schowany — odsłania go klasa `.is-loading` na slajdzie podglądu
+     (reguły + animacja kropek: blok is:global w WorkDetailOverlay.astro,
+     bo klasę nadaje open-detail.ts na sklonowanym węźle). */
+  .dt-hint-load {
+    display: none;
+  }
+  /* Kropki „…" jako trzy elementy — animuje je CSS delayem, nie JS.
+     Bez ruchu (reduce / brak animacji) muszą być WIDOCZNE, więc stan
+     spoczynku to opacity 1, a animacja dopiero go zbija. */
+  .dt-dots {
+    font-style: normal;
+  }
+  .dt-dots b {
+    font-weight: inherit;
+  }
+  .dt-dots b::before {
+    content: ".";
   }
   .dt-time {
     display: none;

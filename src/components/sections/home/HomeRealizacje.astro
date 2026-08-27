@@ -6,20 +6,27 @@
 // karta-licznik „JESZCZE N" (tylko gdy N > 0) + pasek CTA; desktop: kolumna
 // tekstu + 3 polaroidy z rotacjami + CTA obrysowe (bez licznika — design).
 // Pusta kolekcja = sekcja bez kart (tekst + CTA zostają; stan dopuszczalny).
-import { getCollection } from "astro:content";
+//
+// KAFLE OTWIERAJĄ DETAL W MIEJSCU (korekta Mateusza — UNIEWAŻNIA decyzję
+// analiza-realizacje §2 pkt 4 „karty zajawki zostają płaskimi linkami"):
+// klik/tap w kafel klonuje <template data-work-detail> do wspólnego
+// #work-detail (modal ≥1024 / sheet <1024), dokładnie jak na /realizacje/
+// i jak w delungu. Na listę przenoszą WYŁĄCZNIE dedykowane CTA
+// „Zobacz wszystkie realizacje" (zaj-out desktop / zaj-bar mobile) oraz
+// mobilny kafel-licznik „JESZCZE N".
+// Kafel zostaje <a href={WORK_INDEX_PATH}> (a nie <button> jak na
+// /realizacje/): tam bez JS pełna lista jest TUŻ OBOK, więc martwy klik
+// nic nie kosztuje — tu href to jedyne dojście do treści, więc zostaje
+// fallbackiem, a JS robi preventDefault (wzorzec delung D-Q6/D-P2:
+// „href zostaje fallbackiem bez JS").
 import domRemont from "@/assets/dom-remont-ryc1.webp";
 import house8 from "@/assets/dom-ryc-house8.webp";
 import { imgAt } from "@/lib/img";
 import { WORK_INDEX_PATH } from "@/lib/routes";
-import { viewProject, type WorkProject } from "../work/work-data";
-import { HOME_REALIZACJE_MAX } from "./home-config";
 import HomeSectionHead from "./HomeSectionHead.astro";
+import { homeRealizacje } from "./home-realizacje-data";
 
-const entries = (await getCollection("realizacje"))
-  .map((entry) => entry.data as WorkProject)
-  .sort((a, b) => a.order - b.order);
-const shown = entries.slice(0, HOME_REALIZACJE_MAX).map(viewProject);
-const more = entries.length - shown.length;
+const { shown, more } = await homeRealizacje();
 
 /** Rotacje/pozycje polaroidów desktop (eksport; indeks = kolejność karty). */
 const DESKTOP_CARDS = [
@@ -29,7 +36,7 @@ const DESKTOP_CARDS = [
 ];
 ---
 
-<section class="sec re">
+<section class="sec re" data-re-cards>
   <img
     class="mOnly re-ryc"
     data-ryc="r"
@@ -92,7 +99,13 @@ const DESKTOP_CARDS = [
     <div class="re-track" data-re-track>
       {
         shown.map((p) => (
-          <a class="re-card" href={WORK_INDEX_PATH}>
+          <a
+            class="re-card"
+            href={WORK_INDEX_PATH}
+            data-work-slug={p.slug}
+            data-work-name={p.title}
+            aria-haspopup="dialog"
+          >
             <img
               src={imgAt(p.cover.image, "mobile")}
               alt={p.title}
@@ -161,6 +174,9 @@ const DESKTOP_CARDS = [
       <a
         class="dOnly re-pol"
         href={WORK_INDEX_PATH}
+        data-work-slug={p.slug}
+        data-work-name={p.title}
+        aria-haspopup="dialog"
         style={`left:${DESKTOP_CARDS[i].left};top:${DESKTOP_CARDS[i].top};--rot:${DESKTOP_CARDS[i].rot}`}
       >
         <img
@@ -446,3 +462,49 @@ const DESKTOP_CARDS = [
     }
   }
 </style>
+
+<script>
+  // Klik/tap w kafel zajawki → detal w #work-detail (wspólny mechanizm
+  // open-detail: jeden overlay, wariant modal↔sheet w CSS przy 1024,
+  // zamknięcie przy zmianie progu — jak na /realizacje/). Templaty
+  // i sam overlay renderuje index.astro (POZA main.home — isolation).
+  import {
+    openWorkDetail,
+    setDetailContext,
+  } from "@/components/sections/work/open-detail";
+
+  const root = document.querySelector<HTMLElement>("[data-re-cards]");
+  const cards = Array.from(
+    root?.querySelectorAll<HTMLElement>("[data-work-slug]") ?? [],
+  );
+
+  // Kontekst projnav/licznika „REALIZACJA NN / NN" = kafle zajawki.
+  // Kafle mobile i desktop to DWA komplety tego samego zbioru (dOnly/
+  // mOnly), więc dedukujemy po slugu — inaczej licznik pokazywałby 6/6.
+  const seen = new Set<string>();
+  setDetailContext(
+    cards
+      .map((card) => ({
+        slug: card.dataset.workSlug ?? "",
+        name: card.dataset.workName ?? "",
+      }))
+      .filter(
+        (item) => item.slug && !seen.has(item.slug) && seen.add(item.slug),
+      ),
+  );
+
+  root?.addEventListener("click", (e) => {
+    // modyfikatory i środkowy przycisk zostawiamy przeglądarce (kafel
+    // jest linkiem — „otwórz w nowej karcie" ma dalej działać)
+    if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)
+      return;
+    const card = (e.target as HTMLElement).closest<HTMLElement>(
+      "[data-work-slug]",
+    );
+    const slug = card?.dataset.workSlug;
+    if (!slug) return; // CTA „Zobacz wszystkie…" i kafel-licznik → nawigacja
+    // preventDefault DOPIERO gdy detal naprawdę wstał — inaczej href
+    // zostaje jedynym dojściem do treści (fallback bez JS/bez template'u)
+    if (openWorkDetail(slug, card?.dataset.workName ?? "")) e.preventDefault();
+  });
+</script>

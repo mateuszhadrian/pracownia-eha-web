@@ -19,7 +19,13 @@ import wnetrze1 from "@/assets/wnetrze-domu-ryc1.webp";
 import { CONTACT_PATH } from "@/lib/routes";
 import HomeSectionHead from "./HomeSectionHead.astro";
 
-const HOURS = "KONTAKT 7 DNI W TYGODNIU · BUDOWA PN–PT 8–16";
+// Tag godzin w DWÓCH członach (korekta sesji poprawek — ten sam problem
+// i to samo lekarstwo co na /kontakt/): jeden ciąg zawijał się na KAŻDEJ
+// szerokości mobilnej, a przy 430 px zrzucał do drugiego wiersza sierotę
+// „16". Na mobile człony stoją jeden pod drugim, na desktopie skleja je
+// kropka. Stałe, bo markup powtarza się w wariancie mOnly i dOnly.
+const HOURS_1 = "KONTAKT 7 DNI W TYGODNIU";
+const HOURS_2 = "BUDOWA PN–PT 8–16";
 ---
 
 <section class="sec kt">
@@ -85,7 +91,11 @@ const HOURS = "KONTAKT 7 DNI W TYGODNIU · BUDOWA PN–PT 8–16";
         <a class="kt-mail" data-mail href={CONTACT_PATH} hidden>
           <span data-slot>E-mail</span>
         </a>
-        <div class="kt-hours">{HOURS}</div>
+        <div class="kt-hours">
+          <span>{HOURS_1}</span><span class="kt-hours-sep" aria-hidden="true"
+            >&#32;·&#32;</span
+          ><span>{HOURS_2}</span>
+        </div>
       </div>
     </div>
 
@@ -144,7 +154,11 @@ const HOURS = "KONTAKT 7 DNI W TYGODNIU · BUDOWA PN–PT 8–16";
         <a class="kt-mail" data-mail href={CONTACT_PATH} hidden>
           <span data-slot>E-mail</span>
         </a>
-        <div class="kt-hours">{HOURS}</div>
+        <div class="kt-hours">
+          <span>{HOURS_1}</span><span class="kt-hours-sep" aria-hidden="true"
+            >&#32;·&#32;</span
+          ><span>{HOURS_2}</span>
+        </div>
       </div>
     </div>
   </div>
@@ -290,6 +304,19 @@ const HOURS = "KONTAKT 7 DNI W TYGODNIU · BUDOWA PN–PT 8–16";
     letter-spacing: 0.14em;
     color: rgba(33, 29, 24, 0.64);
   }
+  /* Wyłączenie separatora przez :not(), nie osobną regułą — ta miałaby
+     specyficzność (0,1,0) i przegrałaby z selektorem niżej (0,1,1),
+     przez co kropka zostałaby jako trzeci wiersz (błąd złapany przy
+     bliźniaczej poprawce na /kontakt/). */
+  .kt-hours > span:not(.kt-hours-sep) {
+    /* człon nigdy nie łamie się w środku — sierota „8–16" ani „16"
+       nie może już powstać, nawet gdyby kolumna była węższa */
+    white-space: nowrap;
+    display: block;
+  }
+  .kt-hours-sep {
+    display: none;
+  }
   .kt-bar {
     margin: 0 var(--sp) 40px;
   }
@@ -410,6 +437,11 @@ const HOURS = "KONTAKT 7 DNI W TYGODNIU · BUDOWA PN–PT 8–16";
       font-size: var(--monos);
       letter-spacing: 0.2em;
       color: rgba(245, 239, 227, 0.72);
+    }
+    /* desktop wraca do jednego wiersza z kropką (design) */
+    .kt-hours > span:not(.kt-hours-sep),
+    .kt-hours > .kt-hours-sep {
+      display: inline;
     }
 
     .kt-txt {
