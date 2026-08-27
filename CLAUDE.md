@@ -1468,8 +1468,10 @@ p=none`. DMARC bez `sp=` i bez ostrego dopasowania ⇒ maile
     Playwrighta (ta jest PERCEPCYJNA) — własne liczby mówią WYŁĄCZNIE
     „czy render się zmienił", nigdy „czy test zaświeci". I zawsze
     weryfikować szum bazowy dwoma identycznymi przebiegami (tu: 0 px).
-  - **ZMIERZONY zasięg baseline'ów: 34 pliki na platformę (68 łącznie),
-    z czego 10 czerwonych**:
+  - **Zasięg baseline'ów: 34 pliki na platformę mają NIEAKTUALNĄ treść,
+    ale realnie przepisanych zostało 10** — patrz lekcja o trybie
+    `changed` niżej. Pełna lista tras, których render się zmienił
+    (🔴 = przekroczyło próg i zostało zregenerowane):
     - `index-full` × 3 mobile 🔴 (pkt 6 — dokument +32 px, i pkt 9)
     - `index-full` × chromium-1366 (820 px) i firefox-desktop (887 px) —
       pkt 9, pod progiem
@@ -1486,6 +1488,31 @@ p=none`. DMARC bez `sp=` i bez ostrego dopasowania ⇒ maile
       a oba zrzuty wideo są bezpieczne z definicji: `work-detail-video`
       fotografuje galerię (film nie gra), a `work-detail-fullscreen`
       klika PIERWSZY slajd, który regułą projektu zawsze jest zdjęciem.
+  - **LEKCJA: `--update-snapshots` przepisuje TYLKO zrzuty powyżej progu**
+    (Playwright 1.61, domyślny tryb `changed`). Workflow baseline'ów
+    ruszył **10 plików z 34**, których render realnie się zmienił —
+    dokładnie ten sam zbiór, który świecił na czerwono, i ANI JEDNEGO
+    intruza. Pozostałe 24 zostają ze świadomym, drobnym długiem: ich
+    różnice mieszczą się pod per-shot `maxDiffPixelRatio`, więc Playwright
+    uznaje je za nieistotne percepcyjnie. **Nie forsowaliśmy
+    `--update-snapshots=all`** — te 24 pliki ważą **43,3 MB na platformę
+    (86,6 MB dla obu)**, a bloby PNG zostają w historii git na zawsze;
+    to zła wymiana za różnice, których nikt nie zobaczy. Konsekwencja do
+    zapamiętania: przy NASTĘPNEJ zmianie na tych trasach diff pokaże
+    sumę starej i nowej różnicy — jeśli wyjdzie „za duży", sprawdź tę
+    listę, zanim uznasz to za regresję.
+  - **NOWY ZNANY INTRUZ: `kompetencje-full-open` na `webkit-iphone-se`.**
+    Wyszedł dopiero w przebiegu kontrolnym po bot-commicie (11. czerwony
+    obok oczekiwanych 10), a w IZOLACJI jest zielony w trzech kolejnych
+    przebiegach — czyli flake wg definicji `testing.md`. To ta sama klasa
+    co próg `FULLOPEN_MAX_DIFF_RATIO` podniesiony w 4.5 cz. 1
+    (dwustanowa pętla parallaxu przy rozwiniętych akapitach), tyle że
+    dotąd widziana na `webkit-iphone-14`. Trasa kompetencji NIE jest
+    dotknięta żadną z poprawek tej sesji (zmierzony pasek nawigacji na
+    niej: 0 px). **Przy `pnpm test:visual:update` sprawdzić, czy się nie
+    przepisał, i przywrócić** — dopisz go do listy obok `ekipa-top` SE,
+    `index-full` SE/14, `work-index-full` SE i `kompetencje-full`
+    firefox-desktop.
   - **ZNANY, NIETKNIĘTY**: w podglądzie pełnoekranowym na desktopie
     plakietka nachodzi na przycisk `×` o 44 px — stan ZASTANY od 4.3
     (hint w spoczynku ma prawą krawędź na 1906 px i `×` też: 1862–1906),
