@@ -977,11 +977,12 @@ secs"` (mobile: kolumna w kolejności DOM). Jedyna duplikacja
     px (0,02–0,05), więc próg jej nie przepuści. Globalny 0.0005
     w `playwright.config.ts` NIETKNIĘTY. Kandydat odkładany od 4.5 cz. 2
     — zamknięty.
-- **Etap 5 (/kontakt/ + formularz E9) — WYKONANY (kod)** (2026-08-25;
-  mini-analiza i decyzje portu: `docs/analiza-kontakt.md`).
-  ⚠️ **Infrastruktura Etapu 5 zrobiona W POŁOWIE** (2026-08-26, Faza A):
-  Turnstile, KV i WAF stoją, site key jest w repo — brakuje WYŁĄCZNIE
-  Resenda, który wymaga obecności klienta (Faza B niżej).
+- **Etap 5 (/kontakt/ + formularz E9) — WYKONANY** (kod 2026-08-25,
+  infrastruktura 2026-08-26/27; mini-analiza i decyzje portu:
+  `docs/analiza-kontakt.md`). **Formularz DZIAŁA na produkcji** —
+  przetestowany oba warianty E9, klient potwierdził odbiór w skrzynce
+  `eha@`. Zasoby i przebieg wdrożenia niżej (Faza A = bez klienta,
+  Faza B = z klientem).
   - OSTATNI widok serwisu i jedyny z FUNKCJĄ. Warstwa wizualna =
     zwykły port w klasie 4.4–4.6: prefiks `.kt`, ZERO nowych mechanik
     (konsumuje `content-motion.ts`, `content-config.ts`,
@@ -1185,18 +1186,56 @@ http.request.method eq "POST")`, 3 requesty / 10 s, charakterystyka
     bezpieczne do testowania WAF-a; POST z pustym
     `cf-turnstile-response` i `elapsed>4000` daje 403 i dowodzi, że
     Function w ogóle wstaje.
-  - **FAZA B — CZEKA NA KLIENTA** (dostęp do skrzynki `eha@`): konto
-    Resend na `eha@pracownia-eha.pl` (osobne, plan free = 1 domena/konto;
-    link weryfikacyjny idzie na tę skrzynkę) → domena
-    `send.pracownia-eha.pl`, **region EU**, rekordy MX/SPF/DKIM
-    **DNS only**, apeks (poczta The Camels) NIETKNIĘTY → `RESEND_API_KEY`
-    w zmiennych Pages (Production + Preview, Encrypt) → **NOWY
-    deployment** (zmienne działają dopiero od kolejnego builda) → test
-    obu wariantów (sam telefon = 1 mail; e-mail = 2 maile) →
-    potwierdzenie od klienta, że powiadomienie doszło do `eha@` i nie
-    wpadło do spamu → test na fizycznym telefonie.
-    Do tego czasu formularz odpowiada `.kt-srv` (502 z Resenda, nie 403)
-    — telefony i mail działają.
+  - **FAZA B infrastruktury — WYKONANA** (2026-08-26/27, z klientem
+    na linii; klient potrzebny był w DWÓCH momentach po ~3 min:
+    kliknięcie linku weryfikacyjnego i potwierdzenie skrzynki): - **Konto Resend** na `eha@pracownia-eha.pl` — osobne, zwykłe konto
+    na hasło (NIE przez GitHub/Google, bo idzie do klienta w Etapie 7),
+    **MFA/TOTP włączone** (Resend trzyma to w `Profile` → „Enable MFA",
+    NIE w ustawieniach zespołu); hasło, Setup Key i recovery codes
+    w menedżerze haseł Mateusza do rozliczenia w Etapie 7.
+    ⚠️ **SPROSTOWANIE premisy z instrukcji wykonawczej**: plan free
+    daje dziś **3 domeny na konto**, nie jedną (`Domains 0/3`,
+    transakcyjne 100/dobę i 3000/mies.). Osobne konto zostaje mimo to —
+    uzasadnia je WŁASNOŚĆ (Etap 7), nie limit. - **Domena `send.pracownia-eha.pl`**, region **EU (`eu-west-1`,
+    Irlandia)** — region jest NIEODWRACALNY (zmiana = skasować i dodać
+    od nowa). Apeks świadomie NIE dodany: `pracownia-eha.pl` obsługuje
+    skrzynkę klienta w The Camels.
+    **Custom Return-Path zostawiony na domyślnym `send`**, przez co
+    wpisy MX/SPF siedzą na `send.send.pracownia-eha.pl` (podwójny
+    człon — to POPRAWNE, nie literówka).
+    **Tracking Subdomain CELOWO PUSTY**: śledzenie otwarć/kliknięć
+    przepisywałoby linki i profilowało odbiorcę, czego opublikowana
+    polityka prywatności NIE deklaruje (rozjazd kodu z dokumentem
+    prawnym), a do tego psuje dostarczalność. - **Wpisy DNS** (Cloudflare, strefa `pracownia-eha.pl`; MX i TXT nie
+    mają w ogóle przełącznika proxy — „DNS only" dotyczyłoby CNAME,
+    o który Resend nie poprosił):
+    `TXT resend._domainkey.send` = klucz DKIM (218 znaków),
+    `MX send.send` = `feedback-smtp.eu-west-1.amazonses.com` prio 10,
+    `TXT send.send` = `v=spf1 include:amazonses.com ~all`.
+    ⚠️ **Pułapka nazwy DKIM**: w strefie `pracownia-eha.pl` wpisuje się
+    `resend._domainkey.send`, a NIE `resend._domainkey` — to drugie
+    utworzyłoby wpis na apeksie i weryfikacja by nie przeszła. - **Preflight i kontrola po zmianie** (`dig`, przed i po): apeks
+    NIENARUSZONY — `MX 10 mail.pracownia-eha.pl`,
+    `TXT v=spf1 a mx ip4:5.252.231.188 ~all`, `_dmarc` = `v=DMARC1;
+p=none`. DMARC bez `sp=` i bez ostrego dopasowania ⇒ maile
+    z subdomeny nie są odrzucane. DKIM porównany bajt-w-bajt
+    z wartością z panelu Resenda. - **Klucz API** `eha-pages-kontakt` — uprawnienie **Sending access**
+    (nie Full access), zawężony do `send.pracownia-eha.pl`; pokazuje
+    się RAZ. Wartość → zmienna Pages **`RESEND_API_KEY`**
+    (Production + Preview, Encrypt). - **Retry deployment** (`66c51568`, commit `a4caa08`) — zmienne Pages
+    działają WYŁĄCZNIE od nowego builda. Objaw pominięcia: dalej
+    `502 send` przy poprawnym kluczu. - **Testy realnej wysyłki** (oba warianty E9, log Function czysty —
+    ZERO linii `console.error`):
+    sam telefon → `200 {"ok":true}`, JEDEN mail na `eha@`,
+    `replyTo: eha@` (brak adresu nadawcy), `E-mail: —` w treści,
+    temat `[pracownia-eha.pl] Jelenia Góra: zapytanie od …`;
+    e-mail → `200`, DWA maile, `replyTo` = adres nadawcy,
+    `Lokalizacja inwestycji: —` i temat BEZ członu miejscowości.
+    Licznik `quota:2026-08-26` naliczał każdą próbę (2 → 3 → 4). - **Potwierdzenie klienta**: wiadomości dotarły do skrzynki `eha@`,
+    poza spamem. - **LEKCJA**: podgląd żądania w logach Resenda **zjada złamania
+    linii** w polach `text` i `html` (widać to po tym, że OBA je tracą,
+    choć kod skleja je `\n`) — nie diagnozować z tego „zlepionego
+    maila"; prawdziwy układ widać dopiero w skrzynce odbiorcy.
   - UWAGI dla Etapu 6: JSON-LD `HomeAndConstructionBusiness` na
     `/kontakt/` (węzeł JEST w `jsonld.ts`, ale NIE jest renderowany) +
     geo i `@graph` na `/`; **Cloudflare Web Analytics — polityka JUŻ go
@@ -1204,6 +1243,12 @@ http.request.method eq "POST")`, 3 requesty / 10 s, charakterystyka
     `make-icons.mjs`); Search Console + sitemap; UptimeRobot; audyt
     subsetów fontów (kandydat wiszący od Etapu 3); ewentualne
     zacieśnienie LCP osobnym commitem.
+  - UWAGI dla Etapu 7: 2FA konta CMS `pracownia-eha-cms` (celowo
+    wyłączone do tej pory) na telefonie klienta; **przekazanie konta
+    Resend** — hasło + Setup Key MFA są u Mateusza, przeniesienie MFA na
+    telefon klienta bez resetu konta wymaga tego Setup Keya; backupy
+    (Część D instrukcji). Konto Resend, domena i skrzynka są WŁASNOŚCIĄ
+    KLIENTA — inaczej niż w delung (Etap 7 pkt 1).
 
 ## Dokumentacja
 
