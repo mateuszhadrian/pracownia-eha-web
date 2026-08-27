@@ -1249,6 +1249,253 @@ p=none`. DMARC bez `sp=` i bez ostrego dopasowania ⇒ maile
     telefon klienta bez resetu konta wymaga tego Setup Keya; backupy
     (Część D instrukcji). Konto Resend, domena i skrzynka są WŁASNOŚCIĄ
     KLIENTA — inaczej niż w delung (Etap 7 pkt 1).
+- **Poprawki wizualne przed Etapem 6 — WYKONANE** (2026-08-27, zgłoszenie
+  Mateusza po przejrzeniu produkcji; branch `fix/poprawki-wizualne-2`).
+  Dziewięć korekt, ZERO nowych mechanik ruchu; trzy z nich UNIEWAŻNIAJĄ
+  wcześniejsze rozstrzygnięcia zapisane wyżej.
+  - **1. Detal realizacji otwiera się PROSTO z zajawki 02 na `/`**
+    (UNIEWAŻNIA `docs/analiza-realizacje.md` §2 pkt 4 „karty zajawki NIE
+    dostają deep-linków do detalu — zostają płaskie linki na
+    /realizacje/"): kafle karuzeli mobile i polaroidy desktop klonują
+    `<template data-work-detail>` do wspólnego `#work-detail` (modal
+    ≥1024 / sheet <1024), dokładnie jak na `/realizacje/` i jak w
+    delungu — `open-detail.ts` był na to przygotowany od początku
+    (jego nagłówek mówi „współdzielony przez siatkę /realizacje/ **i
+    zajawkę strony głównej**"). Na listę przenoszą WYŁĄCZNIE CTA
+    „Zobacz wszystkie realizacje" (`zaj-out` desktop / `zaj-bar` mobile)
+    i mobilny kafel-licznik „JESZCZE N".
+    - **GOTCHA (nowa, kosztowałaby zakrytą nakładkę)**: templaty
+      i `<WorkDetailOverlay />` MUSZĄ stać POZA `main.home` (są
+      w `index.astro` po `<Footer />`, jak w `realizacje.astro`).
+      `.home` ma `isolation: isolate` (PaperBackdrop), więc `.dt-ov`
+      z `z-index: 100` trafiłby do JEGO kontekstu układania, a `.hdr`
+      (`z-index: 50`, rodzeństwo `main`) malowałby się NA modalu.
+      Delung renderował nakładkę wewnątrz sekcji — u nas by nie zadziałało.
+      Pilnuje tego kontrakt strukturalny w `home.spec.ts`.
+    - Kafel zostaje `<a href={WORK_INDEX_PATH}>`, a NIE `<button>` jak na
+      `/realizacje/`: tam bez JS pełna lista leży tuż obok, więc martwy
+      klik nic nie kosztuje, a tu `href` to jedyne dojście do treści.
+      JS robi `preventDefault` DOPIERO po udanym otwarciu — stąd
+      `openWorkDetail()` zwraca teraz `boolean` (zmiana addytywna,
+      `realizacje.astro` ignoruje wynik). Modyfikatory (Cmd/Ctrl/Shift)
+      przepuszczane — „otwórz w nowej karcie" działa.
+    - Kontekst projnav/licznika = kafle zajawki („REALIZACJA 01 / 03"),
+      z dedupem po slugu: mobile i desktop to DWA komplety tego samego
+      zbioru (dOnly/mOnly), bez dedupu licznik pokazywałby 6.
+    - Lista „pierwsze 3 po `order`" wyjechała do wspólnego modułu
+      `home-realizacje-data.ts` — czytają go kafle (`HomeRealizacje`)
+      i templaty (`index.astro`), więc kopie nie mogą się rozjechać.
+    - Koszt zmierzony (`pnpm build` vs build `main` w worktree):
+      `/index.html` 49 042 → 72 063 B raw (+23 KB, ~+3 KB gzip — trzy
+      templaty detalu); JS `/` rośnie o `open-detail` 8 093 B raw /
+      2 795 B gzip + 520 B skryptu zajawki, czyli ~7 → ~15,5 KB raw
+      (budżet LHCI 40 KB). **LHCI mierzy `/`, więc ten PR rusza budżety
+      strony głównej.** Obrazy z `<template>` NIE są pobierane (treść
+      inertna) — zero kosztu dla LCP.
+  - **2. Zamrożenie stanu paska na czas KAŻDEJ nakładki**
+    (`Navbar.astro`, `onScroll` dostał na wejściu
+    `if (sheetOpen || document.body.style.position === "fixed") return`).
+    `overlay.ts` blokuje scroll przez `body{position:fixed;top:-scrollY}`,
+    co ZERUJE `window.scrollY`; flaga `sheetOpen` z poprawek po 4.6
+    wstaje TYLKO dla menu mobilnego, więc detal realizacji gasił papierowe
+    tło paska (zmierzone: solid=true → false → true). Czytamy teraz wprost
+    blokadę z overlay.ts, więc bramka obejmuje każdą nakładkę.
+    **Drugi, groźniejszy objaw złapany przy okazji**: stara wersja
+    aktualizowała `lastY = y` PRZED sprawdzeniem flagi, więc powrót z 0 do
+    zapamiętanej pozycji przy zamknięciu dawał `d = +1337` — dla auto-hide
+    „gwałtowny scroll w dół" — i pasek CHOWAŁ SIĘ tuż po zamknięciu
+    modala. Menu tego nie ujawniało (auto-hide jest desktop-only, menu
+    mobile-only). Stąd pełny early-return zamiast samego `setSolid`.
+  - **3. Placeholder pola 04 · OPIS** na `/kontakt/`: „Dom przysłupowy
+    z 1820 r., …" → „Opisz swój problem lub zadaj pytanie. Im więcej
+    szczegółów, tym lepiej." **Świadome odstępstwo od eksportu**
+    (decyzja Mateusza). Kontrakt pól i przepływ maili BEZ ZMIAN, więc
+    przegląd `/polityka-prywatnosci/` NIE był potrzebny — polityka
+    wylicza dane, nie teksty podpowiedzi.
+  - **4. Wskaźnik bieżącej strony w navbarze desktop = PODKREŚLENIE**
+    (SPROSTOWANIE zapisu z 4.1 „design nie ma wskaźnika aktywnej strony,
+    aria-current zostaje dla a11y" — **ma go**, tylko Claude Design
+    renderuje bieżącą pozycję jako `<a>` BEZ `href` i łatwo ją przeoczyć).
+    Eksporty dają DWA warianty, zależnie od tonu paska:
+    `realizacje.html` → `1px solid rgba(87,101,74,.6)`,
+    `obsluga-budowy.html` / `kontakt.html` → `1px solid currentColor`.
+    Miejsce na kreskę było zarezerwowane od 4.1 (`.nav-link` ma
+    `border-bottom: 1px solid transparent`), tylko nigdy jej nie
+    zapalono; zamiast tego port dał `color: var(--hdr-accent)` — ciemną
+    zieleń, która na ciemnym hero praktycznie znikała (zgłoszenie
+    z `/obsluga-budowy/` i `/kontakt/`). Kolor TEKSTU wraca do koloru
+    paska; `currentColor` sam podąża za tonem, więc po wejściu w `solid`
+    kreska wraca do zieleni bez dodatkowej reguły.
+  - **5. Submenu „O NAS" było NIEWIDOCZNE na 5 z 8 tras** — wszystkich
+    z `tone="dark"` (ekipa, kompetencje, tradycja, obsługa, kontakt).
+    Przyczyna to PRZECIEKAJĄCY TOKEN, nie brak stylu: `.drop-link` brał
+    `color: var(--hdr-ink)`, a wariant `tone="dark"` przestawia
+    `--hdr-ink` na krem `#f5efe3` — na nieprzezroczystym panelu `#fffdf8`
+    daje to **kontrast 1,06 : 1** (zmierzone). Lekarstwo przywraca token
+    NA PANELU (`.nav-drop { --hdr-ink: #211d18 }`), a nie łata samego
+    `.drop-link` — każda przyszła treść panelu dostaje poprawny kolor za
+    darmo. Po zmianie 16,48 : 1 (pozycja bieżąca, zieleń: 6,14 : 1).
+  - **6. Ryciny hero nachodziły na kicker „01 · EKIPA EH/A"** (mobile).
+    NIE była to rycina sekcji 01 (`.ek-ryc` stoi 157 px niżej), tylko
+    `.hr-m2`/`.hr-m3` z HERO — kotwiczone do DOŁU hero i celowo zeń
+    wystające (`bottom: -92px` / `-70px`), więc ich odległość od początku
+    sekcji 01 nie zależy od wysokości ekranu. Zmierzony najgorszy
+    przypadek przez CAŁY przejazd scrolla (parallax `[data-plxr]` ±15 px):
+    hr-m2 **−25 px**, hr-m3 **−2 px** na pięciu profilach telefonów.
+    Lekarstwo: `.ek-txt` padding-top 74 → **106 px** (+32) — przesuwa się
+    TREŚĆ, ryciny hero nietknięte (decyzja Mateusza: „podoba mi się, jak
+    ta rycina jest osadzona"). Po zmianie zapas 8–11 px / 31–34 px;
+    `.ek-duo` się nie kurczy, dokument rośnie o 32 px. Zmiana TYLKO
+    w sekcji 01 — jest jedyną, nad którą stoi hero.
+  - **7. Gołąb na `/kontakt/` mobile miał uciętą głowę.** Element wystaje
+    44 px poza prawą krawędź (szer. 168 px, `right: -44px`), a
+    `.kt-social` ma `overflow: hidden` — ekran ucinał prawe ~26 %
+    rysunku, czyli dokładnie głowę z dziobem. Lekarstwo:
+    `.kt-social-ryc.mOnly { transform: scaleX(-1) }` — gołąb leci w lewo,
+    głowa ląduje w kadrze, a poza krawędź wychodzi skrzydło. Kompozycja
+    i kotwiczenie BEZ ZMIAN. **Selektor MUSI mieć `.mOnly`**:
+    `.kt-social-ryc` to klasa WSPÓLNA obu wariantów, a reguła desktopowa
+    nadpisuje tylko right/top/width — pierwsza wersja odbiła też rycinę
+    desktopową (złapane kontraktem e2e).
+  - **8. Ryciny desktopowe `/kontakt/` ucinane od DOŁU** (kałamarz
+    i gołąb). Sekcje `.kt-write`/`.kt-social` mają `overflow: hidden`,
+    a ryciny są od nich WYŻSZE: kałamarz 254–292 px w sekcji 142–164 px
+    (wystaje 101–114), gołąb 272–318 px w sekcji 211–245 px (75–94).
+    `overflow` jest potrzebny na MOBILE (tam ryciny celowo wychodzą za
+    krawędź EKRANU), a na desktopie żadna nie wystaje w bok — zwalniamy
+    więc wyłącznie oś PIONOWĄ.
+    - **GOTCHA**: para `overflow-x: hidden` + `overflow-y: visible` NIE
+      zadziała — przeglądarka podmienia wtedy `visible` na `auto` i robi
+      ze sekcji scroller. Musi być `overflow-x: clip`, które tego nie
+      wymusza. Kontrakt e2e pilnuje, że strona nie dostała poziomego
+      scrolla.
+    - **`.kt-formsec` dostał `position: relative`** — to jest to
+      „chowanie się za kontenerem": był `static`, więc jego tło malowało
+      się w warstwie tła bloków, czyli POD absolutną ryciną; po zmianie
+      oba są pozycjonowane z `z-index: auto` i decyduje kolejność drzewa
+      (`.kt-write` wcześniej → rycina POD formularzem).
+    - Gołąb schowka nie potrzebuje: pod `.kt-social` jest 195 px wolnego
+      papieru do stopki, a wystaje 80 px (zmierzone: kończy się 109–123 px
+      nad stopką). To istotne — stopka jest ciemna, a rycina ma
+      `mix-blend-mode: multiply`, więc wjechawszy na nią po prostu by
+      zniknęła.
+  - **9. Tag „KONTAKT 7 DNI W TYGODNIU · BUDOWA PN–PT 8–16" zostawiał
+    sierotę** — na `/kontakt/` I w zajawce 06 na `/`. Jeden ciąg ma
+    326 px, a kolumna mobile 260–326 px: przy 375 px w drugim wierszu
+    zostawało SAMO „16", przy 360 px „8–16", a przy 390 px stał dokładnie
+    na styk (326 = 326), więc pękał od byle zmiany metryki fontu.
+    Na `/` było gorzej — łamał się na KAŻDEJ szerokości mobilnej,
+    a na desktopie 1366/1440 też zostawiała się sierota („8–16" i „16").
+    Lekarstwo w obu miejscach: dwa człony z `white-space: nowrap`
+    - kropka jako osobny `<span>`; mobile układa je w kolumnie, desktop
+      skleja. Dzięki `nowrap` łamanie ZAWSZE wypada na kropce.
+    * **GOTCHA specyficzności**: wyłączenie separatora musi iść przez
+      `:not(.kt-tag-sep)` na regule blokowej, a NIE osobną regułą
+      `.kt-tag-sep { display: none }` — ta ma (0,1,0) i przegrywa
+      z `.kt-tag-hours > span` (0,1,1), przez co kropka zostawała jako
+      TRZECI wiersz.
+  - **10. Wskaźnik ładowania wideo w podglądzie realizacji** (zgłoszenie
+    Mateusza: „widać tylko kadr, użytkownik myśli, że to zdjęcie").
+    Przyczyna: `open-detail.ts` chował podpowiedź na zdarzeniu **`play`**,
+    które leci NATYCHMIAST po wywołaniu `play()`, zanim spadnie choćby
+    bajt. Zmierzone `play` → `playing` na pliku z R2 (throttling CDP):
+    **0,65 s** bez ograniczeń (0,39 s przy ciepłym cache), **2,0 s** na
+    Fast 3G, **7,5 s** na Slow 3G; do tego `waiting` W TRAKCIE filmu
+    (3× na Fast 3G) — tam też nie było żadnego znaku.
+    - Slajd podglądu ma teraz TRZY ROZŁĄCZNE stany: spoczynek
+      („…, aby obejrzeć") → `is-loading` („POCZEKAJ, ŁADUJĘ WIDEO"
+      - kropki) → `is-playing` (bez znaków). `play`/`waiting`/`stalled`
+        uzbrajają, `playing` gasi, `pause`/`error`/`abort` wracają do
+        podpowiedzi. Plakietka to TA SAMA co podpowiedź — podmieniamy
+        treść, nie wprowadzamy nowego znaku wizualnego. Ikonka kamery
+        zostaje widoczna przy ładowaniu (film jeszcze nie gra).
+    - **Stany MUSZĄ być rozłączne**: `.is-playing` chowa CAŁĄ plakietkę,
+      więc przy zacięciu w trakcie (`waiting`) wskaźnik byłby niewidoczny
+      dokładnie wtedy, gdy jest najbardziej potrzebny — `armLoading`
+      zdejmuje `is-playing` przed zapaleniem `is-loading`.
+    - Trzy stałe w `work-config.ts` (importują je testy):
+      `VIDEO_LOADING_DELAY_MS = 400` (próg zapłonu — zjada w całości
+      przypadek „film w cache", gdzie wskaźnik w ogóle się nie pokazuje),
+      `VIDEO_LOADING_MIN_MS = 600` (minimalny czas widoczności — przy
+      progu 250 ms plakietka mignęła na **121 ms**, a migający komunikat
+      jest gorszy niż jego brak), `VIDEO_LOADING_TIMEOUT_MS = 15 000`
+      (bezpiecznik: iOS Low Power Mode potrafi odrzucić `play()` po
+      cichu, bez `error` — plus `.catch()` na `play()`).
+    - Kropki: TRZY osobne `@keyframes` o tym samym cyklu 1,2 s i różnym
+      PROGU zapalenia (25/50/75 %). Jedna animacja + `animation-delay`
+      NIE działa — delay przesuwa cały cykl, więc kropki gasłyby po
+      kolei i w odwrotnej kolejności. Rysuje je `content: "."` z
+      `::before`, bo między sąsiednimi `<b>` prettier wstawia białe
+      znaki, które renderują się jako spacje („. . ." zamiast „...").
+      Bez ruchu (reduce) kropki są WIDOCZNE i statyczne.
+    - Zmierzone po zmianie: cache ciepły — wskaźnik NIE pokazuje się
+      wcale; Fast 3G — 1448 ms; Slow 3G — 6725 ms; WebKit bez
+      throttlingu — 645 ms (minimum zadziałało).
+    - **Trzecie świadome odstępstwo od „mechanizm work 1:1"** (po
+      klawiaturze ←/→ z E7 i `boolean` z `openWorkDetail`), addytywne:
+      dochodzą listenery i klasa, przepływ otwierania/klonowania/
+      nawigacji nietknięty.
+  - Korekty a11y NIE były potrzebne — allowlista axe dalej **PUSTA**.
+    Kontrast submenu poprawiony z 1,06 na 16,48 : 1 (pkt 5).
+  - Testy: nowe kontrakty w `home.spec.ts` (detal z zajawki + kontrakt
+    „nakładka poza main.home" + tło paska przeżywa otwarcie detalu +
+    ryciny hero vs kicker 01 przez CAŁY przejazd scrolla + tag godzin
+    06), `navigation.spec.ts` (kreska per ton, powrót do zieleni po
+    solid, czytelność submenu na trzech ciemnych trasach),
+    `kontakt.spec.ts` (tag godzin, odbicie gołębia per próg, sonda
+    „ryciny wychodzą poza sekcję" + brak poziomego scrolla),
+    `work-index.spec.ts` (wskaźnik ładowania na OBU progach + helper
+    `showEntry`). Bramki 2026-08-27: format/lint/typecheck/unit(86)/
+    build/e2e(**664 passed / 500 skipped**, było 598/482) zielone.
+  - **LEKCJA: kruchy test na wyścigu z timerem.** Pierwsza wersja
+    kontraktu wskaźnika asertowała „jeszcze nie zapalone" zaraz po
+    `waiting` — zielona w izolacji, CZERWONA w pełnym przebiegu, bo
+    ścigała się z timerem 400 ms. Przepisana na pomiar czasu WEWNĄTRZ
+    przeglądarki (`MutationObserver` + `performance.now()`), który
+    sprawdza faktyczny kontrakt „nie migamy". Trzy kolejne pełne
+    przebiegi zielone. Wzorzec do reużycia przy każdym kontrakcie
+    opartym na opóźnieniu.
+  - **LEKCJA: zielony test wizualny NIE znaczy „baseline aktualny".**
+    W tej sesji na 34 zmienione pliki tylko **10 świeciło na czerwono** —
+    reszta to nieaktualna treść mieszcząca się pod per-shot
+    `maxDiffPixelRatio`. Klasyczny przykład: placeholder pola OPIS
+    zmienia ~1500 px na KAŻDYM z sześciu `kontakt-full`, ale desktopowe
+    obrazy są 2–3× większe, więc ta sama różnica schodzi pod próg
+    0.001 (limit dla 1920×2537 to ~4871 px). Zasięg trzeba mierzyć
+    porównaniem render-do-renderu (build `main` w `git worktree` albo
+    cofnięcie reguły przez `page.addStyleTag`), a nie listą czerwonych.
+    ⚠️ Przy takim pomiarze: surowy diff kanałów ≠ liczba z logu
+    Playwrighta (ta jest PERCEPCYJNA) — własne liczby mówią WYŁĄCZNIE
+    „czy render się zmienił", nigdy „czy test zaświeci". I zawsze
+    weryfikować szum bazowy dwoma identycznymi przebiegami (tu: 0 px).
+  - **ZMIERZONY zasięg baseline'ów: 34 pliki na platformę (68 łącznie),
+    z czego 10 czerwonych**:
+    - `index-full` × 3 mobile 🔴 (pkt 6 — dokument +32 px, i pkt 9)
+    - `index-full` × chromium-1366 (820 px) i firefox-desktop (887 px) —
+      pkt 9, pod progiem
+    - `kontakt-full` × 3 mobile 🔴 (pkt 3, 7, 9) i × 3 desktop (pkt 4, 8)
+    - `kontakt-top` × chromium-pixel-5 🔴 (1722 px) i webkit-iphone-14
+      (42 px, powtarzalne) — pkt 9; **webkit-iphone-se: 0 px, bez zmian**
+    - `kontakt-top` × 3 desktop (pkt 4, 8)
+    - `chrome-bar` × 3 desktop 🔴 (pkt 4)
+    - `chrome-dropdown`, `work-index-top`, `work-index-full` × 3 desktop
+      (pkt 4) — 9 plików
+    - `obsluga-top`, `obsluga-full` × 3 desktop (pkt 4) — 6 plików
+    - **ZERO plików**: pkt 1 i 2 (potwierdzone trzema pełnymi przebiegami
+      wizualnymi) oraz pkt 10 — `.dt-hint-load` ma `display: none`,
+      a oba zrzuty wideo są bezpieczne z definicji: `work-detail-video`
+      fotografuje galerię (film nie gra), a `work-detail-fullscreen`
+      klika PIERWSZY slajd, który regułą projektu zawsze jest zdjęciem.
+  - **ZNANY, NIETKNIĘTY**: w podglądzie pełnoekranowym na desktopie
+    plakietka nachodzi na przycisk `×` o 44 px — stan ZASTANY od 4.3
+    (hint w spoczynku ma prawą krawędź na 1906 px i `×` też: 1862–1906),
+    nie regresja tej sesji. Dotąd rzucało się w oczy rzadko (hint
+    w podglądzie widać tylko po pauzie); od pkt 10 plakietka pojawia się
+    przy każdym wolniejszym starcie. Lekarstwo = jedna reguła
+    (`right: 64px` dla hintu w `.lb-media`); decyzja Mateusza odłożona.
+  - UWAGI dla Etapu 6: LHCI mierzy `/`, a strona główna urosła o ~23 KB
+    HTML i ~8 KB JS (pkt 1) — **odczytać budżety z pierwszego runa CI
+    tego PR-a** i dopiero potem wracać do audytu subsetów fontów.
 
 ## Dokumentacja
 

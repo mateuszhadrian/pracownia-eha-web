@@ -650,10 +650,26 @@ const t = {
       outline: 2px solid var(--hdr-ink);
       outline-offset: 4px;
     }
-    /* pozycja bieżącej strony — subtelna zieleń (adaptacja: design nie ma
-       wskaźnika aktywnej strony, aria-current zostaje dla a11y) */
+    /* ── pozycja bieżącej strony = PODKREŚLENIE (design; korekta sesji
+       poprawek — SPROSTOWANIE zapisu z 4.1 „design nie ma wskaźnika
+       aktywnej strony": ma, tylko trudno go w eksporcie zauważyć, bo
+       Claude Design renderuje bieżącą pozycję jako <a> BEZ href).
+       Eksporty dają DWA warianty, zależnie od tonu paska:
+         realizacje.html (pasek atramentowy) → 1px solid rgba(87,101,74,.6)
+         obsluga/kontakt.html (pasek kremowy) → 1px solid currentColor
+       Miejsce na kreskę było zarezerwowane od 4.1 (`.nav-link` ma
+       `border-bottom: 1px solid transparent`), tylko nigdy jej nie
+       zapalono. Kolor TEKSTU zostaje kolorem paska — design go nie
+       zmienia, a zieleń akcentu na ciemnym hero praktycznie znikała
+       (zgłoszenie Mateusza z /obsluga-budowy/ i /kontakt/). ── */
     .nav-link[aria-current="page"] {
-      color: var(--hdr-accent);
+      border-bottom-color: rgba(87, 101, 74, 0.6);
+    }
+    /* nad ciemnym hero kreska idzie w kolorze tekstu (krem), a po wejściu
+       w stan solid wariant wygasa i wraca zieleń — bez osobnej reguły,
+       bo selektor tonu ma `:not([data-solid])` */
+    .hdr[data-tone="dark"]:not([data-solid]) .nav-link[aria-current="page"] {
+      border-bottom-color: currentColor;
     }
 
     /* dropdown „O nas" */
@@ -677,6 +693,15 @@ const t = {
       transform: rotate(180deg);
     }
     .nav-drop {
+      /* Panel to NIEPRZEZROCZYSTA papierowa karta (#fffdf8), więc jego
+         treść NIE MOŻE dziedziczyć kremowego tonu paska: przy
+         tone="dark" (/ekipa-eha/, /kompetencje…/, /tradycja…/,
+         /obsluga-budowy/, /kontakt/) --hdr-ink to #f5efe3, czyli krem na
+         kremie — zmierzony kontrast 1,06:1, pozycje submenu były
+         NIEWIDOCZNE (zgłoszenie Mateusza). Przywracamy atrament lokalnie,
+         zamiast łatać sam .drop-link: każda przyszła treść panelu
+         dostaje poprawny kolor za darmo. Design ma tu twarde #211D18. */
+      --hdr-ink: #211d18;
       position: absolute;
       top: 100%;
       left: 50%;
@@ -866,13 +891,23 @@ const t = {
     }
 
     function onScroll() {
+      // KAŻDA nakładka (menu mobilne, detal realizacji) blokuje scroll
+      // przez `body{position:fixed;top:-scrollY}` (overlay.ts) — to ZERUJE
+      // window.scrollY i odpala `scroll`. Zamrażamy więc CAŁY stan paska
+      // na czas otwartej nakładki, razem z `lastY`: bez tego (a) gasłoby
+      // papierowe tło dokładnie w chwili otwarcia, (b) przy zamknięciu
+      // powrót z 0 do zapamiętanej pozycji wyglądałby dla auto-hide jak
+      // gwałtowny scroll W DÓŁ i chowałby pasek tuż po zamknięciu modala.
+      // Czytamy wprost blokadę z overlay.ts, więc bramka obejmuje każdą
+      // nakładkę; `sheetOpen` zostaje, bo wstaje jeszcze PRZED blokadą
+      // (korekta po 4.6, decyzja Mateusza).
+      if (sheetOpen || document.body.style.position === "fixed") return;
       const y = window.scrollY;
       const d = y - lastY;
       lastY = y;
       // stan solid działa na OBU progach (korekta 4.2 — mobile dostaje
-      // to samo papierowe tło zamiast dawnego glow); przy otwartym
-      // sheecie zamrożony — patrz `sheetOpen`
-      if (!sheetOpen) setSolid(y > solidAt());
+      // to samo papierowe tło zamiast dawnego glow)
+      setSolid(y > solidAt());
       if (!desktopMQ.matches) return;
       if (y <= NAV_TOP_ALWAYS_PX) {
         upAcc = 0;

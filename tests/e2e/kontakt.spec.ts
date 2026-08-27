@@ -426,6 +426,51 @@ test("navbar: kremowy nad hero, atramentowy po zjechaniu za próg", async ({
 test.describe("układ desktop", () => {
   test.skip(({ isMobile }) => !!isMobile, "tylko układ desktop");
 
+  // Ryciny desktopowe nie mogą być ucinane od DOŁU (sesja poprawek;
+  // zgłoszenie Mateusza). `.kt-write`/`.kt-social` mają na mobile
+  // `overflow: hidden` (ryciny celowo wychodzą za krawędź EKRANU),
+  // ale na desktopie ucinało to rysunek w pół kreski, bo obie ryciny
+  // są WYŻSZE od swoich sekcji. Sonda układu, nie pixel-diff.
+  test("ryciny wychodzą poza sekcję zamiast być ucięte na jej krawędzi", async ({
+    page,
+  }) => {
+    await gotoReady(page, PATH);
+    const geo = await page.evaluate(() => {
+      const box = (sel: string) =>
+        document.querySelector<HTMLElement>(sel)!.getBoundingClientRect();
+      const write = box(".kt-write");
+      const kalamarz = box(".kt-write-ryc.dOnly");
+      const formsec = box(".kt-formsec");
+      const social = box(".kt-social");
+      const golab = box(".kt-social-ryc.dOnly");
+      const footer = box("footer");
+      return {
+        // kałamarz sięga NIŻEJ niż jego sekcja (czyli nie jest przycięty)
+        kalamarzPozaSekcja: kalamarz.bottom - write.bottom,
+        // …i wchodzi w obszar pudła formularza, za którym ma się chować
+        kalamarzWFormularzu: kalamarz.bottom - formsec.top,
+        formsecPozycjonowany: getComputedStyle(
+          document.querySelector<HTMLElement>(".kt-formsec")!,
+        ).position,
+        golabPozaSekcja: golab.bottom - social.bottom,
+        // …ale nie dojeżdża do stopki (nie ma się tam za co schować)
+        golabDoStopki: footer.top - golab.bottom,
+        // oś pozioma zostaje przycięta — strona nie może dostać scrolla
+        poziomyScroll: document.documentElement.scrollWidth > window.innerWidth,
+        kalamarzWBoku: kalamarz.right - write.right,
+        golabWBoku: golab.right - social.right,
+      };
+    });
+    expect(geo.kalamarzPozaSekcja).toBeGreaterThan(0);
+    expect(geo.kalamarzWFormularzu).toBeGreaterThan(0);
+    expect(geo.formsecPozycjonowany).toBe("relative");
+    expect(geo.golabPozaSekcja).toBeGreaterThan(0);
+    expect(geo.golabDoStopki).toBeGreaterThan(0);
+    expect(geo.poziomyScroll).toBe(false);
+    expect(geo.kalamarzWBoku).toBeLessThanOrEqual(0);
+    expect(geo.golabWBoku).toBeLessThanOrEqual(0);
+  });
+
   test("kolumna kontaktowa jest sticky i zatrzymuje się POD paskiem", async ({
     page,
   }) => {
@@ -490,6 +535,91 @@ test.describe("układ desktop", () => {
 });
 
 // ── reveal nagłówka po dojechaniu (bramka js-motion, mobile) ──
+// ── tag godzin łamany jawnie (sesja poprawek; zgłoszenie Mateusza).
+// Jeden ciąg „KONTAKT 7 DNI W TYGODNIU · BUDOWA PN–PT 8–16" ma 326 px,
+// a kolumna mobile 260–326 px, więc od 375 px w dół zawijał się sam
+// i zrzucał do drugiego wiersza sierotę „8–16", a przy 375 px SAMO
+// „16". Przy 390 px stał dokładnie na styk. Teraz to dwa człony:
+// mobile jeden pod drugim, desktop sklejone kropką. ──
+test("tag godzin: mobile dwa wiersze, desktop jeden z kropką", async ({
+  page,
+  isMobile,
+}) => {
+  await gotoReady(page, PATH);
+  const tag = page.locator(".kt-tag-hours");
+  const geo = await tag.evaluate((el: HTMLElement) => {
+    const czlony = [
+      ...el.querySelectorAll<HTMLElement>(":scope > span"),
+    ].filter((s) => !s.classList.contains("kt-tag-sep"));
+    const sep = el.querySelector<HTMLElement>(".kt-tag-sep")!;
+    const cs = getComputedStyle(el);
+    const lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.2;
+    return {
+      wierszy: Math.round(
+        (el.getBoundingClientRect().height - parseFloat(cs.paddingBottom)) / lh,
+      ),
+      czlonow: czlony.length,
+      // żaden człon nie może się łamać w środku — inaczej wraca sierota
+      nowrap: czlony.map((s) => getComputedStyle(s).whiteSpace),
+      wysokosciCzlonow: czlony.map((s) =>
+        Math.round(s.getBoundingClientRect().height),
+      ),
+      sep: getComputedStyle(sep).display,
+      tekst: el.innerText.replace(/\s+/g, " ").trim(),
+    };
+  });
+  expect(geo.czlonow).toBe(2);
+  expect(geo.nowrap).toEqual(["nowrap", "nowrap"]);
+  // każdy człon mieści się w JEDNYM wierszu (sierota „16" niemożliwa)
+  const lh = geo.wysokosciCzlonow[0];
+  expect(geo.wysokosciCzlonow[1]).toBe(lh);
+  if (isMobile) {
+    expect(geo.wierszy).toBe(2);
+    expect(geo.sep).toBe("none");
+    expect(geo.tekst).toContain("KONTAKT 7 DNI W TYGODNIU");
+    expect(geo.tekst).toContain("BUDOWA PN–PT 8–16");
+  } else {
+    expect(geo.wierszy).toBe(1);
+    expect(geo.sep).toBe("inline");
+    expect(geo.tekst).toBe("KONTAKT 7 DNI W TYGODNIU · BUDOWA PN–PT 8–16");
+  }
+});
+
+// ── rycina gołębia w sekcji social (sesja poprawek; zgłoszenie
+// Mateusza z telefonu). Element wystaje 44 px poza prawą krawędź przy
+// szerokości 168 px, a `.kt-social` ma `overflow: hidden` — ekran ucinał
+// więc prawe ~26 % rysunku, czyli GŁOWĘ z dziobem. Odbicie lustrzane
+// obraca lot: głowa idzie do środka kadru, a za krawędź wychodzi
+// skrzydło. Kompozycji i kotwiczenia NIE ruszamy. ──
+test("gołąb sekcji social jest odbity na mobile, w oryginale na desktopie", async ({
+  page,
+  isMobile,
+}) => {
+  await gotoReady(page, PATH);
+  const ryc = page.locator(
+    isMobile ? ".kt-social-ryc.mOnly" : ".kt-social-ryc.dOnly",
+  );
+  const geo = await ryc.evaluate((el) => {
+    const box = el.getBoundingClientRect();
+    return {
+      transform: getComputedStyle(el).transform,
+      left: box.left,
+      right: box.right,
+      vw: window.innerWidth,
+    };
+  });
+  if (isMobile) {
+    // scaleX(-1) → matrix(-1, 0, 0, 1, 0, 0)
+    expect(geo.transform).toBe("matrix(-1, 0, 0, 1, 0, 0)");
+    // po odbiciu głowa siedzi przy LEWEJ krawędzi elementu — musi być
+    // w kadrze; za prawą krawędź ekranu wychodzi tylko skrzydło
+    expect(geo.left).toBeGreaterThan(0);
+    expect(geo.right).toBeGreaterThan(geo.vw);
+  } else {
+    expect(geo.transform).toBe("none");
+  }
+});
+
 test("reveal kickera sekcji social odpala po dojechaniu scrollem", async ({
   page,
   isMobile,

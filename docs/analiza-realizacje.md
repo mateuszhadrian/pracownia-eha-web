@@ -147,8 +147,15 @@ WorkDetailOverlay / WorkDetail) — PORT SKINU, architektura bez zmian.
    widocznej strony. Detal otwarty z 6. kafla strony 1 pozwala
    projnavem dojechać do wpisu ze strony 2 — lista jest płaska (E5),
    paginacja to tylko dawkowanie siatki.
-4. **Karty zajawki 02 strony głównej NIE dostają deep-linków do
-   detalu** — zostają płaskie linki na `/realizacje/` (stan z 4.2).
+4. ⚠️ **UNIEWAŻNIONE 2026-08-27** (sesja poprawek wizualnych przed
+   Etapem 6, decyzja Mateusza): karty zajawki 02 OTWIERAJĄ detal
+   w miejscu — dokładnie tak, jak `/realizacje/` i jak delung. Zapis
+   poniżej opisuje stan sprzed tej zmiany i zostaje wyłącznie jako
+   ślad rozumowania. Szczegóły portu i gotcha o kontekście układania
+   `main.home`: wpis „Poprawki wizualne przed Etapem 6" w `CLAUDE.md`
+   oraz sekcja Work w `.claude/rules/sections.md`.
+   ~~**Karty zajawki 02 strony głównej NIE dostają deep-linków do
+   detalu** — zostają płaskie linki na `/realizacje/` (stan z 4.2).~~
    Powody: design nie pokazuje wejścia z home wprost w detal; detal
    wymaga JS (deep-link `#slug` bez JS byłby martwy — gorszy stan niż
    nawigacja na listę); wejście na listę pokazuje pełne portfolio.

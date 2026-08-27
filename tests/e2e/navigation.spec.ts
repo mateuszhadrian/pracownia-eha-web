@@ -84,6 +84,94 @@ test.describe("nawigacja desktop", () => {
     await expect(page).toHaveURL(/\/tradycja-i-ekologia\/?$/);
   });
 
+  // ── wskaźnik bieżącej strony + czytelność submenu (sesja poprawek
+  // wizualnych; zgłoszenie Mateusza). Design ma DWA warianty kreski
+  // zależnie od tonu paska, a panel dropdownu jest nieprzezroczystą
+  // kartą, więc jego treść nie może dziedziczyć kremowego --hdr-ink. ──
+  test.describe("wskaźnik bieżącej strony", () => {
+    test("na jasnym pasku kreska jest zielona, na ciemnym w kolorze tekstu", async ({
+      page,
+    }) => {
+      // /realizacje/ — pasek atramentowy nad papierem (design:
+      // realizacje.html → border-bottom 1px solid rgba(87,101,74,.6))
+      await gotoReady(page, WORK_INDEX_PATH);
+      const akt = page.locator('.hdr-nav .nav-link[aria-current="page"]');
+      await expect(akt).toHaveCount(1);
+      await expect(akt).toHaveCSS("border-bottom-width", "1px");
+      await expect(akt).toHaveCSS(
+        "border-bottom-color",
+        "rgba(87, 101, 74, 0.6)",
+      );
+      // pozostałe pozycje kreski NIE mają
+      const inne = page.locator(
+        '.hdr-nav .nav-link:not([aria-current="page"])',
+      );
+      for (const link of await inne.all()) {
+        await expect(link).toHaveCSS("border-bottom-color", "rgba(0, 0, 0, 0)");
+      }
+
+      // /obsluga-budowy/ — pasek kremowy nad ciemnym hero (design:
+      // obsluga-budowy.html → 1px solid currentColor). Zieleń akcentu
+      // ginęła tu na zdjęciu; kreska musi mieć kolor TEKSTU paska.
+      await gotoReady(page, OBSLUGA_PATH);
+      const aktD = page.locator('.hdr-nav .nav-link[aria-current="page"]');
+      const kolory = await aktD.evaluate((el) => {
+        const cs = getComputedStyle(el);
+        return { color: cs.color, border: cs.borderBottomColor };
+      });
+      expect(kolory.border).toBe(kolory.color);
+      expect(kolory.color).toBe("rgb(245, 239, 227)");
+    });
+
+    test("po wejściu w stan solid kreska wraca do zieleni", async ({
+      page,
+    }) => {
+      // wariant kremowy ma w selektorze `:not([data-solid])`, więc
+      // wygasa razem z tonem — bez osobnej reguły
+      await gotoReady(page, OBSLUGA_PATH);
+      await ensureScrollRoom(page);
+      await scrollPageTo(page, 1200);
+      await expect(page.locator("[data-nav]")).toHaveAttribute(
+        "data-solid",
+        "",
+      );
+      await expect
+        .poll(async () =>
+          page
+            .locator('.hdr-nav .nav-link[aria-current="page"]')
+            .evaluate((el) => getComputedStyle(el).borderBottomColor),
+        )
+        .toBe("rgba(87, 101, 74, 0.6)");
+    });
+
+    test("submenu O nas jest czytelne także na trasach z ciemnym hero", async ({
+      page,
+    }) => {
+      // Regresja złapana w tej sesji: .drop-link brał --hdr-ink, który
+      // przy tone="dark" jest kremowy (#f5efe3) — na panelu #fffdf8
+      // dawało kontrast 1,06:1, czyli pozycje NIEWIDOCZNE.
+      for (const path of [OBSLUGA_PATH, CONTACT_PATH, EKIPA_PATH] as const) {
+        await gotoReady(page, path);
+        await page.locator("[data-dropdown-toggle]").click();
+        const panel = page.locator("[data-dropdown-panel]");
+        await expect(panel).toBeVisible();
+        const tlo = await panel.evaluate(
+          (el) => getComputedStyle(el).backgroundColor,
+        );
+        expect(tlo).toBe("rgb(255, 253, 248)");
+        for (const link of await panel.locator(".drop-link").all()) {
+          const kolor = await link.evaluate((el) => getComputedStyle(el).color);
+          // atrament (zwykła pozycja) albo zieleń akcentu (bieżąca
+          // podstrona) — nigdy krem paska
+          expect(
+            ["rgb(33, 29, 24)", "rgb(87, 101, 74)"],
+            `kolor pozycji submenu na ${path}`,
+          ).toContain(kolor);
+        }
+      }
+    });
+  });
+
   test("auto-hide: scroll w dół chowa pasek, powrót po scrollu w górę", async ({
     page,
   }) => {

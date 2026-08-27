@@ -194,3 +194,23 @@ NIETKNIĘTY) — wymieniam wyłącznie markup i skin.
    prawnej i adresu.
 3. **URL-e social** — finalne: `instagram.com/pracowniaeha`,
    `facebook.com/profile.php?id=61574396106209`.
+
+---
+
+## Sprostowanie — sesja poprawek wizualnych (2026-08-27)
+
+**Design MA wskaźnik bieżącej strony w navbarze desktop.** Zapis
+z Etapu 4.1 („design nie ma wskaźnika aktywnej strony, `aria-current`
+zostaje dla a11y") był pomyłką odczytu: Claude Design renderuje bieżącą
+pozycję jako `<a>` **bez `href`**, więc w gąszczu inline'owych styli
+łatwo ją przeoczyć. Eksporty dają DWA warianty kreski, zależnie od tonu
+paska — `realizacje.html` → `1px solid rgba(87,101,74,.6)`,
+`obsluga-budowy.html` i `kontakt.html` → `1px solid currentColor`.
+Miejsce na kreskę było w porcie zarezerwowane od początku
+(`.nav-link { border-bottom: 1px solid transparent }`).
+
+Druga rzecz z tej samej sesji: **panel dropdownu „O nas" nie może
+dziedziczyć `--hdr-ink`** — przy `tone="dark"` token jest kremowy,
+a panel ma nieprzezroczyste papierowe tło, co dawało kontrast 1,06 : 1
+i niewidoczne pozycje na 5 z 8 tras. Szczegóły i pomiary: wpis
+„Poprawki wizualne przed Etapem 6" w `CLAUDE.md`.

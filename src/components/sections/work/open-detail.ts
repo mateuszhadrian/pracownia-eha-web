@@ -22,7 +22,12 @@
 //    ekranu, następny wjeżdża zza przeciwnej.
 //
 // `window.overlay` typowane w scripts/overlay.ts (declare global).
-import { WORK_DESKTOP_MIN_PX } from "./work-config";
+import {
+  VIDEO_LOADING_DELAY_MS,
+  VIDEO_LOADING_MIN_MS,
+  VIDEO_LOADING_TIMEOUT_MS,
+  WORK_DESKTOP_MIN_PX,
+} from "./work-config";
 
 const OVERLAY_ID = "work-detail";
 const desktopMQ = matchMedia(`(min-width: ${WORK_DESKTOP_MIN_PX}px)`);
@@ -164,9 +169,14 @@ function cleanup() {
   swapSeq += 1; // unieważnij wiszące timeouty przejazdu projnav
 }
 
-export function openWorkDetail(slug: string, name: string) {
-  if (!window.overlay || !mount(slug)) return;
+/** Otwiera detal realizacji. Zwraca `false`, gdy się nie da (brak
+ *  szkieletu overlaya albo <template> dla slugu) — konsument z sensownym
+ *  `href` (zajawka strony głównej) ma po czym poznać, że NIE wolno robić
+ *  preventDefault i trzeba puścić nawigację na /realizacje/. */
+export function openWorkDetail(slug: string, name: string): boolean {
+  if (!window.overlay || !mount(slug)) return false;
   window.overlay.open(OVERLAY_ID, { label: name, onClose: cleanup });
+  return true;
 }
 
 /* ── projnav: poprzednia/następna realizacja (desktop, pętla) ── */
@@ -335,6 +345,101 @@ function onLbScroll(e: Event) {
   paintLbIndicators(track.children.length);
 }
 
+/* ── stan odtwarzania kadru w podglądzie (sesja poprawek wizualnych) ──
+   Do tej sesji slajd dostawał klasę `is-playing` na zdarzeniu `play`,
+   które leci NATYCHMIAST po wywołaniu play() — a obraz rusza dopiero na
+   `playing`. Pomiar na pliku z R2 (throttling CDP): 0,65 s bez
+   ograniczeń, 2,0 s na Fast 3G, 7,5 s na Slow 3G; do tego `waiting`
+   w trakcie odtwarzania (3× na Fast 3G). Przez ten czas podpowiedź już
+   zniknęła, a kadr stał nieruchomo — użytkownik brał film za zdjęcie
+   (zgłoszenie Mateusza).
+   Teraz slajd ma TRZY stany: spoczynek (podpowiedź „…, aby obejrzeć"),
+   `is-loading` (plakietka „Poczekaj, ładuję wideo" + animowane kropki)
+   i `is-playing` (bez znaków). Zmiana jest ADDYTYWNA — przepływ
+   otwierania, klonowania i nawigacji nietknięty. */
+
+/** Stan wskaźnika per kadr: timer zapłonu, bezpiecznik, timer dogaszania
+ *  i chwila, w której plakietka realnie się pojawiła (`since`). */
+const loadTimers = new WeakMap<
+  HTMLElement,
+  { show?: number; give?: number; hide?: number; since?: number }
+>();
+
+function clearLoadTimers(slide: HTMLElement) {
+  const t = loadTimers.get(slide);
+  if (!t) return;
+  if (t.show !== undefined) window.clearTimeout(t.show);
+  if (t.give !== undefined) window.clearTimeout(t.give);
+  if (t.hide !== undefined) window.clearTimeout(t.hide);
+  loadTimers.delete(slide);
+}
+
+/** Wskaźnik zapala się DOPIERO po VIDEO_LOADING_DELAY_MS — na szybkim
+ *  łączu (0,65 s do `playing`) mignąłby na ~0,4 s i to wyglądałoby
+ *  gorzej niż jego brak. Bezpiecznik gasi go po VIDEO_LOADING_TIMEOUT_MS
+ *  i przywraca podpowiedź: iOS w Low Power Mode potrafi odrzucić
+ *  odtwarzanie po cichu, bez `error`. */
+function armLoading(slide: HTMLElement) {
+  // ponowne uzbrojenie w trakcie już zapalonego wskaźnika (np. `waiting`
+  // zaraz po `play`) nie może kasować licznika widoczności
+  const trwa = slide.classList.contains("is-loading");
+  const since = trwa ? loadTimers.get(slide)?.since : undefined;
+  clearLoadTimers(slide);
+  const t: { show?: number; give?: number; hide?: number; since?: number } = {
+    since,
+  };
+  t.show = window.setTimeout(() => {
+    // slajd mógł w międzyczasie zniknąć (zamknięty podgląd)
+    if (!slide.isConnected) return;
+    // Stany są ROZŁĄCZNE: `.is-playing` chowa całą plakietkę, więc przy
+    // zacięciu w trakcie filmu (`waiting`) trzeba ją najpierw zdjąć —
+    // inaczej wskaźnik byłby niewidoczny dokładnie wtedy, gdy jest
+    // najbardziej potrzebny. Jeśli `playing` zdąży przed tym timerem,
+    // settleSlide i tak go skasuje i wskaźnik się nie zapali.
+    slide.classList.remove("is-playing");
+    slide.classList.add("is-loading");
+    const cur = loadTimers.get(slide);
+    if (cur && cur.since === undefined) cur.since = Date.now();
+  }, VIDEO_LOADING_DELAY_MS);
+  t.give = window.setTimeout(() => {
+    slide.classList.remove("is-loading");
+    slide.classList.remove("is-playing");
+    clearLoadTimers(slide);
+  }, VIDEO_LOADING_TIMEOUT_MS);
+  loadTimers.set(slide, t);
+}
+
+function settleSlide(slide: HTMLElement, playing: boolean) {
+  const since = loadTimers.get(slide)?.since;
+  const widoczny =
+    slide.classList.contains("is-loading") && since !== undefined;
+  const zostalo = widoczny ? VIDEO_LOADING_MIN_MS - (Date.now() - since) : 0;
+  clearLoadTimers(slide);
+  if (zostalo > 0) {
+    // plakietka dopala minimalny czas widoczności — film w tym momencie
+    // już gra, więc zwlekamy WYŁĄCZNIE z jej zgaszeniem
+    const t: { hide?: number } = {};
+    t.hide = window.setTimeout(() => {
+      slide.classList.remove("is-loading");
+      slide.classList.toggle("is-playing", playing);
+      loadTimers.delete(slide);
+    }, zostalo);
+    loadTimers.set(slide, t);
+    return;
+  }
+  slide.classList.remove("is-loading");
+  slide.classList.toggle("is-playing", playing);
+}
+
+/** Start filmu z obsługą odrzuconego play() (iOS Low Power Mode,
+ *  polityki autoplay) — inaczej wskaźnik zawisłby do bezpiecznika. */
+function startVideo(video: HTMLVideoElement, slide: HTMLElement | null) {
+  if (slide) armLoading(slide);
+  void video.play().catch(() => {
+    if (slide) settleSlide(slide, false);
+  });
+}
+
 function openLightbox(startIdx: number, autoplay = false) {
   const el = overlayEl();
   const lb = el?.querySelector<HTMLElement>("[data-lightbox]");
@@ -355,10 +460,19 @@ function openLightbox(startIdx: number, autoplay = false) {
         m.appendChild(child.cloneNode(true));
       });
       s.appendChild(m);
-      // ikonka kamery żyje ze stanem odtwarzania (pauza = ikonka wraca)
+      // Znaki kadru żyją ze stanem odtwarzania. `play` NIE zapala już
+      // `is-playing` (leci przed pierwszym bajtem — patrz komentarz przy
+      // armLoading); od tego jest `playing`. `waiting`/`stalled` łapią
+      // zacięcie W TRAKCIE filmu, `pause`/`error`/`abort` wracają do
+      // podpowiedzi.
       const v = m.querySelector<HTMLVideoElement>("video");
-      v?.addEventListener("play", () => s.classList.add("is-playing"));
-      v?.addEventListener("pause", () => s.classList.remove("is-playing"));
+      v?.addEventListener("play", () => armLoading(s));
+      v?.addEventListener("waiting", () => armLoading(s));
+      v?.addEventListener("stalled", () => armLoading(s));
+      v?.addEventListener("playing", () => settleSlide(s, true));
+      v?.addEventListener("pause", () => settleSlide(s, false));
+      v?.addEventListener("error", () => settleSlide(s, false));
+      v?.addEventListener("abort", () => settleSlide(s, false));
       return s;
     }),
   );
@@ -380,9 +494,9 @@ function openLightbox(startIdx: number, autoplay = false) {
   // kolejność z korekty Mateusza: najpierw startuje film, potem widać
   // pełny ekran już GRAJĄCEGO klipu (wciąż w geście usera — autoplay OK)
   if (autoplay) {
-    void (lbTrack.children[lbIndex] as HTMLElement | undefined)
-      ?.querySelector<HTMLVideoElement>("video")
-      ?.play();
+    const slide = lbTrack.children[lbIndex] as HTMLElement | undefined;
+    const video = slide?.querySelector<HTMLVideoElement>("video");
+    if (slide && video) startVideo(video, slide);
   }
   // fokus na kontener, nie na chevron/X — iOS rysuje pierścień na
   // programowo fokusowanych przyciskach (korekta Mateusza)
@@ -394,6 +508,13 @@ function closeLightbox() {
   const lb = el?.querySelector<HTMLElement>("[data-lightbox]");
   if (!el || !lb || lb.hidden) return;
   pauseLbVideos();
+  // zgaś ewentualny wskaźnik ładowania i jego timery — slajdy zaraz
+  // znikną, a wiszący setTimeout nie ma już czego malować
+  lbTrackEl()
+    ?.querySelectorAll<HTMLElement>(".lb-slide")
+    .forEach((slide) => {
+      settleSlide(slide, false);
+    });
   // wyjście wraca na kadr oglądany w podglądzie (korekta Mateusza)
   shot = lbIndex;
   lb.style.transform = "";
@@ -425,11 +546,10 @@ document.addEventListener("click", (e) => {
   // play↔pauza (korekta Mateusza — bez własnego znaku play; stan
   // sygnalizuje ikonka kamery przez zdarzenia play/pause).
   if (t.closest("[data-lightbox]")) {
-    const video = t
-      .closest<HTMLElement>(".lb-slide")
-      ?.querySelector<HTMLVideoElement>("video");
+    const slide = t.closest<HTMLElement>(".lb-slide");
+    const video = slide?.querySelector<HTMLVideoElement>("video");
     if (video) {
-      if (video.paused) void video.play();
+      if (video.paused) startVideo(video, slide);
       else video.pause();
     }
     return;

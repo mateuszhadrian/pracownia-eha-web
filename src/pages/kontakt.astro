@@ -42,7 +42,11 @@ import { POLICY_PATH } from "@/lib/routes";
 const MAP_URL = "https://www.google.com/maps/search/Jelenia+G%C3%B3ra";
 
 // Powtarzane mono-tagi — jedno źródło, żeby kopie nie mogły się rozjechać.
-const TAG_HOURS = "KONTAKT 7 DNI W TYGODNIU · BUDOWA PN–PT 8–16";
+// Tag godzin idzie w DWÓCH członach: na mobile stoją jeden pod drugim
+// (korekta sesji poprawek — patrz .kt-tag-hours w stylach), na desktopie
+// skleja je kropka rozdzielająca.
+const TAG_HOURS_1 = "KONTAKT 7 DNI W TYGODNIU";
+const TAG_HOURS_2 = "BUDOWA PN–PT 8–16";
 const TAG_REPLY = "ODPOWIADAMY W CIĄGU 2 DNI ROBOCZYCH";
 ---
 
@@ -157,7 +161,12 @@ const TAG_REPLY = "ODPOWIADAMY W CIĄGU 2 DNI ROBOCZYCH";
             8:00–16:00, a dla naszych inwestorów jesteśmy wsparciem na każdym
             etapie.
           </p>
-          <p class="kt-tag">{TAG_HOURS}</p>
+          <p class="kt-tag kt-tag-hours">
+            <span>{TAG_HOURS_1}</span><span
+              class="kt-tag-sep"
+              aria-hidden="true">&#32;·&#32;</span
+            ><span>{TAG_HOURS_2}</span>
+          </p>
         </div>
 
         <div class="kt-mail">
@@ -331,7 +340,7 @@ const TAG_REPLY = "ODPOWIADAMY W CIĄGU 2 DNI ROBOCZYCH";
                     maxlength={MESSAGE_MAX}
                     required
                     aria-describedby="kt-msg-err"
-                    placeholder="Dom przysłupowy z 1820 r., potrzebna wymiana więźby i naprawa ściany szachulcowej…"
+                    placeholder="Opisz swój problem lub zadaj pytanie. Im więcej szczegółów, tym lepiej."
                   ></textarea>
                   <span class="kt-err" id="kt-msg-err"
                     >Napisz kilka zdań o budynku — minimum 10 znaków.</span
@@ -546,6 +555,28 @@ const TAG_REPLY = "ODPOWIADAMY W CIĄGU 2 DNI ROBOCZYCH";
   /* mono-tagi z kreskowanym podkreśleniem (godziny, czas odpowiedzi).
      Eksportowe rgba(33,29,24,.55) przy mono 10 px nie przechodzi AA na
      papierze — korekta klasy 4.4–4.6 (allowlista axe zostaje pusta). */
+  /* Tag godzin łamany JAWNIE na mobile (korekta sesji poprawek,
+     zgłoszenie Mateusza). Zmierzone szerokości przy jednym wierszu:
+     tekst 326 px, kolumna 320→260 px, 360→300, 375→315, 390→326 —
+     czyli od 375 px w dół zawijał się sam, zrzucając do drugiego wiersza
+     ogon „8–16", a przy 375 px SAMO „16". Przy 390 px stoi dokładnie
+     na styk (326 = 326), więc jedna zmiana metryki fontu wystarczy,
+     żeby pękło też tam. Zamiast liczyć na zawijanie dzielimy tag na dwa
+     człony i układamy je w kolumnie; desktop skleja je kropką. */
+  .kt-tag-hours > span:not(.kt-tag-sep) {
+    /* człon nigdy nie łamie się w środku — nawet gdyby kiedyś zawinął
+       się sam (wąska kolumna sticky przy 1024 px), pęknie na kropce,
+       a nie zostawi sieroty „8–16" ani „16" */
+    white-space: nowrap;
+    display: block;
+  }
+  /* Wyłączenie przez :not(), a nie osobną regułą `.kt-tag-sep{display:none}`
+     — ta miałaby specyficzność (0,1,0) i PRZEGRYWAŁA z selektorem wyżej
+     (0,1,1), przez co kropka zostawała jako trzeci wiersz. */
+  .kt-tag-sep {
+    display: none;
+  }
+
   .kt-tag {
     margin: 4px 0 0;
     align-self: flex-start;
@@ -556,6 +587,14 @@ const TAG_REPLY = "ODPOWIADAMY W CIĄGU 2 DNI ROBOCZYCH";
     color: rgba(33, 29, 24, 0.65);
     border-bottom: 1px dashed rgba(76, 59, 43, 0.45);
     padding-bottom: 2px;
+  }
+  /* Desktop wraca do jednego wiersza z kropką (design) — w karcie
+     sticky miejsca nie brakuje. */
+  @media (min-width: 1024px) {
+    .kt-tag-hours > span:not(.kt-tag-sep),
+    .kt-tag-hours > .kt-tag-sep {
+      display: inline;
+    }
   }
   .kt-lb {
     margin: 0;
@@ -1540,6 +1579,22 @@ const TAG_REPLY = "ODPOWIADAMY W CIĄGU 2 DNI ROBOCZYCH";
     width: 168px;
     opacity: 0.4;
   }
+  /* ODBICIE LUSTRZANE — TYLKO wariant mobilny (korekta sesji poprawek,
+     zgłoszenie Mateusza). Rycina wystaje 44 px poza prawą krawędź
+     (168 px szerokości, `right: -44px`), a `.kt-social` ma
+     `overflow: hidden`, więc ekran ucinał prawe ~26 % rysunku — czyli
+     dokładnie GŁOWĘ z dziobem i listem. Po odbiciu gołąb leci w lewo:
+     głowa ląduje w okolicy x ≈ 269–299 px (bezpiecznie w kadrze),
+     a poza krawędź wychodzi rozłożyste skrzydło, które cięcie znosi bez
+     szkody. Kompozycja i kotwiczenie BEZ ZMIAN — odbijamy rysunek, nie
+     ruszamy pozycji.
+     Selektor MUSI mieć `.mOnly`: `.kt-social-ryc` to klasa WSPÓLNA obu
+     wariantów, a reguła desktopowa nadpisuje tylko right/top/width —
+     bez zawężenia odbicie łapało też rycinę desktopową (złapane
+     kontraktem e2e przy pierwszym podejściu). */
+  .kt-social-ryc.mOnly {
+    transform: scaleX(-1);
+  }
   @media (min-width: 1024px) {
     .kt-hero-ryc {
       right: clamp(30px, 4vw, 80px);
@@ -1564,6 +1619,38 @@ const TAG_REPLY = "ODPOWIADAMY W CIĄGU 2 DNI ROBOCZYCH";
       right: 0;
       top: clamp(6px, 1vw, 20px);
       width: clamp(170px, 15vw, 240px);
+    }
+
+    /* ── Ryciny desktopowe NIE mogą być ucinane od DOŁU (korekta sesji
+       poprawek, zgłoszenie Mateusza). Przyczyna: `.kt-write`
+       i `.kt-social` mają `overflow: hidden`, a ryciny są od nich
+       WYŻSZE — zmierzone na trzech szerokościach: kałamarz 254–292 px
+       w sekcji 142–164 px (wystaje 101–114 px), gołąb 272–318 px
+       w sekcji 211–245 px (wystaje 75–94 px). Poziomą krawędzią cięcia
+       kończył się rysunek w pół kreski.
+       `overflow: hidden` zostaje potrzebny na MOBILE (tam ryciny celowo
+       wychodzą za krawędź EKRANU — patrz komentarz przy szerokościach
+       kontenerów), a na desktopie żadna nie wystaje w bok: kałamarz ma
+       `right: clamp(4px,1vw,18px)`, gołąb `right: 0`. Zwalniamy więc
+       wyłącznie oś PIONOWĄ. Para `overflow-x: clip` + `overflow-y:
+       visible` jest tu obowiązkowa: przy `overflow-x: hidden`
+       przeglądarka i tak podmieniłaby `visible` na `auto` i zrobiła ze
+       sekcji scroller (`clip` tego nie wymusza). ── */
+    .kt-write,
+    .kt-social {
+      overflow-x: clip;
+      overflow-y: visible;
+    }
+    /* Kałamarz ma się CHOWAĆ ZA pudłem formularza (decyzja Mateusza),
+       a nie leżeć na nim: `.kt-formsec` był `position: static`, więc
+       jego tło malowało się w warstwie tła bloków — POD absolutną
+       ryciną. Po nadaniu `position: relative` (bez z-index) oba są
+       pozycjonowane z `z-index: auto` i decyduje kolejność drzewa:
+       `.kt-write` stoi wcześniej, więc jego rycina ląduje POD
+       formularzem. Gołąb schowka nie potrzebuje — pod `.kt-social`
+       jest 195 px wolnego papieru do stopki, a wystaje 80 px. */
+    .kt-formsec {
+      position: relative;
     }
   }
 

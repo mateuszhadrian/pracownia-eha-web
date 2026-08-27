@@ -37,6 +37,19 @@ która przeżyła kopię w całości (work) i mechaniki formularza (contact).
   z designu: SSR renderuje WSZYSTKIE kafle i `<template data-work-detail>`,
   JS tylko ukrywa (desktop: paginacja, mobile: „pokaż więcej"); bez JS =
   pełna lista.
+- **Detal otwiera się TAKŻE z zajawki 02 strony głównej** (sesja poprawek
+  przed Etapem 6 — unieważnia analiza-realizacje §2 pkt 4). Kafle zajawki
+  są `<a href="/realizacje/">` z `data-work-slug`/`-name`: JS robi
+  `preventDefault` DOPIERO gdy `openWorkDetail()` zwróci `true`, więc bez
+  JS `href` zostaje jedynym dojściem do treści (na `/realizacje/` kafel
+  jest `<button>`, bo tam pełna lista leży obok). Na listę przenoszą
+  wyłącznie CTA „Zobacz wszystkie realizacje" i mobilny kafel-licznik.
+  **Templaty i `<WorkDetailOverlay />` MUSZĄ stać POZA `main.home`**
+  (renderuje je `index.astro` po `<Footer />`): `.home` ma
+  `isolation: isolate`, więc `.dt-ov` (z-index 100) trafiłby do JEGO
+  kontekstu układania i pasek `.hdr` (z-index 50) malowałby się NA
+  modalu. Listę wpisów dla kafli i templatów daje JEDEN moduł
+  `home-realizacje-data.ts` — nie licz jej lokalnie w dwóch miejscach.
 - Track karuzeli mobile wymaga `scroll-snap-stop: always` (bez tego szybki
   swipe przeskakuje kilka kafli naraz).
 - **Parallax musi mieć zapas ≥ ruch** (lekcja D-U1 szablonu): element
@@ -82,6 +95,18 @@ która przeżyła kopię w całości (work) i mechaniki formularza (contact).
   warianty w SSR, przełącza `@media`), tap w kadr galerii startuje film
   i otwiera podgląd pełnoekranowy (`[data-lightbox]`), w podglądzie
   tap = pauza↔play; odtwarzanie testuj funkcjonalnie w e2e.
+- **Wskaźnik ładowania filmu** (sesja poprawek przed Etapem 6): slajd
+  podglądu ma TRZY ROZŁĄCZNE stany — spoczynek („…, aby obejrzeć"),
+  `is-loading` („POCZEKAJ, ŁADUJĘ WIDEO" + kropki) i `is-playing`.
+  Podpowiedź chowa `playing`, **nigdy `play`** (to drugie leci przed
+  pierwszym bajtem — zmierzone 0,65–7,5 s luki zależnie od łącza);
+  `waiting`/`stalled` zapalają wskaźnik także przy zacięciu W TRAKCIE.
+  Stany muszą zostać rozłączne, bo `.is-playing` chowa całą plakietkę.
+  Progi w `work-config.ts` (`VIDEO_LOADING_DELAY_MS` / `_MIN_MS` /
+  `_TIMEOUT_MS`) — importują je testy; nie wpisuj liczb w kod. Kropki
+  animuje CSS (trzy `@keyframes` o różnym PROGU zapalenia, a nie jedna
+  animacja z `animation-delay` — delay przesuwa cały cykl i kropki
+  gasłyby po kolei) i rysuje je `::before`, nie tekst w DOM.
 
 ## Chrome (navbar/stopka) — Etap 4.1
 
@@ -92,6 +117,24 @@ która przeżyła kopię w całości (work) i mechaniki formularza (contact).
 - Menu mobilne = bottom sheet na `overlay.ts` z akordeonem „O nas";
   stopka sheeta: dwa telefony MACIEK/ŁUKASZ przez sloty
   `contact-details.ts` (antyscraping!).
+- **Pozycja bieżącej strony = PODKREŚLENIE, nie kolor tekstu** (design;
+  sesja poprawek przed Etapem 6 — sprostowanie zapisu z 4.1). Dwa
+  warianty: `rgba(87,101,74,.6)` nad papierem i `currentColor` przy
+  `tone="dark"` bez `[data-solid]` (zieleń akcentu ginęła na ciemnym
+  hero). `currentColor` sam podąża za tonem — nie dokładaj reguły dla
+  stanu solid.
+- **Panel dropdownu jest NIEPRZEZROCZYSTĄ kartą** i nie może dziedziczyć
+  tonu paska: `.nav-drop` przywraca `--hdr-ink: #211d18` lokalnie. Bez
+  tego przy `tone="dark"` treść panelu jest kremowa na kremowym tle
+  (zmierzony kontrast 1,06 : 1 — pozycje NIEWIDOCZNE na 5 z 8 tras).
+  Nowe elementy panelu stylizuj przez ten token, nie punktowo.
+- **Stan paska zamraża się na czas KAŻDEJ otwartej nakładki.**
+  `overlay.ts` blokuje scroll przez `body{position:fixed;top:-scrollY}`,
+  co zeruje `window.scrollY`; `onScroll` Navbara wychodzi wtedy od razu
+  (`sheetOpen || document.body.style.position === "fixed"`) — łącznie
+  z aktualizacją `lastY`, inaczej powrót do zapamiętanej pozycji przy
+  zamknięciu wygląda dla auto-hide jak gwałtowny scroll w dół i chowa
+  pasek tuż po zamknięciu modala.
 
 ## Contact (`kt`) — /kontakt/ (Etap 5, WYKONANY)
 
@@ -134,6 +177,21 @@ która przeżyła kopię w całości (work) i mechaniki formularza (contact).
   przenoś do eager loadu.
 - Pola mobile mają PODŁOGĘ `font-size: 16px` (Safari iOS zoomuje stronę
   przy focusie mniejszego pola i zostawia ją zoomniętą).
+- **Mono-tagi z kropką rozdzielającą łam JAWNIE, nie zawijaniem**
+  (`.kt-tag-hours` tutaj, `.kt-hours` w zajawce 06 na `/`): dwa człony
+  z `white-space: nowrap` + separator w osobnym `<span>`, mobile
+  w kolumnie, desktop inline. Jeden ciąg zawijał się w środku i zrzucał
+  do drugiego wiersza sierotę „8–16", a przy 375 px SAMO „16".
+  Separator wyłączaj przez `:not(.kt-tag-sep)` na regule blokowej —
+  osobna reguła `.kt-tag-sep{display:none}` ma niższą specyficzność
+  i kropka zostaje jako trzeci wiersz.
+- **Ryciny desktopowe nie mogą być ucinane od dołu**: sekcje mają
+  `overflow: hidden` dla MOBILE (tam ryciny wychodzą za krawędź ekranu),
+  a na desktopie zwalniamy oś pionową parą `overflow-x: clip` +
+  `overflow-y: visible` — `hidden` + `visible` NIE działa (przeglądarka
+  podmienia drugą oś na `auto` i robi scroller). Element, za którym
+  rycina ma się chować, musi być `position: relative` — inaczej jego tło
+  maluje się pod absolutną ryciną.
 - Breakpoint: `CONTACT_DESKTOP_MIN_PX = 1024` z `contact-config.ts`
   (importują go testy e2e; `@media` w parze).
 - Pułapki klienckie mają serwerowy odpowiednik w `functions/api/kontakt.ts`

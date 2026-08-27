@@ -26,3 +26,25 @@ export const WORK_MOBILE_STEP = 4;
  *  kreski-wskaźniki pod karuzelą (korekta Mateusza): powyżej rząd
  *  kresek przestałby się mieścić — zostaje sam licznik 01/NN. */
 export const WORK_GALLERY_DASHES_MAX = 15;
+
+/** Ile czekać, zanim pokażemy wskaźnik „ładuję wideo" po tapnięciu
+ *  w kadr (sesja poprawek wizualnych). Pomiar na pliku z R2, throttling
+ *  CDP, `play` → `playing`: ~650 ms przy zimnym cache bez ograniczeń,
+ *  ~390 ms przy ciepłym, ~1,9 s na Fast 3G, ~7,2 s na Slow 3G. Próg
+ *  400 ms zjada w całości przypadek „film już w cache" — tam wskaźnik
+ *  w ogóle się nie zapala, i dobrze. */
+export const VIDEO_LOADING_DELAY_MS = 400;
+
+/** Minimalny czas WIDOCZNOŚCI wskaźnika, gdy już się zapalił. Bez tego
+ *  przy zimnym cache i dobrym łączu (650 ms do `playing`) plakietka
+ *  mignęłaby na 250 ms — zmierzone 121 ms w przebiegu z ciepłym cache
+ *  przy niższym progu. Migający komunikat jest gorszy niż jego brak,
+ *  więc po zapłonie trzymamy go do końca tego okna (film w tym czasie
+ *  już gra pod spodem — plakietka tylko dogasa). */
+export const VIDEO_LOADING_MIN_MS = 600;
+
+/** Bezpiecznik: po tylu ms bez `playing` wracamy do podpowiedzi
+ *  „…, aby obejrzeć". Chroni przed wiecznym „ładuję" tam, gdzie
+ *  odtwarzanie NIE ruszy i nie poleci `error` — sztandarowy przypadek
+ *  to iOS Low Power Mode, który potrafi odrzucić `play()` po cichu. */
+export const VIDEO_LOADING_TIMEOUT_MS = 15_000;

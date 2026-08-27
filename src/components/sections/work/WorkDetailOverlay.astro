@@ -626,6 +626,77 @@
   #work-detail .lb-slide.is-playing [data-cam-hint] {
     display: none;
   }
+
+  /* ── WSKAŹNIK ŁADOWANIA WIDEO (sesja poprawek wizualnych) ──
+     Stan `.is-loading` nadaje open-detail.ts między `play` a `playing`
+     (oraz na `waiting`/`stalled`, czyli przy zacięciu w trakcie).
+     Plakietka zostaje ta sama — podmieniamy tylko jej treść, żeby nie
+     wprowadzać nowego znaku wizualnego w miejscu, w którym użytkownik
+     przed chwilą czytał podpowiedź. Ikonka kamery ZOSTAJE widoczna
+     (film jeszcze nie gra, a ona mówi „to jest film") — znika dopiero
+     ze stanem `.is-playing` wyżej.
+     Selektory z `#work-detail` mają specyficzność (1,2,0) i dlatego
+     biją scoped-reguły Astro z WorkDetail.astro, postaci
+     `.dt-hint-d[data-astro-cid-…]` = (0,2,0). Klony kadrów niosą klasy,
+     ale nie mają atrybutu scope — stąd cały blok jest is:global. */
+  #work-detail .lb-slide.is-loading .dt-hint-d,
+  #work-detail .lb-slide.is-loading .dt-hint-m {
+    display: none;
+  }
+  #work-detail .lb-slide.is-loading .dt-hint-load {
+    display: inline;
+  }
+  /* Animacja kropek: pojawiają się po kolei, potem cykl od nowa
+     (0 → 1 → 2 → 3 → od nowa). Delayem, nie JS-owym timerem — trzyma
+     się kontraktu sekcji „ruch = CSS za bramką reduced-motion".
+     Stan spoczynku (bez animacji) = kropki WIDOCZNE, więc przy
+     `reduce` plakietka czyta się jako zwykłe „…". */
+  @media (prefers-reduced-motion: no-preference) {
+    #work-detail .lb-slide.is-loading .dt-dots b:nth-child(1) {
+      animation: dtDot1 1.2s linear infinite;
+    }
+    #work-detail .lb-slide.is-loading .dt-dots b:nth-child(2) {
+      animation: dtDot2 1.2s linear infinite;
+    }
+    #work-detail .lb-slide.is-loading .dt-dots b:nth-child(3) {
+      animation: dtDot3 1.2s linear infinite;
+    }
+  }
+  /* Trzy osobne przebiegi zamiast jednego z `animation-delay`: delay
+     przesuwa CAŁY cykl, więc kropki gasłyby po kolei, a nie razem
+     (i w odwrotnej kolejności niż trzeba). Tu każda ma ten sam cykl
+     1,2 s i inny PRÓG zapalenia — 25 / 50 / 75 % — dzięki czemu
+     zapalają się po kolei i gasną WSZYSTKIE naraz na końcu cyklu. */
+  @keyframes dtDot1 {
+    0%,
+    24.99% {
+      opacity: 0;
+    }
+    25%,
+    100% {
+      opacity: 1;
+    }
+  }
+  @keyframes dtDot2 {
+    0%,
+    49.99% {
+      opacity: 0;
+    }
+    50%,
+    100% {
+      opacity: 1;
+    }
+  }
+  @keyframes dtDot3 {
+    0%,
+    74.99% {
+      opacity: 0;
+    }
+    75%,
+    100% {
+      opacity: 1;
+    }
+  }
   @media (prefers-reduced-motion: reduce) {
     #work-detail .lb-track,
     #work-detail .lb-dashes button {

@@ -14,7 +14,10 @@ import HomeKompetencje from "@/components/sections/home/HomeKompetencje.astro";
 import HomeKontakt from "@/components/sections/home/HomeKontakt.astro";
 import HomeObsluga from "@/components/sections/home/HomeObsluga.astro";
 import HomeRealizacje from "@/components/sections/home/HomeRealizacje.astro";
+import { homeRealizacje } from "@/components/sections/home/home-realizacje-data";
 import HomeTradycja from "@/components/sections/home/HomeTradycja.astro";
+import WorkDetail from "@/components/sections/work/WorkDetail.astro";
+import WorkDetailOverlay from "@/components/sections/work/WorkDetailOverlay.astro";
 import { ui } from "@/i18n/ui";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 
@@ -22,6 +25,14 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 const DESCRIPTION =
   "Ciesielstwo i murarstwo tradycyjne, tynki wapienne, wełna drzewna. " +
   "Prowadzimy całą inwestycję — od ekspertyzy po stan surowy zamknięty +.";
+
+// Detal realizacji otwierany PROSTO z zajawki 02 (korekta Mateusza —
+// unieważnia analiza-realizacje §2 pkt 4). Templaty i nakładka muszą stać
+// POZA <main class="home">: `.home` ma isolation: isolate (PaperBackdrop),
+// więc .dt-ov (z-index 100) trafiłby do JEGO kontekstu układania i pasek
+// nawigacji (.hdr, z-index 50) malowałby się NA modalu. Ta sama lista co
+// w kaflach — wspólne źródło home-realizacje-data.
+const { shown: realizacje } = await homeRealizacje();
 ---
 
 <BaseLayout title={ui.pl["meta.title"]} description={DESCRIPTION}>
@@ -47,6 +58,16 @@ const DESCRIPTION =
   </main>
 
   <Footer />
+
+  {/* Treść detalu per realizacja — klonowana do #work-detail po kliknięciu. */}
+  {
+    realizacje.map((project) => (
+      <template data-work-detail={project.slug}>
+        <WorkDetail project={project} />
+      </template>
+    ))
+  }
+  <WorkDetailOverlay />
 </BaseLayout>
 
 <style is:global>

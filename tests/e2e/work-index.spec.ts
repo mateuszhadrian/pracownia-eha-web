@@ -9,6 +9,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { PAPER_BG_SPEED } from "../../src/components/sections/home/home-config";
 import {
+  VIDEO_LOADING_DELAY_MS,
   WORK_DESKTOP_MIN_PX,
   WORK_GALLERY_DASHES_MAX,
   WORK_GRID_TWO_COL_MIN_PX,
@@ -62,6 +63,32 @@ test.skip(
 /** Dociera do pierwszego kafla siatki i uspokaja scroll przed klikiem. */
 async function revealFirstCard(page: Page) {
   const card = page.locator(".wk-grid [data-work-slug]").first();
+  await card.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(300);
+  return card;
+}
+
+/** Odsłania kafel wpisu w siatce (desktop: paginacja, mobile: „pokaż
+ *  więcej") i zwraca jego locator — wpis z wideo bywa poza pierwszą
+ *  porcją. */
+async function showEntry(page: Page, slug: string) {
+  const card = page.locator(`.wk-grid [data-work-slug="${slug}"]`);
+  if (await card.isHidden()) {
+    const idx = ENTRIES.findIndex((e) => e.slug === slug);
+    const pag = page.locator(
+      `[data-pag-page="${Math.floor(idx / WORK_PAGE_SIZE)}"]`,
+    );
+    if (await pag.isVisible()) {
+      await pag.click();
+    } else {
+      const more = page.locator("[data-more]");
+      while ((await card.isHidden()) && (await more.isVisible())) {
+        await more.click();
+        await settle(page, 200);
+      }
+    }
+    await settle(page, 400);
+  }
   await card.scrollIntoViewIfNeeded();
   await page.waitForTimeout(300);
   return card;
@@ -485,6 +512,143 @@ test.describe("detal desktop: modal, galeria, projnav", () => {
     await lbVideo.click();
     expect(await lbVideo.evaluate((v: HTMLVideoElement) => v.paused)).toBe(
       false,
+    );
+  });
+});
+
+// ── wskaźnik ładowania wideo (sesja poprawek wizualnych; zgłoszenie
+// Mateusza). Do tej pory slajd dostawał `is-playing` na zdarzeniu
+// `play`, które leci PRZED pierwszym bajtem — podpowiedź znikała, a kadr
+// stał nieruchomo (zmierzone `play`→`playing`: 0,65 s bez throttlingu,
+// 2,0 s na Fast 3G, 7,5 s na Slow 3G) i użytkownik brał film za zdjęcie.
+// Test jedzie na WŁASNYCH zdarzeniach media (`waiting`/`playing`),
+// bo prawdziwe buforowanie jest niedeterministyczne. ──
+test.describe("wskaźnik ładowania wideo w podglądzie", () => {
+  test.skip(!VIDEO_ENTRY, "brak wpisu z wideo w kolekcji");
+
+  test("zacięcie w trakcie zapala plakietkę „ładuję”, start ją gasi", async ({
+    page,
+    isMobile,
+  }) => {
+    const entry = VIDEO_ENTRY!;
+    const videoIdx = entry.gallery.findIndex((g) => g.type === "video");
+    await gotoReady(page, PATH);
+    const detail = await openDetail(page, await showEntry(page, entry.slug));
+
+    // dojazd do kadru wideo: desktop strzałkami, mobile przewinięciem toru
+    if (!isMobile) {
+      for (let i = 0; i < videoIdx; i++) {
+        await detail.locator("[data-nextshot]").click();
+      }
+    }
+    const kadr = detail.locator("[data-gal] [data-slide]").nth(videoIdx);
+    await kadr.scrollIntoViewIfNeeded();
+    await settle(page, 500);
+    await kadr.click();
+
+    const lb = detail.locator("[data-lightbox]");
+    await expect(lb).toBeVisible();
+    const slajd = lb.locator(".lb-slide").nth(videoIdx);
+    // film startuje sam (autoplay w geście usera) — czekamy na `playing`
+    await expect(slajd).toHaveClass(/is-playing/, { timeout: 15_000 });
+    await expect(slajd).not.toHaveClass(/is-loading/);
+
+    // ZACIĘCIE: własne `waiting` na elemencie media. Czas do zapłonu
+    // mierzymy W PRZEGLĄDARCE (MutationObserver), a nie asercją
+    // „jeszcze nie ma" — ta ścigałaby się z timerem 400 ms i pod
+    // obciążeniem runnera potrafi przegrać (złapane w pierwszym
+    // przebiegu tego testu: zielony w izolacji, czerwony w komplecie).
+    const zaplon = await slajd.evaluate(
+      (el: HTMLElement) =>
+        new Promise<number>((res) => {
+          const t0 = performance.now();
+          const obs = new MutationObserver(() => {
+            if (!el.classList.contains("is-loading")) return;
+            obs.disconnect();
+            res(performance.now() - t0);
+          });
+          obs.observe(el, { attributes: true, attributeFilter: ["class"] });
+          el.querySelector("video")!.dispatchEvent(new Event("waiting"));
+          window.setTimeout(() => {
+            obs.disconnect();
+            res(-1);
+          }, 5000);
+        }),
+    );
+    // wskaźnik zapala się DOPIERO po progu — bez tego migałby na
+    // szybkim łączu; tolerancja na rozdzielczość timera
+    expect(zaplon).toBeGreaterThanOrEqual(VIDEO_LOADING_DELAY_MS - 60);
+    await expect(slajd).toHaveClass(/is-loading/);
+    // stany są rozłączne — inaczej `.is-playing` schowałoby plakietkę
+    await expect(slajd).not.toHaveClass(/is-playing/);
+
+    const hint = slajd.locator("[data-cam-hint]");
+    await expect(hint).toBeVisible();
+    // kapitaliki robi text-transform (design), stąd wersaliki w asercji.
+    // Kropki rysuje ::before, więc innerText ich NIE widzi — liczymy je
+    // osobno jako elementy (animuje je CSS delayem, nie JS).
+    await expect(hint).toHaveText("POCZEKAJ, ŁADUJĘ WIDEO", {
+      useInnerText: true,
+    });
+    await expect(slajd.locator(".dt-dots b")).toHaveCount(3);
+
+    // START: własne `playing` — plakietka dopala minimalny czas
+    // widoczności i dopiero potem ustępuje miejsca stanowi „gra"
+    const dogaszanie = await slajd.evaluate(
+      (el: HTMLElement) =>
+        new Promise<number>((res) => {
+          const t0 = performance.now();
+          const obs = new MutationObserver(() => {
+            if (!el.classList.contains("is-playing")) return;
+            obs.disconnect();
+            res(performance.now() - t0);
+          });
+          obs.observe(el, { attributes: true, attributeFilter: ["class"] });
+          el.querySelector("video")!.dispatchEvent(new Event("playing"));
+          window.setTimeout(() => {
+            obs.disconnect();
+            res(-1);
+          }, 5000);
+        }),
+    );
+    // plakietka nie gaśnie natychmiast — dopala minimalny czas
+    // widoczności, żeby nie mrugnęła (film w tym czasie już gra)
+    expect(dogaszanie).toBeGreaterThan(0);
+    await expect(slajd).toHaveClass(/is-playing/);
+    await expect(slajd).not.toHaveClass(/is-loading/);
+    await expect(hint).toBeHidden();
+  });
+
+  test("pauza wraca do podpowiedzi, a nie do wskaźnika", async ({
+    page,
+    isMobile,
+  }) => {
+    const entry = VIDEO_ENTRY!;
+    const videoIdx = entry.gallery.findIndex((g) => g.type === "video");
+    await gotoReady(page, PATH);
+    const detail = await openDetail(page, await showEntry(page, entry.slug));
+    if (!isMobile) {
+      for (let i = 0; i < videoIdx; i++) {
+        await detail.locator("[data-nextshot]").click();
+      }
+    }
+    const kadr = detail.locator("[data-gal] [data-slide]").nth(videoIdx);
+    await kadr.scrollIntoViewIfNeeded();
+    await settle(page, 500);
+    await kadr.click();
+
+    const lb = detail.locator("[data-lightbox]");
+    const slajd = lb.locator(".lb-slide").nth(videoIdx);
+    await expect(slajd).toHaveClass(/is-playing/, { timeout: 15_000 });
+    await slajd.locator("video").evaluate((v: HTMLVideoElement) => {
+      v.pause();
+    });
+    await expect(slajd).not.toHaveClass(/is-playing/);
+    await expect(slajd).not.toHaveClass(/is-loading/);
+    await expect(slajd.locator("[data-cam-hint]")).toBeVisible();
+    await expect(slajd.locator("[data-cam-hint]")).toHaveText(
+      isMobile ? "STUKNIJ, ABY OBEJRZEĆ" : "KLIKNIJ, ABY OBEJRZEĆ",
+      { useInnerText: true },
     );
   });
 });
