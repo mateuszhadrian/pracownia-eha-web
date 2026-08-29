@@ -39,12 +39,19 @@
 // Zmierzone ciała odpowiedzi na „/": fonty 457 780 → 210 616 B,
 // CSS 106 390 → 98 723 B, razem 1 364 096 → 1 110 071 B.
 // Liczba PLIKÓW fontów się nie zmieniła (12) — subsetowanie tnie bajty,
-// nie żądania. Warn `font.count <= 8` świeci więc od Etapu 4.2 i nigdy
-// nie zgaśnie bez usunięcia kroju albo wagi (czyli zmiany designu).
-// KANDYDAT na osobny commit po zielonym CI tej gałęzi: warn count 8 → 12
-// oraz NOWY error `resource-summary:font:size` ≤ 230 000 (ratchet od
-// zmierzonych 210 616 B, ~9 % zapasu) — bo pilnować chcemy bajtów,
-// a nie liczby requestów.
+// nie żądania.
+//
+// RATCHET wykonany osobnym commitem po zielonym CI (run 33256736588,
+// zmierzone: mobile „/" perf 0,84 / LCP 4261 ms / total 902 376 B,
+// polityka 0,92 / 3341 ms / 378 221 B; desktop 0,99 / 888 ms i 1,00 /
+// 732 ms; fonty 214 267 B na obu trasach). Zmieniono TRZY rzeczy:
+//   — warn `font:count` 8 → 12 (opis stanu, nie zacieśnienie),
+//   — NOWY error `font:size` ≤ 230 000 (ratchet na bajtach),
+//   — numberOfRuns 3 → 5 (wiarygodność pomiaru, nie próg).
+// CELOWO NIE ruszono `total`, `perf`, `LCP` ani `script`: zapas na nich
+// pracuje na treść klienta (okładki realizacji z R2 na „/") i na
+// wariancję runnera. Bramka padająca od zdjęć wgranych w panelu to
+// dokładnie scenariusz, przed którym ostrzega .claude/rules/testing.md.
 module.exports = {
   ci: {
     collect: {
@@ -56,7 +63,13 @@ module.exports = {
       // zewnętrzna sieć w CI = flaky (ta sama zasada co CHECK_REMOTE_MEDIA
       // poza ścieżką PR), dlatego ich tu nie ma.
       url: ["/", "/polityka-prywatnosci/"],
-      numberOfRuns: 3, // mediana — tłumi szum runnera
+      // 5, nie 3 (Etap 6). To NIE jest zacieśnienie progu, tylko
+      // poprawa wiarygodności pomiaru: zmierzona wariancja runnera to
+      // ±1300 ms na LCP i ±0,09 na performance przy ZEROWEJ zmianie
+      // bajtów (runy 33071049182 vs 33073106228 mają identyczne co do
+      // bajta resource-summary). Mediana z 5 znacznie rzadziej ląduje
+      // na wartości odstającej. Koszt: job dłuższy o ~2 min.
+      numberOfRuns: 5, // mediana — tłumi szum runnera
     },
     assert: {
       aggregationMethod: "median-run",
@@ -67,7 +80,18 @@ module.exports = {
         "cumulative-layout-shift": ["error", { maxNumericValue: 0.05 }],
         "resource-summary:script:size": ["error", { maxNumericValue: 40000 }],
         "resource-summary:total:size": ["error", { maxNumericValue: 1200000 }],
-        "resource-summary:font:count": ["warn", { maxNumericValue: 8 }],
+        // Liczba PLIKÓW fontów = 12 od Etapu 4.2 i taka zostanie:
+        // subsetowanie (Etap 6) ścina BAJTY, nie żądania, a zejście do 8
+        // wymagałoby usunięcia kroju albo wagi — czyli zmiany designu.
+        // Ostrzeżenie, które świeci przy każdym buildzie, przestaje być
+        // sygnałem, więc próg opisuje stan faktyczny.
+        "resource-summary:font:count": ["warn", { maxNumericValue: 12 }],
+        // RATCHET Etapu 6 na tym, co realnie chcemy pilnować: BAJTACH.
+        // Zmierzone w CI (run 33256736588): 214 267 B na obu mierzonych
+        // trasach — próg daje ~7 % zapasu. Fonty rosną wyłącznie wtedy,
+        // gdy ktoś świadomie doda krój, wagę albo poszerzy zakres znaków
+        // w scripts/subset-fonts.mjs — i wtedy ma się o tym dowiedzieć.
+        "resource-summary:font:size": ["error", { maxNumericValue: 230000 }],
       },
     },
     upload: { target: "temporary-public-storage" },

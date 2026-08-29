@@ -1655,7 +1655,9 @@ p=none`. DMARC bez `sp=` i bez ostrego dopasowania ⇒ maile
     - Zakres znaków = **sam polski, świadomie**. Zmierzone rozszerzenie
       o czeski/słowacki: 27 412 → **40 844 B** (+13,4 KB) na scenariusz,
       który nie wystąpił, a strażnik i tak go złapie.
-  - **4. Budżety LHCI — PRZEJRZANE, ANI JEDEN PRÓG NIE RUSZONY.**
+  - **4. Budżety LHCI — przejrzane w PR #21 BEZ ruszania progów; ratchet
+    wszedł OSOBNYM commitem po zielonym CI (opis niżej, „Domknięcie
+    Etapu 6").**
     - `main` po merge PR #20 był CZERWONY (run 33073106228): mobile LCP
       `/` **5446,77 ms** przy budżecie 5000, perf 0,77.
     - **Kluczowa liczba: wariancja runnera to ±1300 ms na LCP przy
@@ -1769,6 +1771,96 @@ p=none`. DMARC bez `sp=` i bez ostrego dopasowania ⇒ maile
     liczby (w HTML był `KategorieSheets.css`, którego eha nie ma).
     Przy ręcznym `astro preview` zawsze zweryfikuj, CO serwuje port —
     np. `curl -s localhost:PORT | grep -o 'BaseLayout[^"]*css'`.
+  - **Domknięcie Etapu 6 — panele, ratchet i DWA SPROSTOWANIA**
+    (2026-08-29, po merge'u PR #21 jako `f92bf4e`).
+    - **Panele WYKONANE**: Cloudflare Web Analytics (szczegóły niżej),
+      Google Search Console — property **domenowa** `pracownia-eha.pl`
+      zweryfikowana metodą „Dostawca nazwy domeny" (integracja
+      Cloudflare'a dodała TXT sama, bez duplikatu; apeks ma teraz DWA
+      rekordy TXT: SPF klienta + `google-site-verification=vwkgyDGE…`,
+      MX/\_dmarc/`send.send` NIETKNIĘTE — zweryfikowane `digiem` przed
+      i po), sitemapa `https://pracownia-eha.pl/sitemap-index.xml`
+      przesłana; UptimeRobot — monitor **Keyword** („incident when
+      keyword does NOT exist", fraza `Pracownia EH/A`, 5 min, alert na
+      mail Mateusza). Świadome odstępstwo od instrukcji, która mówiła
+      HTTP(s): keyword łapie dodatkowo „200, ale pusta strona" — przy
+      buildzie statycznym realniejsza awaria niż padnięcie hostingu;
+      fraza zweryfikowana w SUROWYM HTML (5 wystąpień na „/", m.in.
+      w JSON-LD i `og:title`), więc nie wymaga JS.
+      ⚠️ **Konto UptimeRobot zostaje przy Mateuszu** (alerty są dla tego,
+      kto naprawia), inaczej niż Resend. Search Console założona na jego
+      koncie Google obok `delung.pl` — klienta dodać jako WŁAŚCICIELA
+      w Etapie 7 (`Ustawienia → Użytkownicy i uprawnienia`), nie
+      przenosić property.
+    - **SPROSTOWANIE 1 — Web Analytics był włączony od 2026-08-22, a nie
+      „wchodzi w Etapie 6"** (unieważnia zapis w instrukcji wykonawczej
+      §Etap 6 pkt 3 ORAZ moją diagnozę w pkt 5 wyżej). Witryna
+      w panelu ma „Created 7 days ago" i „Automatic setup" — powstała
+      razem z domeną w Etapie 1B. Realnym zadaniem Etapu 6 było
+      **przestawienie trybu**: stało na **„Enable, excluding visitor
+      data in the EU"**, czyli beacon NIE był wstrzykiwany odwiedzającym
+      z UE. Dla serwisu PL-only znaczyło to, że nie zbieraliśmy
+      praktycznie nic — te 12 odsłon w panelu to ruch spoza UE (boty).
+      Po przełączeniu na **„Enable"** beacon pojawił się w 15 sekund.
+    - **SPROSTOWANIE 2 — wniosek z A5 był ODWRÓCONY.** Pisałem
+      „deklarujemy statystykę, której nie zbieramy" (kierunek
+      nieszkodliwy). Prawda była gorsza: **zbieraliśmy** (choć śladowo,
+      bo tylko spoza UE) **przy niepełnym wykazie danych** w
+      opublikowanym dokumencie. Poprawka wykazu z pkt 5 nie była więc
+      zapobiegawcza, tylko NAPRAWCZA — i dobrze, że weszła na produkcję
+      PRZED przestawieniem trybu. Kolejność wyszła właściwa, choć
+      z innego powodu, niż zakładałem.
+    - **Beacon — zmierzone**: wstrzykiwany na `pracownia-eha.pl`
+      i `www`, **NIE na `pages.dev`** (ruch z preview nie zaśmieca
+      statystyk). `<script type="module">` z SRI, token jawny z natury.
+      **28 467 B raw / 9 509 B gzip** (moje wcześniejsze „~6 KB" było
+      błędne). **Zero wpływu na LHCI** — beacona nie ma w `dist`,
+      a `lighthouserc*.cjs` mierzy `staticDistDir: "./dist"`.
+    - **RATCHET budżetów** (osobny commit, decyzja Mateusza) na podstawie
+      zielonego CI **run 33256736588**: mobile „/" perf **0,84** /
+      LCP **4261 ms** / total **902 376 B**; `/polityka-prywatnosci/`
+      **0,92** / **3341 ms** / **378 221 B**; desktop „/" **0,99** /
+      888 ms, polityka **1,00** / 732 ms; fonty **214 267 B** (12 plików)
+      na obu trasach. Wobec czerwonego `main` sprzed Etapu 6
+      (run 33073106228): perf 0,77 → 0,84, LCP **5447 → 4261 ms**,
+      total **1 150 024 → 902 376 B**. Ciekawostka o precyzji: z rozmiarów
+      plików przewidywałem oszczędność 247 164 B, CI zmierzył **247 176 B**
+      — różnica 12 bajtów.
+      Zmienione TRZY rzeczy: warn `font:count` 8 → **12** (opis stanu),
+      NOWY error `font:size` ≤ **230 000** (~7 % zapasu), `numberOfRuns`
+      3 → **5** w OBU configach. **CELOWO nie ruszono `total`, `perf`,
+      `LCP` ani `script`** — zapas na nich pracuje na treść klienta
+      (okładki realizacji z R2 na „/") i na wariancję runnera; bramka
+      padająca od zdjęć wgranych w panelu to scenariusz, przed którym
+      ostrzega `testing.md`.
+    - **NOWY ZNANY FLAKE: testy wideo są JEDYNYMI w e2e, które zależą od
+      zewnętrznego CDN-a.** Pierwszy przebieg CI na `main` po merge'u
+      (run 33258429686) dał `e2e` 1 failed / 673 passed:
+      `work-index.spec.ts:553` i `:642` na `webkit-iphone-se`
+      i `-14` czekały 15 s na klasę `is-playing`, a slajd stał na
+      `is-loading` — czyli film z R2 nie ruszył. To NIE jest regresja
+      Etapu 6: ten sam kod dał 676 passed 40 minut wcześniej na gałęzi
+      (run 33256736588) i lokalnie, a żadna zmiana tej sesji nie dotyka
+      mechanizmu work ani R2. `pnpm test:e2e` buduje treść PRODUKCYJNĄ,
+      więc film pobiera się z `media.pracownia-eha.pl` — dokładnie ta
+      klasa, przed którą ostrzega `testing.md` („zewnętrzna sieć =
+      flaky"). Kandydat na Etap 7: przenieść trzy asercje odtwarzania za
+      bramkę `CHECK_REMOTE_MEDIA` albo podnieść limit; wskaźnik
+      ładowania (klasy `is-loading`/`is-playing`) da się testować na
+      stubie, bez sieci.
+    - **DWIE PUŁAPKI WERYFIKACYJNE, które kosztowały czas w tej sesji:**
+      (1) **na Cloudflare Pages „HTTP 200" niczego nie dowodzi** —
+      zmyślona nazwa `nie-ma-takiego-pliku-xyz.woff2` też zwraca 200,
+      z 73 442 bajtami `index.html`; rozstrzyga `content-type` i rozmiar,
+      a najlepiej to, co realnie ładuje przeglądarka. Przy okazji: stare,
+      zahaszowane pliki fontów z poprzednich wdrożeń DALEJ odpowiadają
+      200 (Pages trzyma assety poprzednich deploymentów) — nic ich nie
+      referencjonuje, przeglądarka pobiera 12 właściwych plików;
+      (2) **`grep -c` liczy LINIE, nie wystąpienia** — sitemapa
+      w jednej linii dała „1 URL" zamiast 8, a regex `[a-z0-9.-]` na
+      nazwach plików Vite nie trafiał, bo hash zawiera WIELKIE litery
+      i podkreślenie (`D-uohVev`, `KM6_XOKs`). Obie pomyłki wyglądały
+      jak awaria wdrożenia i nią nie były.
   - UWAGI dla Etapu 7: konto CMS `pracownia-eha-cms` — włączyć 2FA na
     telefonie klienta; **przekazanie konta Resend** (hasło + Setup Key
     MFA u Mateusza); backupy (Część D instrukcji); domknąć trzy
