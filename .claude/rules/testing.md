@@ -104,10 +104,25 @@ w tym samym PR (ostatni wpis = skasowanie pliku).
   sygnałem. Stan po Etapie 6 (audyt fontów): fonty na „/" 457 780 →
   210 616 B, total 1 364 096 → 1 110 071 B; **12 plików fontów zostaje
   12** (subsetowanie tnie bajty, nie żądania), więc warn `fonty ≤ 8`
-  świeci ZAWSZE — kandydat na osobny commit: count 8 → 12 + nowy error
-  `resource-summary:font:size` ≤ 230 000.
+  świeci ZAWSZE — dlatego RATCHET Etapu 6 (osobny commit) przestawił
+  `font:count` na 12 (opis stanu) i dołożył NOWY error
+  `resource-summary:font:size` ≤ 230 000 (zmierzone w CI 214 267 B,
+  ~7 % zapasu), a `numberOfRuns` poszło 3 → 5 w obu configach.
+  **`total`, `perf`, `LCP` i `script` zostały NIETKNIĘTE** — zapas na
+  nich pracuje na treść klienta (okładki realizacji z R2 wchodzą na „/")
+  i na wariancję runnera; bramka padająca od zdjęć wgranych w panelu to
+  ten sam błąd, przed którym ostrzega reguła „test nie może wywracać się
+  na treści z panelu".
 - Test mediów R2 (`CHECK_REMOTE_MEDIA=1`) tylko poza ścieżką PR
-  (zewnętrzna sieć = flaky).
+  (zewnętrzna sieć = flaky). ⚠️ **Ta zasada ma dziś WYŁOM**: kontrakty
+  odtwarzania wideo w `work-index.spec.ts` (`is-loading` → `is-playing`)
+  pobierają realny plik z `media.pracownia-eha.pl`, bo `pnpm test:e2e`
+  buduje treść produkcyjną. To JEDYNE testy e2e zależne od zewnętrznego
+  CDN-a i już raz wywróciły `main` (run 33258429686: 15 s czekania na
+  `is-playing`, slajd stał na `is-loading`, dwa profile WebKit; ten sam
+  kod 40 minut wcześniej dał 676 passed). Do domknięcia w Etapie 7:
+  bramka `CHECK_REMOTE_MEDIA` albo stub — same klasy wskaźnika da się
+  testować bez sieci.
 - Wersje `playwright` i `@playwright/test` podnoś PARĄ (jeden zestaw
   binariów); bump = też tag obrazu Dockera w procedurze baseline'ów.
 - Profile Playwright: 6 (chromium-1920/1366, firefox, webkit-SE/14,
