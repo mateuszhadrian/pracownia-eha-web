@@ -120,9 +120,22 @@ w tym samym PR (ostatni wpis = skasowanie pliku).
   buduje treść produkcyjną. To JEDYNE testy e2e zależne od zewnętrznego
   CDN-a i już raz wywróciły `main` (run 33258429686: 15 s czekania na
   `is-playing`, slajd stał na `is-loading`, dwa profile WebKit; ten sam
-  kod 40 minut wcześniej dał 676 passed). Do domknięcia w Etapie 7:
-  bramka `CHECK_REMOTE_MEDIA` albo stub — same klasy wskaźnika da się
-  testować bez sieci.
+  kod 40 minut wcześniej dał 676 passed; rerun padł drugi raz, a kolejny
+  przebieg przeszedł czysto — trzy porażki w dwóch przebiegach, potem
+  zero. Klasyczny test przerywany: „przepuść rerun i zobacz" NIE jest tu
+  strategią).
+  **ROZWIĄZANE bramką `CHECK_REMOTE_MEDIA`** na describe — te dwa testy
+  nie biegają w CI w ogóle, tylko z jawną zmienną i w `/release-check`
+  (dopisana tam osobna komenda; to JEDYNE miejsce, gdzie ten kontrakt
+  jeszcze biega). Dwie ślepe uliczki, żeby nikt nie szedł nimi drugi raz:
+  (a) **stub nie działa** — podmiana filmu na mały plik przez
+  `page.route` wywraca asercję „stany rozłączne", bo przy materiale
+  w PEŁNI zbuforowanym symulowane `waiting` natychmiast wraca do
+  `playing`; ten test wymaga dużego, CZĘŚCIOWO zbuforowanego wideo;
+  (b) **większy timeout nie działa** — przy 40 s klasy szły
+  `lb-slide` → `is-loading` → `lb-slide`, a powrót do podpowiedzi
+  zachodzi tylko na `pause`/`error`/`abort`, czyli pobieranie zostało
+  PRZERWANE, nie spowolnione.
 - Wersje `playwright` i `@playwright/test` podnoś PARĄ (jeden zestaw
   binariów); bump = też tag obrazu Dockera w procedurze baseline'ów.
 - Profile Playwright: 6 (chromium-1920/1366, firefox, webkit-SE/14,

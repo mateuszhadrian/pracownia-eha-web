@@ -1844,10 +1844,45 @@ p=none`. DMARC bez `sp=` i bez ostrego dopasowania ⇒ maile
       mechanizmu work ani R2. `pnpm test:e2e` buduje treść PRODUKCYJNĄ,
       więc film pobiera się z `media.pracownia-eha.pl` — dokładnie ta
       klasa, przed którą ostrzega `testing.md` („zewnętrzna sieć =
-      flaky"). Kandydat na Etap 7: przenieść trzy asercje odtwarzania za
-      bramkę `CHECK_REMOTE_MEDIA` albo podnieść limit; wskaźnik
-      ładowania (klasy `is-loading`/`is-playing`) da się testować na
-      stubie, bez sieci.
+      flaky").
+      **Rerun padł DRUGI raz** (2 failed / 1 flaky / 673 passed), ale
+      NASTĘPNY przebieg (PR #22, run 33260984385) przeszedł CZYSTO —
+      675 passed, zero flaky, na tym samym kodzie testu. Bilans: trzy
+      porażki w dwóch przebiegach, potem czysty. To jest klasyczny test
+      przerywany, nie awaria — i dlatego „przepuszczę rerun i zobaczę"
+      jest tu ZŁĄ strategią: raz wygra, raz nie. Diagnoza WYKLUCZYŁA produkcję: R2
+      odpowiada z TTFB 60 ms, a plik JEST `faststart` — `moov` na
+      offsecie 32, przed `mdat` (sprawdzone parserem atomów na pierwszych
+      4 MB), więc u użytkownika odtwarzanie rusza po ~36 KB, a nie po
+      pobraniu całych 13,4 MB. Wąskim gardłem jest CI: cztery workery
+      i zimny brzeg CDN-u.
+      **PRÓBA WŁAŚCIWEJ NAPRAWY — ODRZUCONA, i to jest wiedza do
+      zapamiętania**: podstawienie `page.route` + własny 2,4 KB H.264
+      (baseline, faststart) wywróciło INNĄ asercję tego samego testu —
+      przy pliku w PEŁNI zbuforowanym symulowane `waiting` natychmiast
+      wraca do `playing`, więc kontrakt „stany są rozłączne" traci sens.
+      **Ten test POTRZEBUJE dużego, CZĘŚCIOWO zbuforowanego materiału** —
+      stub go unieważnia.
+      **SAM WIĘKSZY BUDŻET TEŻ NIE WYSTARCZYŁ** — i to jest rozstrzygający
+      dowód. Przy `test.slow()` (30 → 90 s) i asercjach 40 s
+      (run 33262279754) raport pokazał sekwencję klas: `lb-slide`
+      (5 sond) → `is-loading` (36 sond) → **`lb-slide` z powrotem**
+      (42 sondy). Powrót do podpowiedzi zachodzi WYŁĄCZNIE na
+      `pause`/`error`/`abort`, czyli pobieranie 13,4 MB zostało
+      PRZERWANE, a nie było wolne. Żaden limit czasu tego nie naprawi —
+      diagnoza „za krótki timeout" była BŁĘDNA.
+      **Rozwiązanie: BRAMKA `CHECK_REMOTE_MEDIA`** na describe, wzorem
+      `media-r2.test.ts` — te dwa testy nie biegają ani na ścieżce PR,
+      ani na `main` (żaden workflow nie ustawia zmiennej), tylko
+      świadomie: `CHECK_REMOTE_MEDIA=1 pnpm test:e2e` oraz
+      w `/release-check`, gdzie dopisano dla nich osobną komendę.
+      Zweryfikowane: bez zmiennej **12 skipped**, z nią **12 passed**.
+      Większy budżet ZOSTAJE, bo pomaga przy przebiegu lokalnym, ale
+      rozstrzyga bramka.
+      ⚠️ **Koszt tej decyzji jest realny**: wskaźnik ładowania wideo nie
+      ma już pokrycia w CI. Świadomy wybór — test padający co drugi raz
+      uczy ignorowania czerwonego CI, a to gorsze niż brak testu.
+      `/release-check` jest jedynym miejscem, gdzie ten kontrakt biega.
     - **DWIE PUŁAPKI WERYFIKACYJNE, które kosztowały czas w tej sesji:**
       (1) **na Cloudflare Pages „HTTP 200" niczego nie dowodzi** —
       zmyślona nazwa `nie-ma-takiego-pliku-xyz.woff2` też zwraca 200,
