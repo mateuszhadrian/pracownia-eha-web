@@ -525,6 +525,22 @@ test.describe("detal desktop: modal, galeria, projnav", () => {
 // bo prawdziwe buforowanie jest niedeterministyczne. ──
 test.describe("wskaźnik ładowania wideo w podglądzie", () => {
   test.skip(!VIDEO_ENTRY, "brak wpisu z wideo w kolekcji");
+  // Te dwa testy jako JEDYNE w zestawie e2e czekają na REALNE `playing`,
+  // czyli na pobranie filmu z R2 (13,4 MB) przez publiczną sieć. Przy
+  // czterech workerach i zimnym brzegu CDN-u 15 s okazało się za mało —
+  // wywróciło `main` dwa razy pod rząd (run 33258429686, oba profile
+  // WebKit: slajd stał na `is-loading`). Diagnoza WYKLUCZYŁA produkcję:
+  // R2 odpowiada z TTFB 60 ms, a plik jest `faststart` (`moov` na
+  // offsecie 32, przed `mdat`), więc u użytkownika odtwarzanie rusza po
+  // ~36 KB. To był zakład o przepustowość runnera, nie o kod.
+  //
+  // PODMIANA FILMU NA MAŁY STUB ZOSTAŁA SPRAWDZONA I ODRZUCONA: przy
+  // w pełni zbuforowanym pliku symulowane `waiting` natychmiast wraca do
+  // `playing`, więc asercja „stany są rozłączne" (niżej) traci sens —
+  // ten test POTRZEBUJE dużego, częściowo zbuforowanego materiału.
+  // Stąd większy budżet zamiast usuwania zależności; właściwe domknięcie
+  // (bramka CHECK_REMOTE_MEDIA) = Etap 7.
+  test.slow(); // 30 s → 90 s: samo podniesienie asercji nic by nie dało
 
   test("zacięcie w trakcie zapala plakietkę „ładuję”, start ją gasi", async ({
     page,
@@ -549,8 +565,10 @@ test.describe("wskaźnik ładowania wideo w podglądzie", () => {
     const lb = detail.locator("[data-lightbox]");
     await expect(lb).toBeVisible();
     const slajd = lb.locator(".lb-slide").nth(videoIdx);
-    // film startuje sam (autoplay w geście usera) — czekamy na `playing`
-    await expect(slajd).toHaveClass(/is-playing/, { timeout: 15_000 });
+    // film startuje sam (autoplay w geście usera) — czekamy na `playing`.
+    // 40 s, nie 15: to jedyna asercja w zestawie czekająca na pobranie
+    // 13,4 MB z zewnętrznego CDN-u (uzasadnienie w nagłówku describe).
+    await expect(slajd).toHaveClass(/is-playing/, { timeout: 40_000 });
     await expect(slajd).not.toHaveClass(/is-loading/);
 
     // ZACIĘCIE: własne `waiting` na elemencie media. Czas do zapłonu
@@ -639,7 +657,7 @@ test.describe("wskaźnik ładowania wideo w podglądzie", () => {
 
     const lb = detail.locator("[data-lightbox]");
     const slajd = lb.locator(".lb-slide").nth(videoIdx);
-    await expect(slajd).toHaveClass(/is-playing/, { timeout: 15_000 });
+    await expect(slajd).toHaveClass(/is-playing/, { timeout: 40_000 });
     await slajd.locator("video").evaluate((v: HTMLVideoElement) => {
       v.pause();
     });
