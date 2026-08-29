@@ -20,6 +20,31 @@
 // normalne: emulacja mobile dokłada stały mnożnik CPU do hosta, więc wynik
 // zależy od obciążenia Maca. Czerwony przebieg lokalny NIE jest powodem do
 // ruszania progów; bramkuje CI i tylko pomiar z CI jest podstawą ratchetu.
+//
+// ── STAN NA ETAP 6 (2026-08-29) — sam OPIS, progi NIETKNIĘTE ──────────
+// Liczby z nagłówka wyżej pochodzą ze SZKIELETU Etapu 3 i są nieaktualne
+// (dziś nie ma 7 plików fontów po 280 KB, tylko 12 po 211 KB).
+//
+// WARIANCJA RUNNERA — najważniejsza liczba przy każdej rozmowie
+// o zacieśnianiu. Dwa przebiegi CI na DOKŁADNIE TYCH SAMYCH bajtach
+// (identyczne resource-summary co do bajta) dały na „/":
+//   run 33071049182 (PR #20, zielony): FCP 1144 ms, LCP 4153 ms, perf 0,86
+//   run 33073106228 (main po merge, CZERWONY): FCP 2308, LCP 5447, perf 0,77
+// Czyli LCP potrafi skoczyć o +1300 ms bez ŻADNEJ zmiany w kodzie.
+// Każdy próg bliżej niż ~1,3 s od mediany będzie migotał — dlatego
+// LCP 5000 zostaje, mimo że mediana jest dziś dużo niżej.
+//
+// AUDYT FONTÓW (Etap 6) ściął transfer „/" o 247 KB: subsety `latin-ext`
+// 274 576 → 27 412 B (16 polskich glifów zamiast ~800 znaków zakresu).
+// Zmierzone ciała odpowiedzi na „/": fonty 457 780 → 210 616 B,
+// CSS 106 390 → 98 723 B, razem 1 364 096 → 1 110 071 B.
+// Liczba PLIKÓW fontów się nie zmieniła (12) — subsetowanie tnie bajty,
+// nie żądania. Warn `font.count <= 8` świeci więc od Etapu 4.2 i nigdy
+// nie zgaśnie bez usunięcia kroju albo wagi (czyli zmiany designu).
+// KANDYDAT na osobny commit po zielonym CI tej gałęzi: warn count 8 → 12
+// oraz NOWY error `resource-summary:font:size` ≤ 230 000 (ratchet od
+// zmierzonych 210 616 B, ~9 % zapasu) — bo pilnować chcemy bajtów,
+// a nie liczby requestów.
 module.exports = {
   ci: {
     collect: {

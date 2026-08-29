@@ -32,9 +32,10 @@ import Navbar from "@/components/navbar/Navbar.astro";
 import PaperBackdrop from "@/components/PaperBackdrop.astro";
 import { CONTACT_ENDPOINT } from "@/components/sections/contact/contact-config";
 import { ui } from "@/i18n/ui";
+import JsonLd from "@/components/seo/JsonLd.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { MESSAGE_MAX, NAME_MAX, PLACE_MAX } from "@/lib/contact-form";
-import { FACEBOOK_URL, INSTAGRAM_URL } from "@/lib/jsonld";
+import { FACEBOOK_URL, INSTAGRAM_URL, localBusiness } from "@/lib/jsonld";
 import { POLICY_PATH } from "@/lib/routes";
 
 // Mapa obszaru działania — link z eksportu (wyszukiwarka, nie osadzona
@@ -48,6 +49,13 @@ const MAP_URL = "https://www.google.com/maps/search/Jelenia+G%C3%B3ra";
 const TAG_HOURS_1 = "KONTAKT 7 DNI W TYGODNIU";
 const TAG_HOURS_2 = "BUDOWA PN–PT 8–16";
 const TAG_REPLY = "ODPOWIADAMY W CIĄGU 2 DNI ROBOCZYCH";
+
+// Dane strukturalne (Etap 6): HomeAndConstructionBusiness — adres, geo,
+// godziny, NIP, sameAs. CELOWO bez telefonu i e-maila (D-CH5: JSON-LD
+// renderuje się statycznie do dist/, więc `telephone` wpisałoby pełny
+// numer wprost do źródła i unieważniło sloty antyscrapingowe).
+// Baza = Astro.site (stabilne `@id`) — uzasadnienie jak w index.astro.
+const jsonLd = localBusiness(Astro.site ?? Astro.url);
 ---
 
 <BaseLayout
@@ -63,6 +71,7 @@ const TAG_REPLY = "ODPOWIADAMY W CIĄGU 2 DNI ROBOCZYCH";
       document.documentElement.classList.add("js-motion");
     }
   </script>
+  <JsonLd slot="head" data={jsonLd} />
 
   <Navbar tone="dark" />
 

@@ -1,8 +1,6 @@
-<!-- Logo Pracownia EH/A — sam znaczek EH/A (ikony — Etap 6). Wektor odrysowany (potrace)
-     z maski base64 w docs/design/export (Etap 0.4); weryfikacja
-     pixel-diffem wobec oryginału: <0,3% pikseli różnicy.
-     fill=currentColor — kolor nadaje kontekst (atrament/papier). -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2836 2832">
+<!-- GENERAT: node scripts/make-icons.mjs — nie edytuj ręcznie.
+     Znaczek z src/assets/logo/eha-logo-sign.svg: ścieżki 1:1, przekadrowany viewBox. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="69.8 -65.0 2697.8 2697.8">
 <g transform="translate(0,2832) scale(0.1,-0.1)"
 fill="currentColor" stroke="none">
 <path d="M13873 23785 c-11 -8 -24 -30 -27 -49 -8 -41 -43 -125 -61 -146 -7

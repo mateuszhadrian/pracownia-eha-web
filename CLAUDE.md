@@ -1523,6 +1523,259 @@ p=none`. DMARC bez `sp=` i bez ostrego dopasowania ⇒ maile
   - UWAGI dla Etapu 6: LHCI mierzy `/`, a strona główna urosła o ~23 KB
     HTML i ~8 KB JS (pkt 1) — **odczytać budżety z pierwszego runa CI
     tego PR-a** i dopiero potem wracać do audytu subsetów fontów.
+- **Etap 6 (SEO, pomiar, polish) — WYKONANY** (2026-08-27/29; branch
+  `feat/etap6-seo`). Pięć pozycji kodowych; dwie z nich UNIEWAŻNIAJĄ
+  zapisy wyżej, a jedna (fonty) była największym długiem projektu.
+  - **1. JSON-LD podpięty.** Stan zastany zweryfikowany na `dist`:
+    **0 wystąpień** `application/ld+json`, a `seo.spec.ts` miał
+    strażnik ODWROTNY („JSON-LD nie występuje przed Etapem 6") —
+    do wymiany, nie do dopisania obok. Teraz `/kontakt/` =
+    `localBusiness()` (`HomeAndConstructionBusiness` + `geo`), `/` =
+    `webSite()` (`@graph`: `WebSite` + samodzielna `Organization`),
+    oba przez `<JsonLd slot="head" …>`. Pozostałe 6 tras: 0 węzłów
+    (kontrakt).
+    - **`geo`**: 50.973319, 15.675724 (Strzyżowiec 30 — współrzędne
+      podał Mateusz; zaokrąglone do 6 miejsc ≈ 0,1 m, dalsze cyfry to
+      szum odczytu z mapy). Liczby, nie ciągi.
+    - **Bazą URL-i jest `Astro.site`, nie `Astro.url`** — świadome
+      odstępstwo od wzorca canonicala w `BaseLayout`: `@id` to
+      identyfikator firmy i musi być TEN SAM na produkcji, preview
+      i w dev, inaczej `Organization` z `/` i firma z `/kontakt/`
+      przestają być tym samym bytem.
+    - Koszt zmierzony (build `main` w `git worktree`, ta sama maszyna):
+      `/` 72 636 → 73 436 B raw (+800), gzip 12 988 → 13 288 (+300);
+      `/kontakt/` 23 634 → 24 666 (+1032), gzip 7 133 → 7 564 (+431).
+    - **Walidacja `validator.schema.org`: 0 błędów / 0 ostrzeżeń** na
+      obu trasach. API zmieniło parametr — działa `POST` z polem
+      **`html`** (nie `textValue`/`url`); `textValue` zwraca
+      `fetchError: NOT_FOUND`, a nadużycie kończy się `429`.
+    - ⚠️ **ZMIERZONE, nierozstrzygnięte**: walidator przy `@graph`
+      z `publisher: {"@id": …}` raportuje **1 obiekt (sam WebSite)** —
+      identycznie jak przy `publisher` zagnieżdżonym inline, czyli
+      w wariancie, którego zakazuje lekcja D-E6. Bez `publisher` widzi
+      **2 obiekty**. Wszędzie 0 błędów. Nie rozstrzygnięto, czy to
+      zwijanie WIDOKU, czy utrata tripli — zrzut surowej odpowiedzi
+      przerwał limit 429. **Decyzja Mateusza: zostawiamy `publisher`**
+      (utrata realnej krawędzi semantycznej po to, żeby UI walidatora
+      pokazał dwa kafelki, to zła wymiana). Kandydat do domknięcia.
+  - **2. Ikony: „placeholdery z 19.08" to była NIEPRAWDA** (SPROSTOWANIE
+    zapisu z Etapu 0 i `capture-scripts.md`). Uruchomienie
+    `make-icons.mjs` bez zmian dało wyjście **bajt w bajt identyczne**
+    z plikami w `public/` — to był już finalny wynik z prawdziwego
+    wektora, tylko nikt go po Etapie 0.4 nie przejrzał. Wartość była
+    w tym, CO w tych plikach jest:
+    - **Kadr**: znaczek jest PODŁUŻNY (1,42:1), więc wpisany w kwadrat
+      zostawiał **41 % pustej wysokości**, i to niesymetrycznie —
+      marginesy 41/42 lewo-prawo, ale **81 górny wobec 129 dolnego**
+      (render 512). Teraz przycięcie do bboxu tuszu + wyśrodkowanie
+      z `ICON_PAD = 6 %`: marginesy **31/31/98/98**, znak z 83,8 % →
+      88 % szerokości kadru.
+    - **16 px = szara plama**: monogram jest włosowy, kreski schodzą
+      poniżej piksela. Rastry **≤ `ICON_BOLD_MAX_PX` (32)** dostają
+      obrys `ICON_BOLD_STROKE` (700 jednostek wewnętrznych svg);
+      48/180/192/512 zostają WŁOSOWE. Kontener ICO trzyma osobne
+      obrazki per rozmiar — dokładnie po to jest. Próg 32 px, bo przy
+      dpr 2 przeglądarka bierze do zakładki obrazek 32 px i rysuje go
+      w 16 CSS px.
+    - **`public/favicon.svg` stał się GENERATEM** (było: bajtowa kopia
+      `src/assets/logo/eha-logo-sign.svg`, dwa pliki bez powiązania).
+      To nie kosmetyka: Chrome/Firefox/Safari wolą
+      `rel=icon type="image/svg+xml"`, więc wykadrowanie samych rastrów
+      dałoby INNĄ IKONĘ zależnie od przeglądarki. Skrypt przelicza mu
+      sam `viewBox` (ścieżek nie rusza); SVG i `icon-512.png` mają ten
+      sam kadr **z dokładnością do 1 px**. `eha-logo-sign.svg`
+      (maska CSS Navbara i stopki) NIETKNIĘTY. Strażnik `GENERAT:`
+      w `seo.spec.ts`.
+      ⚠️ **Granica poprawki**: pogrubienie NIE dotyczy SVG (SVG nie zna
+      rozmiaru docelowego), więc przy dpr 1 przeglądarka preferująca
+      SVG dalej dostanie wersję włosową. Przy dpr 2 rysuje się w 32 px
+      i jest czytelna. Domknięcie = osobny, cięższy wariant znaku,
+      czyli decyzja projektowa — ODŁOŻONE.
+    - Tło `og-image` → `#f5efe3` (token `--bg`; było `#f4f1ea`).
+      `site.webmanifest`: `theme_color`/`background_color`
+      `#ffffff` → `#f5efe3` — manifest został pominięty przy korekcie
+      Etapu 4.2 (białe dawało biały pas na Androidzie).
+    - Rozmiary: favicon.svg 22 279 → 22 157, favicon.ico 2 068 → 2 491,
+      apple-touch 3 009 → 3 776, icon-192 3 109 → 4 063, icon-512
+      7 611 → 10 738, og-image 6 687 → 6 720 B (razem +7,2 KB).
+      Żaden z tych plików NIE jest na ścieżce krytycznej.
+  - **3. AUDYT SUBSETÓW FONTÓW — dług wiszący od Etapu 3, zamknięty.**
+    - Diagnoza: skan tekstu 8 tras + treści CMS pokazał, że z całego
+      zakresu `latin-ext` (~800 znaków) serwis używa **DOKŁADNIE 16
+      kodów** — polskich `ĄąĆćĘęŁłŃńŚśŹźŻż`, i niczego więcej
+      (`←`/`→` są poza oboma zakresami, jak dotąd). Za te 16 glifów
+      płaciliśmy **274 576 B** w sześciu plikach; sam `latin-ext`
+      Garamonda (113 928 B) był **2,6× cięższy** niż jego `latin`.
+    - Lekarstwo: `scripts/subset-fonts.mjs` (nowa devDependency
+      `subset-font` — harfbuzz; wzorzec `sharp` w `optimize-images.mjs`)
+      tnie te sześć plików do polskiego alfabetu. Generaty
+      w `src/assets/fonts/` (**27 412 B**, commitowane) — w `src/`,
+      a nie `public/`, żeby przeszły przez hashowanie Vite i dostały
+      `immutable`.
+    - `src/styles/fonts.css` (NOWY) — 9 WŁASNYCH `@font-face`. Kroje
+      ZMIENNE nie mają w Fontsource wejść per subset, więc ich
+      `index.css` wyleciał w całości; Plex Mono ma `latin-400/500/600.css`
+      i dalej idzie gotowcem. **Zero polegania na kolejności kaskady** —
+      dla każdego zakresu istnieje dokładnie JEDNA deklaracja.
+      Deskryptory (`font-display`, zakresy wag, `unicode-range`)
+      przepisane 1:1 z arkuszy Fontsource'a.
+    - **GOTCHA Vite**: trzy subsety mono (2,6–3,4 KB) wpadły pod
+      domyślny `assetsInlineLimit` (4096 B) i Vite wkleił je **jako
+      base64 do CSS**, czyli ~11,5 KB bajtów kroju wylądowało
+      w arkuszu BLOKUJĄCYM RENDER zamiast dogrywać się przez
+      `font-display: swap`. Stąd `assetsInlineLimit` wyłączony dla
+      `.woff2` w `astro.config.mjs` (pozostałe assety bez zmian).
+    - **GOTCHA CSS**: `*/` wewnątrz komentarza (`@fontsource*/index.css`)
+      zamyka komentarz — parser Tailwinda 4 wywraca build z mylącym
+      „Unterminated string".
+    - Pomiar (ciała odpowiedzi, `/`, mobile, ten sam build produkcyjny):
+      fonty **457 780 → 210 616 B**, CSS **106 390 → 98 723**
+      (Fontsource deklarował ~35 `@font-face`, my 12), dokument
+      72 636 → 73 442 (JSON-LD), **razem 1 364 096 → 1 110 071 B
+      (−254 025)**. Liczba żądań bez zmian (43). `dist`: **35 plików
+      woff2 / 816 884 B → 12 / 210 616 B**.
+    - LHCI lokalnie, oba buildy pod rząd na tej samej maszynie:
+      `/` perf 0,74 → **0,81**, LCP 6019 → **4749 ms**, total 1123 →
+      **881 KB**; `/polityka-prywatnosci/` perf 0,79 → **0,89**,
+      LCP 4825 → **3456 ms**, total 611 → **369 KB**.
+    - **ZASIĘG BASELINE'ÓW = ZERO, zmierzone TRZEMA drogami** (to nie
+      jest przypadek „zielone, ale nieaktualne"):
+      (1) metryki tekstu — szerokości `ĄĆĘŁŃŚŹŻ` przy wagach 400/800,
+      100/700, 400/600 + italik, w chromium/webkit/firefox: identyczne
+      co do TRZECIEGO miejsca po przecinku z buildem `main`
+      (495,406 / 507,500 / 298,500 …); oś zmiennej wagi żyje;
+      (2) rasteryzacja — 6 par (oryginał vs subset) × 3 silniki
+      × 4 rozmiary (11/16/28/96 px) × wagi, dpr 2: **0 różnych pikseli,
+      max delta kanału 0**;
+      (3) pełny zestaw wizualny: 126 passed.
+    - Kontrakt `tests/unit/fonts-subset.test.ts`: znak z `latin-ext`
+      spoza subsetu w źródłach ALBO w treści z panelu = czerwony test
+      z instrukcją. Bez niego taki znak narysowałby się krojem
+      zastępczym i NIKT BY NIE ZAUWAŻYŁ (layout się nie wywraca).
+    - Zakres znaków = **sam polski, świadomie**. Zmierzone rozszerzenie
+      o czeski/słowacki: 27 412 → **40 844 B** (+13,4 KB) na scenariusz,
+      który nie wystąpił, a strażnik i tak go złapie.
+  - **4. Budżety LHCI — PRZEJRZANE, ANI JEDEN PRÓG NIE RUSZONY.**
+    - `main` po merge PR #20 był CZERWONY (run 33073106228): mobile LCP
+      `/` **5446,77 ms** przy budżecie 5000, perf 0,77.
+    - **Kluczowa liczba: wariancja runnera to ±1300 ms na LCP przy
+      ZEROWEJ zmianie bajtów.** Run PR #20 (33071049182) i run `main`
+      po merge mają `resource-summary` identyczne CO DO BAJTA
+      (script 13 043, font 461 443, image 631 935, total 1 150 024),
+      a dały FCP 1144 → 2308 i LCP 4153 → 5447. Każdy próg bliżej niż
+      ~1,3 s od mediany zamieni bramkę w loterię — dlatego **LCP 5000
+      zostaje**, mimo że mediana jest dziś dużo niżej.
+    - `total ≤ 1,2 MB` miał przed tą sesją **4,2 % zapasu**
+      (1 150 024 z 1 200 000); po audycie fontów ~25 %. Zapas ma
+      pracować na Etap 7 — nie zacieśniamy.
+    - **Warn `resource-summary:font:count ≤ 8` daje 12 od Etapu 4.2
+      i nigdy nie zgaśnie**: subsetowanie tnie BAJTY, nie żądania;
+      zejście do 8 = usunięcie kroju albo wagi, czyli zmiana designu.
+      Ostrzeżenie, które świeci zawsze, przestaje być sygnałem.
+    - KANDYDAT na OSOBNY commit po zielonym CI tej gałęzi: warn count
+      8 → 12; NOWY error `resource-summary:font:size` ≤ 230 000
+      (ratchet od zmierzonych 210 616 B, ~9 % zapasu); `numberOfRuns`
+      3 → 5. W `lighthouserc.cjs` zmieniony WYŁĄCZNIE komentarz
+      (`git diff` bez ani jednej linii z progiem).
+  - **5. Polityka prywatności — przegląd PRAWNY, nie tylko data.**
+    Zgoda Mateusza na modyfikację treści („byle prawnie jak najlepiej").
+    - **Data rozdzielona na DWIE** (UNIEWAŻNIA zapis z 4.6 „OBOWIĄZUJE
+      OD 01.09.2026 / WERSJA 1.0"). Pierwotna wartość leżała
+      w PRZYSZŁOŚCI, a serwis przetwarza dane od **2026-08-26**
+      (formularz na produkcji: Turnstile/WAF widzą IP, Resend wysyła
+      pocztę), w Etapie 6 dochodzą Web Analytics i zgłoszenie sitemapy.
+      Opublikowany dokument mówiący o sobie „jeszcze nie obowiązuję" to
+      dokładnie ten rozjazd, którego ta strona ma nie dopuszczać.
+      Teraz: `EFFECTIVE_DATE` = **25.08.2026** (dzień pierwszej
+      publikacji — ZWERYFIKOWANY w gicie: commit `79d4842`, merge do
+      `main`; data wcześniejsza byłaby fikcją, bo dokumentu nie było),
+      `UPDATED_DATE` = **29.08.2026** (dzień redakcji; sesja stała dwa
+      dni, więc wartość poszła za dniem realnego wyjścia zmiany),
+      `VERSION` = **1.1**. Sekcja 09 obiecywała „istotne zmiany będą
+      odnotowane nową DATĄ OBOWIĄZYWANIA" — co w tej konstrukcji byłoby
+      nieprawdą, więc przepisana na numer wersji + datę aktualizacji.
+    - **Wykaz danych statystyki był ZAMKNIĘTY i NIEPEŁNY.** Zdanie
+      „Zliczane są **wyłącznie** odsłony, adresy podstron, kraj oraz
+      rodzaj urządzenia i przeglądarki" pomijało trzy rzeczy, które
+      Cloudflare Web Analytics realnie zbiera (zweryfikowane
+      w `developers.cloudflare.com` + blogu wdrożeniowym, 2026-08-27):
+      wymiary to **Country, Host, Path, Referer, Device type, Browser,
+      Operating system, Navigation type** plus odsłony/wizyty,
+      **page load time i Core Web Vitals**. Brakowało ODSYŁACZA
+      (a to na nim liczą się „wizyty"), SYSTEMU OPERACYJNEGO
+      i POMIARÓW SZYBKOŚCI. Dziś kierunek rozjazdu jest nieszkodliwy
+      (deklarujemy coś, czego nie zbieramy) — po włączeniu Analytics
+      stałby się szkodliwy. **Warunek konieczny dla zadania B6.**
+    - **Prawo sprzeciwu wyodrębnione — art. 21 ust. 4 RODO** („jasno
+      i ODRĘBNIE od wszelkich innych informacji"). Było pozycją 05
+      w wyliczance sześciu praw, a całe przetwarzanie stoi na
+      art. 6 ust. 1 lit. f. Teraz własny, wyróżniony akapit z opisem
+      skutku sprzeciwu.
+    - **Brak IOD powiedziany wprost — art. 13 ust. 1 lit. b** („jeżeli
+      ma to zastosowanie"). Obowiązku nie ma (art. 37 ust. 1), ale
+      milczenie czyta się jak przeoczenie.
+    - **Termin odpowiedzi — art. 12 ust. 3**: „bez zbędnej zwłoki,
+      najpóźniej w ciągu miesiąca".
+    - **Retencja statystyki — art. 13 ust. 2 lit. a**: było odesłanie
+      („zgodnie z ich politykami retencji"), jest liczba — pełne dane
+      **7 dni**, potem tylko postać **próbkowana (~10 % zdarzeń)**.
+      ⚠️ Cloudflare pisze „aggregated down to around 10%", co jest
+      PRÓBKOWANIEM, nie agregacją — pierwsza redakcja tego zdania była
+      nieścisła i została poprawiona.
+    - Dopisane, dlaczego nie ma banera cookie (nic nie zapisujemy
+      w urządzeniu — Cloudflare: „We don't use any client-side state,
+      like cookies or localStorage"; „We don't «fingerprint»
+      individuals via their IP address, User Agent string").
+    - Zweryfikowane i NIEZMIENIONE: administrator z NIP/REGON,
+      podstawy prawne per cel, odbiorcy, transfer poza EOG (SCC + DPF),
+      retencja korespondencji, skarga do PUODO, dobrowolność, brak
+      decyzji automatycznych, sloty antyscrapingowe (D-CH5).
+  - **Testy**: unit **91 passed** (było 86 — doszły geo i cztery
+    kontrakty subsetów); e2e — `seo.spec.ts` przepisany (strażnik
+    odwrotny → 4 kontrakty JSON-LD + `GENERAT:` faviconu + kolory
+    manifestu), `policy.spec.ts` +3 kontrakty (data nie z przyszłości,
+    obowiązkowe elementy art. 13/21, kompletność wykazu statystyki).
+  - **ZASIĘG BASELINE'ÓW: tylko `/polityka-prywatnosci/`, 9 z 12
+    zrzutów czerwonych.** `polityka-full` × 6 profili (dokument urósł
+    o 5 akapitów: 1366 4822→5179, 1920 5726→6168, SE 7519→8503 px;
+    ratio 0,16–0,26) oraz `polityka-top` × 3 desktopy (2 385 / 11 131 /
+    11 595 px). **`polityka-top` × 3 mobile przechodzi na ZIELONO, ale
+    ma nieaktualną treść** — zmierzone przy progu zbitym do zera:
+    **42–43 px** (stara data i „WERSJA 1.0"). Podręcznikowy przypadek
+    lekcji „zielony ≠ aktualny". **Decyzja: `--update-snapshots=all`
+    ZAWĘŻONE do `tests/visual/polityka.spec.ts`** — 24 pliki (12 na
+    platformę). `polityka-full` (~38 MB obu platform) i tak jest
+    przepisywane, więc dołożenie `polityka-top` (**6,7 MB**) podnosi
+    koszt trasy o 17 %; alternatywą była nieaktualna DATA DOKUMENTU
+    PRAWNEGO w baselinie. Inna klasa decyzji niż odrzucone 86,6 MB
+    z poprzedniej sesji. Fonty i ikony: zasięg ZERO (zmierzone).
+  - **LEKCJA: pomiar „ile realnie się rozjechało" przez zbicie progu
+    do zera.** Zamiast zgadywać, czy zielony zrzut ma aktualną treść,
+    ustaw w specu na czas JEDNEGO przebiegu `maxDiffPixelRatio: 0`
+    i `maxDiffPixels: 0`, odczytaj liczbę i przywróć plik (`git diff`
+    na specu musi wyjść czysty). Żaden baseline nie jest przy tym
+    ruszany. To jest tańsze i pewniejsze niż budowanie `main`
+    w worktree.
+  - **LEKCJA: `git worktree` + symlink do `node_modules` psuje build
+    Tailwinda.** `pnpm build` w worktree wywraca się na sprawdzeniu
+    zależności, a `npx astro build` przechodzi, ale utility w rodzaju
+    `font-serif` nie powstają — strona renderuje się z domyślnym
+    stosem Tailwinda. Objaw przy pomiarze: `getComputedStyle(h1)`
+    zwraca `ui-sans-serif, system-ui…` zamiast Garamonda. Zanim
+    porównasz cokolwiek z buildem `main`, SPRAWDŹ, że serwowana strona
+    ma właściwe kroje.
+  - **LEKCJA: port 4400 na maszynie Mateusza zajmuje `preview`
+    delunga.** Pomiar poszedł przeciwko CUDZEJ stronie i dał bezsensowne
+    liczby (w HTML był `KategorieSheets.css`, którego eha nie ma).
+    Przy ręcznym `astro preview` zawsze zweryfikuj, CO serwuje port —
+    np. `curl -s localhost:PORT | grep -o 'BaseLayout[^"]*css'`.
+  - UWAGI dla Etapu 7: konto CMS `pracownia-eha-cms` — włączyć 2FA na
+    telefonie klienta; **przekazanie konta Resend** (hasło + Setup Key
+    MFA u Mateusza); backupy (Część D instrukcji); domknąć trzy
+    świadomie odłożone sprawy: (a) kolizja plakietki z `×` w podglądzie
+    pełnoekranowym desktop (`right: 64px`), (b) cięższy wariant znaku
+    dla faviconu przy dpr 1, (c) ratchet budżetów LHCI po zielonym CI
+    (font count 8 → 12, nowy font size ≤ 230 000, numberOfRuns 3 → 5).
 
 ## Dokumentacja
 

@@ -6,13 +6,18 @@
 // — IBM Plex Sans Variable: body/UI,
 // — IBM Plex Mono: statyczne 400/500/600 (etykiety; brak wersji variable
 //   w Fontsource — wynik testu A/B Etapu 0.4).
-import "@fontsource-variable/eb-garamond/index.css";
-import "@fontsource-variable/eb-garamond/wght-italic.css";
-import "@fontsource-variable/ibm-plex-sans/index.css";
-import "@fontsource/ibm-plex-mono/400.css";
-import "@fontsource/ibm-plex-mono/500.css";
-import "@fontsource/ibm-plex-mono/600.css";
+//
+// ETAP 6 (audyt fontów): gotowe arkusze `index.css` krojów ZMIENNYCH
+// wyleciały — deklaracje @font-face stoją teraz w src/styles/fonts.css,
+// bo subsety `latin-ext` bierzemy własne (274 KB → 27 KB; uzasadnienie
+// i pomiar w nagłówku fonts.css). Plex Mono ma w pakiecie wejścia per
+// subset, więc jego `latin` dalej idzie gotowcem — bez `latin-ext`,
+// który dokłada fonts.css.
+import "@fontsource/ibm-plex-mono/latin-400.css";
+import "@fontsource/ibm-plex-mono/latin-500.css";
+import "@fontsource/ibm-plex-mono/latin-600.css";
 
+import "@/styles/fonts.css";
 import "@/styles/global.css";
 
 import LoadingOverlay from "@/components/ui/LoadingOverlay.astro";
@@ -20,14 +25,15 @@ import LoadingOverlay from "@/components/ui/LoadingOverlay.astro";
 // Preload krojów above-the-fold — skraca okno font-display:swap (mniejszy
 // „przeskok" z fontu systemowego przy nawigacji). Import ?url zamiast
 // hardkodu: hash pliku woff2 zmienia się co build. Strona jest PL-only,
-// więc kryte są oba subsety (latin + latin-ext — polskie diakrytyki).
-// Italiki Garamonda i Plex Mono celowo BEZ preloadu: nie są krytyczne
-// above-the-fold (dogrywają się swapem); zestaw do weryfikacji pomiarem
-// LHCI w Etapie 3.
+// więc kryte są oba subsety (latin + latin-ext — polskie diakrytyki);
+// od Etapu 6 `latin-ext` to NASZE subsety polskie (src/assets/fonts/),
+// więc preload dwóch dodatkowych plików kosztuje razem 12,8 KB zamiast
+// 145 KB. Italiki Garamonda i Plex Mono celowo BEZ preloadu: nie są
+// krytyczne above-the-fold (dogrywają się swapem).
+import garamondExtWoff2 from "@/assets/fonts/eb-garamond-latin-ext-wght-normal-pl.woff2?url";
+import plexExtWoff2 from "@/assets/fonts/ibm-plex-sans-latin-ext-wght-normal-pl.woff2?url";
 import garamondWoff2 from "@fontsource-variable/eb-garamond/files/eb-garamond-latin-wght-normal.woff2?url";
-import garamondExtWoff2 from "@fontsource-variable/eb-garamond/files/eb-garamond-latin-ext-wght-normal.woff2?url";
 import plexWoff2 from "@fontsource-variable/ibm-plex-sans/files/ibm-plex-sans-latin-wght-normal.woff2?url";
-import plexExtWoff2 from "@fontsource-variable/ibm-plex-sans/files/ibm-plex-sans-latin-ext-wght-normal.woff2?url";
 
 interface Props {
   title?: string;

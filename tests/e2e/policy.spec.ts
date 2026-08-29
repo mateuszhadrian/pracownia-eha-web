@@ -19,8 +19,9 @@ const SITE = "https://pracownia-eha.pl";
  *  docs/analiza-polityka.md §2 pkt 9). Kontrakt trzyma je tutaj, żeby
  *  zmiana daty była świadoma: dokument prawny nie zmienia daty „przy
  *  okazji" edycji treści. */
-const EFFECTIVE_DATE = "01.09.2026";
-const VERSION = "1.0";
+const EFFECTIVE_DATE = "25.08.2026";
+const UPDATED_DATE = "29.08.2026";
+const VERSION = "1.1";
 
 useChromium1920Only(
   "treść/meta polityki są niezależne od profilu — jeden projekt wystarczy",
@@ -90,10 +91,87 @@ test(`${POLICY_PATH}: pasmo daty obowiązywania jest wypełnione`, async ({
     `OBOWIĄZUJE OD ${EFFECTIVE_DATE}`,
   );
   await expect(page.locator(".pp-date")).toContainText(`WERSJA ${VERSION}`);
-  // sekcja 09 powtarza tę samą datę — w widoku z jednej stałej
+  // sekcja 09 niesie datę TEJ redakcji — inną niż data obowiązywania
+  // (dokument obowiązuje od pierwszej publikacji, tekst bywa poprawiany).
   await expect(page.locator(".pp-upd")).toHaveText(
-    `OSTATNIA AKTUALIZACJA: ${EFFECTIVE_DATE}`,
+    `OSTATNIA AKTUALIZACJA: ${UPDATED_DATE}`,
   );
+});
+
+test(`${POLICY_PATH}: data obowiązywania NIE jest z przyszłości`, async ({
+  page,
+}) => {
+  // Pierwotne 01.09.2026 wyprzedzało stan faktyczny o tydzień: formularz
+  // przetwarzał już dane od 26.08, a w Etapie 6 doszły Web Analytics
+  // i indeksowanie. Opublikowany dokument, który „jeszcze nie obowiązuje",
+  // to rozjazd kodu z dokumentem prawnym — ten kontrakt go łapie.
+  await gotoReady(page, POLICY_PATH);
+  const band = (await page.locator(".pp-date").innerText()).replace(
+    /\s+/g,
+    " ",
+  );
+  const [, d, m, y] = band.match(/OBOWIĄZUJE OD (\d{2})\.(\d{2})\.(\d{4})/)!;
+  const effective = Date.UTC(Number(y), Number(m) - 1, Number(d));
+  const today = new Date();
+  const midnight = Date.UTC(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+  );
+  expect(
+    effective,
+    `polityka obowiązuje od ${d}.${m}.${y}, a serwis przetwarza dane JUŻ DZIŚ`,
+  ).toBeLessThanOrEqual(midnight);
+});
+
+test(`${POLICY_PATH}: obowiązkowe elementy klauzuli informacyjnej RODO`, async ({
+  page,
+}) => {
+  // Art. 13 RODO wylicza, co MUSI się znaleźć. Ten kontrakt pilnuje
+  // elementów, które najłatwiej wypaść przy redakcji treści:
+  //   13(1)(b) — inspektor ochrony danych „jeżeli ma to zastosowanie",
+  //   13(2)(d) — prawo skargi do organu nadzorczego,
+  //   21(4)    — prawo sprzeciwu JASNO i ODRĘBNIE od innych informacji.
+  await gotoReady(page, POLICY_PATH);
+  await expect(page.locator("#pp-01")).toContainText(
+    "inspektora ochrony danych",
+  );
+  await expect(page.locator("#pp-07")).toContainText(
+    "skargę do Prezesa Urzędu Ochrony Danych Osobowych",
+  );
+  // Sprzeciw ma stać we WŁASNYM, wyróżnionym akapicie — nie tylko jako
+  // pozycja wyliczanki (art. 21 ust. 4 mówi wprost „odrębnie").
+  const objection = page.locator("#pp-07 p", { hasText: "prawo sprzeciwu" });
+  await expect(objection).toHaveCount(1);
+  await expect(objection.locator("strong")).toBeVisible();
+  await expect(objection).toContainText("art. 6 ust. 1 lit. f");
+});
+
+test(`${POLICY_PATH}: lista danych statystyki opisuje to, co Cloudflare realnie zbiera`, async ({
+  page,
+}) => {
+  // Lista jest ZAMKNIĘTA słowem „wyłącznie", więc każdy wymiar Web
+  // Analytics musi się w niej znaleźć. Cloudflare wystawia: Country, Host,
+  // Path, Referer, Device type, Browser, Operating system, Navigation type
+  // + odsłony/wizyty, page load time i Core Web Vitals (docs 2026-08-27).
+  // Brakowało odsyłacza, systemu operacyjnego i pomiarów szybkości.
+  await gotoReady(page, POLICY_PATH);
+  const sec = page.locator("#pp-02");
+  for (const needle of [
+    "odsłony",
+    "adresy podstron",
+    "z której do nas trafiłeś",
+    "kraj",
+    "rodzaj urządzenia",
+    "przeglądarka",
+    "system operacyjny",
+    "sposób wejścia",
+    "szybkości",
+  ]) {
+    await expect(sec, `brak „${needle}" w wykazie statystyki`).toContainText(
+      needle,
+    );
+  }
 });
 
 test(`${POLICY_PATH}: żaden placeholder designu nie został w treści`, async ({

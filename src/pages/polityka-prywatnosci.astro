@@ -32,11 +32,33 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import { CONTACT_PATH } from "@/lib/routes";
 
 // Data obowiązywania i wersja — pasmo daty designu było świadomie puste
-// („data wchodzi przy wdrożeniu"); wartości = decyzja Mateusza
-// z 2026-08-25 (analiza §2 pkt 9). JEDNO źródło dla pasma daty i chipa
+// („data wchodzi przy wdrożeniu"). JEDNO źródło dla pasma daty i chipa
 // „OSTATNIA AKTUALIZACJA" w sekcji 09 — kopie nie mogą się rozjechać.
-const EFFECTIVE_DATE = "01.09.2026";
-const VERSION = "1.0";
+//
+// ETAP 6 — data ROZDZIELONA na dwie i cofnięta z 01.09.2026 (zgoda
+// Mateusza). Pierwotna wartość była w PRZYSZŁOŚCI, a serwis przetwarza
+// dane od 2026-08-26 (formularz na produkcji: Turnstile/WAF widzą IP,
+// Resend wysyła pocztę) i w Etapie 6 dochodzą Web Analytics oraz
+// zgłoszenie sitemapy do Search Console. Opublikowany dokument mówiący
+// o sobie „jeszcze nie obowiązuję" to dokładnie ten rozjazd, którego ta
+// strona ma nie dopuszczać.
+//
+// Konstrukcja docelowa (art. 12 RODO — informacja ma być dostępna
+// i aktualna):
+//   EFFECTIVE_DATE — dzień, od którego dokument OBOWIĄZUJE = dzień jego
+//     pierwszej publikacji na produkcji. Zweryfikowane w gicie:
+//     commit 79d4842 „feat(polityka): /polityka-prywatnosci/ view",
+//     merge do main 2026-08-25. Wcześniej dokumentu nie było, więc
+//     data wcześniejsza byłaby fikcją.
+//   UPDATED_DATE — dzień TEJ redakcji tekstu. Musi być realny: sesja
+//     Etapu 6 stała dwa dni (redakcja 27.08, domknięcie 29.08), więc
+//     wartość idzie za dniem, w którym zmiana faktycznie wychodzi.
+//   VERSION — rośnie przy każdej istotnej zmianie treści (tu: wykaz
+//     danych statystyki i wyodrębnienie prawa sprzeciwu).
+// Kontrakt „data nie jest z przyszłości" siedzi w tests/e2e/policy.spec.ts.
+const EFFECTIVE_DATE = "25.08.2026";
+const UPDATED_DATE = "29.08.2026";
+const VERSION = "1.1";
 
 // Numery, kickery i tytuły sekcji — jedno źródło dla SPISU TREŚCI
 // i nagłówków sekcji (spis nie może opisywać czegoś innego niż treść).
@@ -208,6 +230,18 @@ const RIGHTS = [
               >formularza kontaktowego</a
             >.
           </p>
+          {
+            /* Art. 13 ust. 1 lit. b RODO wymaga danych inspektora ochrony
+              danych „jeżeli ma to zastosowanie". Nie mamy obowiązku go
+              wyznaczać (art. 37 ust. 1 — brak przetwarzania na dużą skalę
+              i danych szczególnych kategorii), ale MILCZENIE w tym miejscu
+              czyta się jak przeoczenie. Stwierdzamy to wprost. */
+          }
+          <p class="pp-p">
+            Nie wyznaczyliśmy inspektora ochrony danych — nie mamy takiego
+            obowiązku. We wszystkich sprawach dotyczących danych piszesz wprost
+            do nas, na powyższe adresy.
+          </p>
         </section>
 
         {/* ── 02 zakres danych ── */}
@@ -230,12 +264,16 @@ const RIGHTS = [
             Statystyka odwiedzin jest zbiorcza i nie identyfikuje osób: nie
             zapisujemy plików cookie ani żadnych danych w Twojej przeglądarce,
             nie nadajemy użytkownikom identyfikatorów i nie śledzimy Cię na
-            innych stronach. Zliczane są wyłącznie odsłony, adresy podstron,
-            kraj oraz rodzaj urządzenia i przeglądarki.
+            innych stronach. Zliczane są wyłącznie odsłony i adresy podstron,
+            adres strony, z której do nas trafiłeś, kraj, rodzaj urządzenia,
+            przeglądarka i system operacyjny, sposób wejścia na stronę oraz
+            podstawowe pomiary szybkości jej ładowania.
           </p>
           <p class="pp-p">
             Strona nie wyświetla reklam, nie profiluje użytkowników i nie używa
-            plików cookie do celów marketingowych.
+            plików cookie do celów marketingowych. Nie zapisujemy też żadnych
+            informacji w Twoim urządzeniu, więc nie prosimy Cię o zgodę na pliki
+            cookie — nie ma na co jej udzielać.
           </p>
           <p class="pp-note">
             Formularz nie przyjmuje załączników. Rzuty, ekspertyzy i zdjęcia
@@ -322,8 +360,12 @@ const RIGHTS = [
             >.
           </p>
           <p class="pp-p">
-            Krótkotrwałe logi techniczne u dostawców (np. logi wysyłki, logi
-            zapory) są usuwane automatycznie zgodnie z ich politykami retencji.
+            Krótkotrwałe logi techniczne u dostawców (logi wysyłki poczty, logi
+            zapory i mechanizmu antybotowego) są usuwane automatycznie zgodnie z
+            ich politykami retencji. Dane statystyki odwiedzin Cloudflare
+            przechowuje w pełnej postaci przez <span class="pp-dot">7 dni</span
+            >, a po tym czasie już tylko w postaci próbkowanej (ok. 10 %
+            zdarzeń).
           </p>
         </section>
 
@@ -344,10 +386,28 @@ const RIGHTS = [
               ))
             }
           </ol>
+          {
+            /* Art. 21 ust. 4 RODO: prawo sprzeciwu ma być przedstawione
+              „jasno i odrębnie od wszelkich innych informacji". Całe
+              przetwarzanie na tej stronie stoi na art. 6 ust. 1 lit. f,
+              więc pozycja 05 w wyliczance to za mało — stąd osobny,
+              wyróżniony akapit. */
+          }
           <p class="pp-p pp-p-gap">
+            <strong>Odrębnie zwracamy uwagę na prawo sprzeciwu.</strong> Przetwarzamy
+            dane przede wszystkim na podstawie prawnie uzasadnionego interesu (art.
+            6 ust. 1 lit. f RODO), a w takim przypadku możesz w dowolnym momencie
+            wnieść sprzeciw wobec przetwarzania — z przyczyn związanych z Twoją szczególną
+            sytuacją. Po jego otrzymaniu przestajemy przetwarzać dane, chyba że wykażemy
+            istnienie ważnych, prawnie uzasadnionych podstaw nadrzędnych wobec Twoich
+            interesów, praw i wolności, albo podstaw do ustalenia, dochodzenia lub
+            obrony roszczeń.
+          </p>
+          <p class="pp-p">
             Żeby skorzystać z tych praw, po prostu napisz lub zadzwoń — dane
-            kontaktowe w punkcie 01. Masz też prawo wnieść skargę do Prezesa
-            Urzędu Ochrony Danych Osobowych (<a
+            kontaktowe w punkcie 01. Odpowiadamy bez zbędnej zwłoki, najpóźniej
+            w ciągu miesiąca. Masz też prawo wnieść skargę do Prezesa Urzędu
+            Ochrony Danych Osobowych (<a
               class="pp-link"
               href="https://uodo.gov.pl"
               target="_blank"
@@ -378,9 +438,12 @@ const RIGHTS = [
           <h2 data-rev data-rev-d="1">{SECS[8].title}</h2>
           <p class="pp-p">
             Aktualna wersja polityki jest zawsze dostępna pod tym adresem.
-            Istotne zmiany będą odnotowane nową datą obowiązywania.
+            Dokument obowiązuje od dnia pierwszej publikacji (<span
+              class="pp-dot">{EFFECTIVE_DATE}</span
+            >); istotne zmiany odnotowujemy nowym numerem wersji i datą
+            aktualizacji poniżej.
           </p>
-          <p class="pp-upd">OSTATNIA AKTUALIZACJA: {EFFECTIVE_DATE}</p>
+          <p class="pp-upd">OSTATNIA AKTUALIZACJA: {UPDATED_DATE}</p>
         </section>
       </div>
     </div>

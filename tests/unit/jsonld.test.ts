@@ -67,6 +67,23 @@ describe("localBusiness()", () => {
     });
   });
 
+  it("niesie geo jako LICZBY w granicach Dolnego Śląska", () => {
+    // Współrzędne Strzyżowca 30 (Etap 6). schema.org dopuszcza też ciągi,
+    // ale validator.schema.org i Google czytają liczby bez niespodzianek;
+    // ramka to sanity-check, że nikt nie przestawił lat↔lon.
+    const geo = business.geo as {
+      "@type": string;
+      latitude: number;
+      longitude: number;
+    };
+    expect(geo["@type"]).toBe("GeoCoordinates");
+    expect(typeof geo.latitude).toBe("number");
+    expect(typeof geo.longitude).toBe("number");
+    expect(geo.latitude).toBeCloseTo(50.973319, 6);
+    expect(geo.longitude).toBeCloseTo(15.675724, 6);
+    expect(geo.latitude).toBeGreaterThan(geo.longitude);
+  });
+
   it("adresy obrazów i strony są absolutne (podglądy i walidator wymagają URL)", () => {
     for (const url of [business.url, business.image, business.logo]) {
       expect(String(url).startsWith(`${SITE}/`)).toBe(true);
