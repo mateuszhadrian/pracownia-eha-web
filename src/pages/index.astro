@@ -19,7 +19,9 @@ import HomeTradycja from "@/components/sections/home/HomeTradycja.astro";
 import WorkDetail from "@/components/sections/work/WorkDetail.astro";
 import WorkDetailOverlay from "@/components/sections/work/WorkDetailOverlay.astro";
 import { ui } from "@/i18n/ui";
+import JsonLd from "@/components/seo/JsonLd.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
+import { webSite } from "@/lib/jsonld";
 
 // Opis = lead hero (dotąd strona główna była bez description — szkielet).
 const DESCRIPTION =
@@ -33,6 +35,13 @@ const DESCRIPTION =
 // nawigacji (.hdr, z-index 50) malowałby się NA modalu. Ta sama lista co
 // w kaflach — wspólne źródło home-realizacje-data.
 const { shown: realizacje } = await homeRealizacje();
+
+// Dane strukturalne (Etap 6): @graph z WebSite + SAMODZIELNĄ Organization.
+// Bazą jest ZAWSZE Astro.site (produkcyjna domena z astro.config), a nie
+// Astro.url jak canonical w BaseLayout: `@id` węzłów to identyfikator
+// firmy, który ma być TEN SAM na produkcji, na preview i w dev — inaczej
+// Organization z `/` i firma z `/kontakt/` przestałyby być tym samym bytem.
+const jsonLd = webSite(Astro.site ?? Astro.url);
 ---
 
 <BaseLayout title={ui.pl["meta.title"]} description={DESCRIPTION}>
@@ -43,6 +52,7 @@ const { shown: realizacje } = await homeRealizacje();
       document.documentElement.classList.add("js-motion");
     }
   </script>
+  <JsonLd slot="head" data={jsonLd} />
 
   <Navbar />
 

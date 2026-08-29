@@ -1,0 +1,142 @@
+/* Kroje eha (E10) — deklaracje WŁASNE zamiast gotowych arkuszy Fontsource'a.
+ *
+ * DLACZEGO NIE gotowe `index.css` z pakietów Fontsource (zmiana Etapu 6,
+ * audyt fontów wiszący od Etapu 3): tamte arkusze deklarują KOMPLET subsetów
+ * (cyrylica, greka, wietnamski, latin, latin-ext). Przeglądarka pobiera
+ * z tego tylko to, czego potrzebuje — na „/" wychodziło 12 plików i
+ * 461 KB, czyli 40 % transferu strony — ale do `dist/` Vite kopiował
+ * wszystkie 35 plików, a przede wszystkim: SZEŚĆ subsetów `latin-ext`
+ * ważyło 274 KB i służyło DOKŁADNIE 16 glifom (polskie ĄąĆćĘęŁłŃńŚśŹźŻż —
+ * zmierzone skanem tekstu 8 tras plus treści CMS; nic innego z zakresu
+ * latin-ext w serwisie nie występuje).
+ *
+ * Stąd: `latin` bierzemy z plików Fontsource'a bez zmian, a `latin-ext`
+ * z własnych subsetów w src/assets/fonts/ (generuje je
+ * `node scripts/subset-fonts.mjs`, wynik commitowany — wzorzec
+ * optimize-images.mjs). 274 KB → 27 KB.
+ *
+ * Deskryptory (font-display, zakresy wag, unicode-range) są przepisane
+ * 1:1 z arkuszy Fontsource'a — to NIE jest miejsce na własne wartości.
+ * Plex Mono `latin` dalej jedzie gotowcem (`latin-400/500/600.css`
+ * w BaseLayout), bo pakiet statyczny MA wejścia per subset; kroje
+ * zmienne takich wejść nie mają i dlatego są tu wypisane ręcznie.
+ *
+ * ⚠️ Po zmianie tej listy albo zakresu znaków w subset-fonts.mjs
+ * przegeneruj pliki i uruchom `pnpm test:unit` (kontrakt
+ * tests/unit/fonts-subset.test.ts). */
+
+/* ── EB Garamond Variable — nagłówki i cytaty (oś wght 400–800) ───────── */
+@font-face {
+  font-family: "EB Garamond Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400 800;
+  src: url("@fontsource-variable/eb-garamond/files/eb-garamond-latin-wght-normal.woff2")
+    format("woff2-variations");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "EB Garamond Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400 800;
+  src: url("../assets/fonts/eb-garamond-latin-ext-wght-normal-pl.woff2")
+    format("woff2-variations");
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB,
+    U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "EB Garamond Variable";
+  font-style: italic;
+  font-display: swap;
+  font-weight: 400 800;
+  src: url("@fontsource-variable/eb-garamond/files/eb-garamond-latin-wght-italic.woff2")
+    format("woff2-variations");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "EB Garamond Variable";
+  font-style: italic;
+  font-display: swap;
+  font-weight: 400 800;
+  src: url("../assets/fonts/eb-garamond-latin-ext-wght-italic-pl.woff2")
+    format("woff2-variations");
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB,
+    U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ── IBM Plex Sans Variable — treść i UI (oś wght 100–700) ────────────── */
+@font-face {
+  font-family: "IBM Plex Sans Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 700;
+  src: url("@fontsource-variable/ibm-plex-sans/files/ibm-plex-sans-latin-wght-normal.woff2")
+    format("woff2-variations");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "IBM Plex Sans Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 700;
+  src: url("../assets/fonts/ibm-plex-sans-latin-ext-wght-normal-pl.woff2")
+    format("woff2-variations");
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB,
+    U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ── IBM Plex Mono — etykiety; STATYCZNE 400/500/600 (brak wersji
+      variable w Fontsource — wynik testu A/B Etapu 0.4). `latin` idzie
+      gotowcem z pakietu, tu tylko polskie subsety `latin-ext`. ───────── */
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url("../assets/fonts/ibm-plex-mono-latin-ext-400-normal-pl.woff2")
+    format("woff2");
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB,
+    U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url("../assets/fonts/ibm-plex-mono-latin-ext-500-normal-pl.woff2")
+    format("woff2");
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB,
+    U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url("../assets/fonts/ibm-plex-mono-latin-ext-600-normal-pl.woff2")
+    format("woff2");
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB,
+    U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}

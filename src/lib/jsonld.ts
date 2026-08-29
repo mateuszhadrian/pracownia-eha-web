@@ -1,9 +1,10 @@
 // Dane strukturalne schema.org — JEDYNE źródło danych firmy dla JSON-LD.
-// STAN Etapu 0: dane Pracowni EH/A wpisane, ale węzły NIE są jeszcze
-// renderowane na stronach — podpięcie, geo, walidacja validator.schema.org
-// i ostateczny kształt = Etap 6 (§9 analizy: /kontakt/ =
-// HomeAndConstructionBusiness, / = @graph WebSite + samodzielna
-// Organization — nie zagnieżdżać w publisher).
+// STAN Etapu 6: węzły RENDEROWANE — `localBusiness()` na /kontakt/
+// i `webSite()` na / (przez <JsonLd slot="head" …>), typ
+// HomeAndConstructionBusiness potwierdzony (§5.5 analizy), `geo`
+// uzupełnione, walidacja validator.schema.org przeprowadzona.
+// Strona główna dostaje @graph z WebSite + SAMODZIELNĄ Organization —
+// nie zagnieżdżaj jej z powrotem w publisher (lekcja D-E6).
 //
 // KONTRAKT ANTYSCRAPINGOWY (D-CH5 z szablonu): ten moduł CELOWO nie zna
 // telefonów ani e-maila i nie wolno mu ich poznać. Fragmenty numerów/adresu
@@ -33,6 +34,11 @@ export const BUSINESS = {
   country: "PL",
   vatID: "PL5272449969",
   areaServed: "Polska",
+  /** Współrzędne Strzyżowca 30 (podane przez Mateusza, Etap 6; zaokrąglone
+   *  do 6 miejsc = ok. 0,1 m — dalsze cyfry to szum odczytu z mapy).
+   *  schema.org oczekuje liczb, nie ciągów. */
+  latitude: 50.973319,
+  longitude: 15.675724,
 } as const;
 
 /** Godziny „Na budowie pn.–pt. 8:00–16:00" (ustalenie z analizy §9).
@@ -50,8 +56,8 @@ const abs = (site: string | URL, path: string) =>
   new URL(path, typeof site === "string" ? site : site.href).href;
 
 /** Węzeł firmy dla /kontakt/ — `HomeAndConstructionBusiness` to podtyp
- *  `LocalBusiness` dla profilu remontowego (decyzja robocza §5.5 analizy;
- *  potwierdzenie + geo w Etapie 6). */
+ *  `LocalBusiness` dla profilu remontowego (§5.5 analizy — decyzja
+ *  potwierdzona w Etapie 6 razem z `geo`). */
 export function localBusiness(site: string | URL): Record<string, unknown> {
   return {
     "@context": "https://schema.org",
@@ -69,6 +75,11 @@ export function localBusiness(site: string | URL): Record<string, unknown> {
       postalCode: BUSINESS.postalCode,
       addressLocality: BUSINESS.locality,
       addressCountry: BUSINESS.country,
+    },
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: BUSINESS.latitude,
+      longitude: BUSINESS.longitude,
     },
     openingHoursSpecification: OPENING_HOURS.map((slot) => ({
       "@type": "OpeningHoursSpecification",

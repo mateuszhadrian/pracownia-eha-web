@@ -62,6 +62,14 @@ w tym samym PR (ostatni wpis = skasowanie pliku).
   `mcr.microsoft.com/playwright:v<wersja>-noble`). Zamierzona zmiana
   wyglądu = kod + OBA komplety w jednym PR. Kolejność NA ZAWSZE:
   kod → workflow linux → commit darwin na końcu (bot-push nie wyzwala CI).
+- **Zielony zrzut NIE znaczy „baseline aktualny"** — różnica może siedzieć
+  pod per-shot `maxDiffPixelRatio`. Żeby ZMIERZYĆ, ile realnie się
+  rozjechało, ustaw w specu na czas JEDNEGO przebiegu
+  `maxDiffPixelRatio: 0` i `maxDiffPixels: 0`, odczytaj liczbę z logu
+  i przywróć plik (`git diff` na specu musi wyjść czysty). Żaden baseline
+  nie jest przy tym ruszany. Tańsze i pewniejsze niż budowanie `main`
+  w `git worktree` (Etap 6: `polityka-top` na trzech profilach mobilnych
+  przechodził na zielono z NIEAKTUALNĄ datą dokumentu prawnego — 42–43 px).
 - ZAKAZ regenerowania baseline'u w celu „naprawienia" czerwonego testu bez
   pokazania diffu Mateuszowi i jego zgody (blokada Edit/Write także
   w settings.json). Nigdy nie „naprawiaj" rozjazdu darwin↔linux globalnym
@@ -85,6 +93,19 @@ w tym samym PR (ostatni wpis = skasowanie pliku).
   decyzją Mateusza (osobny commit), po pomiarze w CI (`lhci collect`
   z `numberOfRuns=5`, potem `node scripts/lhci-median.mjs`). Lokalny
   `lhci` wypada gorzej niż CI (mnożnik CPU) — nie jest podstawą ratchetu.
+  ⚠️ **WARIANCJA RUNNERA: ±1300 ms na LCP przy ZEROWEJ zmianie bajtów**
+  (Etap 6). Dwa przebiegi CI na identycznym co do bajta
+  `resource-summary` dały na „/" FCP 1144 → 2308 i LCP 4153 → 5447
+  (runy 33071049182 i 33073106228). Wniosek operacyjny: (1) każdy próg
+  bliżej niż ~1,3 s od mediany zamieni bramkę w loterię — LCP 5000
+  zostaje, mimo że mediana jest dziś dużo niżej; (2) pojedynczy czerwony
+  `lighthouse` na LCP NIE dowodzi regresji — najpierw porównaj
+  `resource-summary` obu runów, i dopiero różnica w BAJTACH jest
+  sygnałem. Stan po Etapie 6 (audyt fontów): fonty na „/" 457 780 →
+  210 616 B, total 1 364 096 → 1 110 071 B; **12 plików fontów zostaje
+  12** (subsetowanie tnie bajty, nie żądania), więc warn `fonty ≤ 8`
+  świeci ZAWSZE — kandydat na osobny commit: count 8 → 12 + nowy error
+  `resource-summary:font:size` ≤ 230 000.
 - Test mediów R2 (`CHECK_REMOTE_MEDIA=1`) tylko poza ścieżką PR
   (zewnętrzna sieć = flaky).
 - Wersje `playwright` i `@playwright/test` podnoś PARĄ (jeden zestaw
