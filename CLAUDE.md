@@ -1862,12 +1862,27 @@ p=none`. DMARC bez `sp=` i bez ostrego dopasowania ⇒ maile
       przy pliku w PEŁNI zbuforowanym symulowane `waiting` natychmiast
       wraca do `playing`, więc kontrakt „stany są rozłączne" traci sens.
       **Ten test POTRZEBUJE dużego, CZĘŚCIOWO zbuforowanego materiału** —
-      stub go unieważnia. Zastosowano więc większy budżet: `test.slow()`
-      na describe (30 → 90 s; samo podniesienie asercji nic by nie dało,
-      bo konfiguracja nie ma globalnego `timeout` i domyślne 30 s ucinało
-      test) plus asercje `is-playing` 15 s → **40 s**. Lokalnie 12/12.
-      Właściwe domknięcie (bramka `CHECK_REMOTE_MEDIA` dla tych dwóch
-      testów) = Etap 7.
+      stub go unieważnia.
+      **SAM WIĘKSZY BUDŻET TEŻ NIE WYSTARCZYŁ** — i to jest rozstrzygający
+      dowód. Przy `test.slow()` (30 → 90 s) i asercjach 40 s
+      (run 33262279754) raport pokazał sekwencję klas: `lb-slide`
+      (5 sond) → `is-loading` (36 sond) → **`lb-slide` z powrotem**
+      (42 sondy). Powrót do podpowiedzi zachodzi WYŁĄCZNIE na
+      `pause`/`error`/`abort`, czyli pobieranie 13,4 MB zostało
+      PRZERWANE, a nie było wolne. Żaden limit czasu tego nie naprawi —
+      diagnoza „za krótki timeout" była BŁĘDNA.
+      **Rozwiązanie: BRAMKA `CHECK_REMOTE_MEDIA`** na describe, wzorem
+      `media-r2.test.ts` — te dwa testy nie biegają ani na ścieżce PR,
+      ani na `main` (żaden workflow nie ustawia zmiennej), tylko
+      świadomie: `CHECK_REMOTE_MEDIA=1 pnpm test:e2e` oraz
+      w `/release-check`, gdzie dopisano dla nich osobną komendę.
+      Zweryfikowane: bez zmiennej **12 skipped**, z nią **12 passed**.
+      Większy budżet ZOSTAJE, bo pomaga przy przebiegu lokalnym, ale
+      rozstrzyga bramka.
+      ⚠️ **Koszt tej decyzji jest realny**: wskaźnik ładowania wideo nie
+      ma już pokrycia w CI. Świadomy wybór — test padający co drugi raz
+      uczy ignorowania czerwonego CI, a to gorsze niż brak testu.
+      `/release-check` jest jedynym miejscem, gdzie ten kontrakt biega.
     - **DWIE PUŁAPKI WERYFIKACYJNE, które kosztowały czas w tej sesji:**
       (1) **na Cloudflare Pages „HTTP 200" niczego nie dowodzi** —
       zmyślona nazwa `nie-ma-takiego-pliku-xyz.woff2` też zwraca 200,

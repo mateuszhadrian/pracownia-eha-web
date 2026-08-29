@@ -538,8 +538,21 @@ test.describe("wskaźnik ładowania wideo w podglądzie", () => {
   // w pełni zbuforowanym pliku symulowane `waiting` natychmiast wraca do
   // `playing`, więc asercja „stany są rozłączne" (niżej) traci sens —
   // ten test POTRZEBUJE dużego, częściowo zbuforowanego materiału.
-  // Stąd większy budżet zamiast usuwania zależności; właściwe domknięcie
-  // (bramka CHECK_REMOTE_MEDIA) = Etap 7.
+  //
+  // SAM WIĘKSZY BUDŻET TEŻ NIE WYSTARCZYŁ (run 33262279754, 40 s): raport
+  // pokazał sekwencję klas `lb-slide` → `is-loading` (36 sond) →
+  // `lb-slide`, czyli POWRÓT do podpowiedzi. Ta ścieżka zachodzi tylko na
+  // `pause`/`error`/`abort` — pobieranie 13,4 MB zostało PRZERWANE, a nie
+  // było wolne. Żaden limit czasu tego nie naprawi. Budżet zostaje, bo
+  // pomaga przy świadomym przebiegu lokalnym, ale rozstrzyga bramka.
+  // BRAMKA: te dwa testy NIE biegają na ścieżce PR — wzorzec
+  // `media-r2.test.ts` i reguła testing.md („zewnętrzna sieć = flaky").
+  // Odpalasz je świadomie: `CHECK_REMOTE_MEDIA=1 pnpm test:e2e`, oraz
+  // w `/release-check`.
+  test.skip(
+    !process.env.CHECK_REMOTE_MEDIA,
+    "odtwarzanie realnego wideo z R2 — poza ścieżką PR (CHECK_REMOTE_MEDIA=1)",
+  );
   test.slow(); // 30 s → 90 s: samo podniesienie asercji nic by nie dało
 
   test("zacięcie w trakcie zapala plakietkę „ładuję”, start ją gasi", async ({

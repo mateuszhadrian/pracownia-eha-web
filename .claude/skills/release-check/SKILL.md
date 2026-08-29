@@ -27,6 +27,12 @@ Uruchom po kolei; każdy błąd napraw albo zgłoś:
   obejrzenia w `test-results/`; interpretacja: skill `/verify-mobile`);
 - `CHECK_REMOTE_MEDIA=1 pnpm exec vitest run tests/unit/media-r2.test.ts`
   — dostępność mediów R2 (HEAD);
+- `CHECK_REMOTE_MEDIA=1 npx playwright test tests/e2e/work-index.spec.ts --grep "wskaźnik ładowania"`
+  — ODTWARZANIE realnego filmu z R2 i wskaźnik ładowania. Ta sama bramka
+  co wyżej i z tego samego powodu: film waży 13,4 MB, więc na ścieżce PR
+  test jest loterią (Etap 6: trzy porażki w dwóch przebiegach CI, potem
+  czysty przebieg na tym samym kodzie). TO JEST JEDYNE MIEJSCE, w którym
+  ten kontrakt jeszcze biega — nie pomijaj go przed wydaniem;
 - `pnpm exec lhci autorun --config=lighthouserc.cjs` oraz
   `rm -rf .lighthouseci && pnpm exec lhci autorun --config=lighthouserc.desktop.cjs`
   — budżety wydajnościowe (uwaga: progi mierzone na runnerze CI; lokalny
