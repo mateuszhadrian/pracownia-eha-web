@@ -344,6 +344,66 @@ test.describe("detal desktop: modal, galeria, projnav", () => {
     await expect(count).toHaveText(`02 / ${pad(shots)}`);
   });
 
+  /** REGRESJA (zgłoszenie klienta i Mateusza: „czasem po otwarciu
+   *  realizacji przestaje działać przełączanie kadrów"). Przyczyna nie
+   *  była w mechanizmie galerii, tylko w geście SZUFLADY z overlay.ts:
+   *  `#work-detail` niósł `data-overlay-kind="sheet"` także na
+   *  desktopie, więc wciśnięcie myszy w panelu + kilka pikseli dryfu
+   *  w dół uzbrajało drag-to-dismiss. Ten nadpisuje panelowi
+   *  `transform: translateY(dy)` — co na wyśrodkowanym modalu KASUJE
+   *  `translate(-50%, -50%)` i wyrzuca strzałkę spod kursora (zmierzone:
+   *  1362,1161 zamiast 732,763 przy oknie 1440×900). Po puszczeniu
+   *  finishDrag przywracał panel, więc jedynym śladem był zgubiony klik.
+   *  Test odtwarza NIEDOKŁADNY KLIK, nie zwykły — zwykły przechodził
+   *  przez cały czas trwania błędu. Panel mierzymy W TRAKCIE gestu
+   *  (między ruchami myszy), a nie po nim: to kontrakt „gest w ogóle się
+   *  nie uzbraja", a nie wyścig z animacją powrotu. */
+  test("niedokładny klik (dryf myszy w dół) nie ginie na geście szuflady", async ({
+    page,
+  }) => {
+    const shots = ENTRIES[0].gallery.length;
+    test.skip(shots < 2, "pierwszy wpis ma jeden kadr");
+    // gest overlay.ts przejmuje ruch od DRAG_SLOP_PX = 8 px w dół;
+    // 24 px to zwykły dryf gładzika, z zapasem ponad próg
+    const DRIFT_PX = 24;
+
+    await gotoReady(page, PATH);
+    const detail = await openDetail(page, await revealFirstCard(page));
+
+    // wariant desktopowy NIE jest szufladą — inaczej gest się uzbraja
+    await expect(detail).toHaveAttribute("data-overlay-kind", "modal");
+
+    const count = detail.locator("[data-shotcount]");
+    await expect(count).toHaveText(`01 / ${pad(shots)}`);
+
+    const box = await detail.locator("[data-nextshot]").boundingBox();
+    expect(box).not.toBeNull();
+    const x = box!.x + box!.width / 2;
+    const y = box!.y + box!.height / 2;
+    const panelTransform = () =>
+      detail
+        .locator("[data-overlay-panel]")
+        .first()
+        .evaluate((el) => ({
+          inline: (el as HTMLElement).style.transform,
+          x: Math.round(el.getBoundingClientRect().x),
+        }));
+    const spoczynek = await panelTransform();
+
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    for (let i = 1; i <= 4; i++) {
+      await page.mouse.move(x, y + (DRIFT_PX * i) / 4);
+      // panel ma stać nieruchomo przez CAŁY gest
+      expect(await panelTransform()).toEqual(spoczynek);
+    }
+    await page.mouse.up();
+
+    // klik dotarł do strzałki
+    await expect(count).toHaveText(`02 / ${pad(shots)}`);
+    await expect(detail).toHaveClass(/is-open/);
+  });
+
   test("projnav przechodzi po PEŁNEJ liście (kontekst E5)", async ({
     page,
   }) => {
@@ -864,6 +924,17 @@ test.describe("detal mobile: bottom sheet, karuzela, gesty", () => {
     await page.mouse.up();
 
     await expect(detail).toBeHidden();
+  });
+
+  // strażnik pary z kontraktem desktopowym („…nie ginie na geście
+  // szuflady"): na mobile wariant MUSI zostać szufladą, inaczej
+  // drag-to-dismiss przestałby działać razem z tamtą poprawką
+  test("wariant mobilny zostaje szufladą (gest drag-to-dismiss uzbrojony)", async ({
+    page,
+  }) => {
+    await gotoReady(page, PATH);
+    const detail = await openDetail(page, await revealFirstCard(page));
+    await expect(detail).toHaveAttribute("data-overlay-kind", "sheet");
   });
 
   test("swipe-down DOTYKIEM zamyka sheet z treści (a nie tylko myszą)", async ({

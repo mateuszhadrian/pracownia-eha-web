@@ -691,7 +691,17 @@ const showDashes = p.gallery.length <= WORK_GALLERY_DASHES_MAX;
       height: 100%;
       margin: 0;
       background: var(--bg-dark);
-      overflow: hidden;
+      /* `clip`, NIE `hidden` (lekcja 4.4 cz. 1 pkt 5): tor przejeżdża
+         translateX-em, ale jego slajdy WYSTAJĄ poza kadr, a pudełko
+         `overflow: hidden` da się przewinąć PROGRAMOWO
+         (scrollIntoView / fokus / szukajka). Zmierzone przy sondzie:
+         jedno takie przewinięcie ustawia .dt-gal scrollLeft = 718 px
+         i wypycha z panelu pasek galerii — strzałki kadrów lądują na
+         x = 14 px zamiast 732 i przestają być klikalne, aż do zamknięcia
+         detalu. `clip` nie tworzy kontenera scrolla, więc tej drogi nie
+         ma; obcinanie jest identyczne. */
+      overflow: hidden; /* fallback dla silników bez overflow: clip */
+      overflow: clip;
     }
     .dt-gal::after {
       content: "";

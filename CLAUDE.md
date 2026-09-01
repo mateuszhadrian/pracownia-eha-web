@@ -2178,6 +2178,138 @@ playwright-report`; nazwa pliku PNG w `data/` to jego własna suma
     powtarza się na drugiej platformie.** Sama gęstość ani sam rozmiar
     diffu NIE rozstrzygają.
 
+- **Błąd galerii w detalu realizacji — NAPRAWIONY** (2026-09-01, branch
+  `fix/gest-szuflady-na-desktopie`; zgłoszenia klienta i Mateusza).
+  Objaw: na desktopie ZDARZA SIĘ, że po otwarciu realizacji strzałki
+  przeglądania kadrów „przestają działać" — klika się i nic. ZERO nowych
+  mechanik; naprawa to **CZWARTE świadome odstępstwo** od „mechanizm work
+  1:1" (po klawiaturze ←/→ z E7, `boolean` z `openWorkDetail` i wskaźniku
+  ładowania wideo), addytywne: dochodzi jedna funkcja synchronizująca
+  atrybut, przepływ otwierania/klonowania/nawigacji NIETKNIĘTY.
+  - **PRZYCZYNA — gest SZUFLADY uzbrojony na desktopowym MODALU.**
+    `#work-detail` niesie w SSR `data-overlay-kind="sheet"` i **nikt tego
+    nie przestawiał na desktopie**, choć wariant ≥1024 px jest
+    wyśrodkowanym modalem. `startDrag()` w `overlay.ts` uzbraja
+    drag-to-dismiss przy KAŻDYM `pointerdown` w panelu (mysz, bo dotyk
+    idzie ścieżką `touch*`), o ile `kind === "sheet"` i obszar pod
+    kursorem jest przewinięty na górę. Na desktopie galeria siedzi
+    w `.dt` (nie w `[data-overlay-scroll]`), więc `scroller = panelOf()`
+    ma `scrollTop === 0` ZAWSZE ⇒ gest uzbraja się na strzałkach kadrów
+    zawsze. Po `DRAG_SLOP_PX = 8` px ruchu w dół `moveDrag` ustawia
+    panelowi inline'owy `transform: translateY(dy)`, który **KASUJE
+    klasowe `translate(-50%, -50%)`**.
+  - **POMIAR (chromium, okno 1440×900, panel 1260×774):** przy `dy = 9`
+    panel skacze z `90,63` na `223,145`, przy `dy = 14` na `720,455`
+    — czyli o pół swojego rozmiaru w dół i w prawo; strzałka „następny
+    kadr" wędruje z `732,763` na **`1362,1161`, czyli POZA EKRAN**.
+    Puszczenie myszy woła `finishDrag`, który przywraca panel na
+    `90,63` i czyści style — więc **jedynym śladem jest ZGUBIONY KLIK**
+    (licznik stoi na `01 / 03`). Próg zmierzony na trzech silnikach
+    identycznie: **klik ginie od ~9 px dryfu w dół** między wciśnięciem
+    a puszczeniem (przy ≥ 96 px albo „flicku" `vy > 0,55 px/ms` modal
+    dodatkowo się ZAMYKA). To jest zwykły niedokładny klik gładzikiem —
+    stąd „zdarza się".
+  - **Zasięg objawu jest szerszy niż zgłoszenie**: gest przechwytuje
+    KAŻDE wciśnięcie w panelu `.dt` — strzałki kadrów, klik w kadr
+    (otwarcie podglądu), CTA `dt-ask`, a także **zaznaczanie tekstu myszą
+    w opisie realizacji** (zaznaczanie w dół przeciągało modal zamiast
+    zaznaczać). Bezpieczne były: `[data-overlay-close]` i
+    `[data-overlay-nodrag]` (wyjątki w `startDrag`) oraz projnav, który
+    leży POZA `[data-overlay-panel]`.
+  - **NAPRAWA**: `syncOverlayKind()` w `open-detail.ts` — moduł będący
+    właścicielem dualizmu modal ↔ sheet trzyma `data-overlay-kind`
+    zgodny z REALNYM wariantem (`"modal"` gdy `desktopMQ.matches`,
+    inaczej `"sheet"`); wołane w `bindChrome()` i w istniejącym
+    handlerze `desktopMQ` change. `overlay.ts` **NIETKNIĘTY** — jest
+    generyczny i nie zna progu widoku, robi dokładnie to, co mu kazano.
+    SSR zostaje przy `"sheet"`: bez JS nakładki nie ma w ogóle.
+    Po zmianie te same pomiary: dryf 9/20/60 px → klik dociera,
+    panel stoi nieruchomo, `dy = 60` już nie zamyka modala (chromium,
+    webkit, firefox).
+  - **HARTOWANIE przy okazji (znalezione sondą, NIE dowiedzione jako
+    droga użytkownika)**: `.dt-gal` na desktopie miał `overflow: hidden`,
+    czyli był KONTENEREM SCROLLA, a slajdy toru wystają poza kadr. Jedno
+    programowe przewinięcie (`scrollIntoView` przy fokusie / szukajka —
+    u mnie wywołał je Playwright przed klikiem w slajd poza kadrem)
+    ustawiło `.dt-gal scrollLeft = 718 px` i **na stałe** wypchnęło pasek
+    galerii z panelu: `.dt-galbar` z `90,741` na `-628,741`, strzałka
+    z `732,763` na `14,763` (potwierdzone: `getComputedStyle` toru
+    pokazywał transform TOŻSAMOŚCIOWY, a `getBoundingClientRect` −628 —
+    czyli scroll, nie transform). Stan przeżywał zamknięcie podglądu
+    i uspokojenie; kasowało go dopiero zamknięcie detalu (`mount`
+    tworzy świeżą galerię). Lekarstwo: `overflow: clip` (+ `hidden` jako
+    fallback) — klip identyczny, kontenera scrolla nie ma. To ta sama
+    lekcja co przy `CollapsibleText` w 4.4 cz. 1 pkt 5.
+  - **Czego NIE potwierdziłem**: „naprawiło dopiero odświeżenie strony"
+    (relacja Mateusza). Zmierzony mechanizm jest PER GEST — po
+    nieudanym kliknięciu stan modułu i style panelu wracają do czystych,
+    a kolejny czysty klik działa (sprawdzone: 3 przechwycone gesty pod
+    rząd, potem klik = działa, na trzech silnikach). Reload nie jest
+    więc potrzebny; najprawdopodobniejsze wyjaśnienie relacji jest takie,
+    że kolejne próby „mocniejszego kliknięcia" tym bardziej dryfowały,
+    a po przeładowaniu klik padł czysto. **Do potwierdzenia u Mateusza:**
+    gładzik czy mysz, i czy zamknięcie + ponowne otwarcie modala
+    pomagało (jeśli TAK — to ten błąd; jeśli NIE pomagało, a pomagał
+    tylko reload — zostaje coś jeszcze).
+  - **ŚLEDZTWO — co WYKLUCZONO i na jakiej podstawie** (żeby nikt nie
+    szedł tymi drogami drugi raz):
+    - _„Klonowanie z `<template>` zrywa bindowanie strzałek"_ — NIE:
+      strzałki kadrów nie mają listenerów elementowych, obsługuje je
+      delegacja na `document` (`open-detail.ts`, gałęzie `data-prevshot`
+      / `data-nextshot`).
+    - _„`disabled` zostaje z poprzedniego projektu"_ — NIEMOŻLIWE:
+      `mount()` klonuje `<template>` (`cloneNode`), więc przyciski są
+      za każdym razem NOWE, bez atrybutu; „obie strzałki disabled"
+      wymagałoby galerii jednokadrowej.
+    - _„Stan modułu się zakleszcza" (`lbOpen`, `exiting`, `swapSeq`)_ —
+      NIE ZNALEZIONO ścieżki ani statycznie, ani fuzzerem z CZTEREMA
+      czarnymi skrzynkami po uspokojeniu (klik w strzałkę / klawiatura
+      ←/→ — łapie zablokowane `lbOpen` / projnav — łapie zablokowane
+      `exiting` / Esc zamyka detal — łapie połknięty Esc): 18 przebiegów
+      chromium + 14 webkit + 14 firefox × 14–16 losowych akcji, zero
+      trafień.
+    - _„Zduplikowana galeria w panelu, `q()` trafia w martwą"_ — NIE:
+      sonda liczyła `[data-gal]` / `[data-track]` po każdej akcji,
+      zawsze 1.
+    - _„Przecieka `transform`/`transition` panelu po przerwanym
+      przejeździe projnav"_ — NIE: `finish()` w `overlay.ts` czyści
+      `p.style.transform` i `p.style.transition` przy każdym zamknięciu.
+  - **Testy: DWA nowe kontrakty w `work-index.spec.ts`** (para).
+    Desktop: „niedokładny klik (dryf myszy w dół) nie ginie na geście
+    szuflady" — sprawdza `data-overlay-kind="modal"`, a potem odtwarza
+    NIEDOKŁADNY klik (`mouse.down` → 4 ruchy po 6 px w dół → `mouse.up`)
+    i żąda, żeby licznik kadru drgnął. **Panel mierzony W TRAKCIE gestu**
+    (inline `transform` + `x` rectu między ruchami myszy) — kontrakt
+    brzmi „gest w ogóle się nie uzbraja", a nie „panel zdążył wrócić";
+    to świadomie NIE jest wyścig z animacją (lekcja o kruchym teście
+    z sesji przed Etapem 6). Mobile: „wariant mobilny zostaje szufladą"
+    — strażnik, żeby ta poprawka nie zabiła drag-to-dismiss (samą
+    mechanikę gestu pilnują istniejące testy CDP).
+  - **ZASIĘG BASELINE'ÓW: ZERO — ZMIERZONE, nie założone.** Przebieg
+    całego zestawu wizualnego z progiem zbitym do zera
+    (`maxDiffPixelRatio: 0` + `maxDiffPixels: 0` w `playwright.config.ts`
+    na JEDEN przebieg, plik przywrócony, `git diff` czysty) dał
+    **121 passed / 5 failed**, a wszystkie 5 to znane flake'y na trasach
+    NIEZWIĄZANYCH ze zmianą: `ekipa-full` firefox/SE (721/735 px),
+    `ekipa-full-open` SE/14 (391/731 px), `tradycja-top` SE (15 px).
+    **Wszystkie 45 zrzutów `work-index-*`, `work-detail-*`, `chrome-*`
+    i `index-*` mają różnicę 0 px.** Argument strukturalny się zgadza:
+    `open-detail.ts` i `WorkDetail.astro` konsumują wyłącznie
+    `/realizacje/` i `/`, a `data-overlay-kind` nie jest w żadnej regule
+    CSS (poza `startDrag`).
+  - **ZNANE, NIETKNIĘTE (do decyzji Mateusza)**: wciśnięcie myszy
+    w panelu i puszczenie POZA nim (np. dryf 60 px w dół ze strzałki,
+    która stoi 22 px nad dolną krawędzią modala) zamyka detal — `click`
+    trafia wtedy we wspólnego przodka, czyli w scrim, a delegacja
+    „klik w tło" w `overlay.ts` nie sprawdza, gdzie zaczął się gest.
+    Stan ZASTANY od 4.3, nie regresja tej sesji; lekarstwo (zapamiętać
+    cel `pointerdown` i zamykać tylko, gdy OBA końce były w tle) rusza
+    moduł współdzielony z menu mobilnym, więc świadomie odłożone.
+  - Bramki 2026-09-01: format:check / lint / typecheck (0 errors) /
+    unit **91 passed** / build / e2e **670 passed, 0 failed**
+    (548 skipped; było 664/542 — +6 to nowa para × 3 profile) / visual
+    **121 passed** na progu zerowym.
+
 ## Dokumentacja
 
 - Decyzje projektu (zapadłe — nie otwieraj na nowo):
