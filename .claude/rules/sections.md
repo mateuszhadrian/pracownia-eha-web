@@ -81,6 +81,26 @@ która przeżyła kopię w całości (work) i mechaniki formularza (contact).
   (pilnować przy skinowaniu w 4.3): gap toru zaszyty w JS
   (`offsetWidth + 10`), kolejność `.dt` przed `.lb` w DOM, projnav
   zakłada panel ≤ 92vw.
+- **Wariant nakładki MUSI być zgodny z `data-overlay-kind`.** Gest
+  „przeciągnij w dół, by zamknąć" z `overlay.ts` uzbraja się WYŁĄCZNIE
+  przy `kind="sheet"` i nadpisuje panelowi inline'owy
+  `transform: translateY(dy)` — co na wyśrodkowanym modalu KASUJE
+  `translate(-50%, -50%)`. SSR daje „sheet"; `syncOverlayKind()`
+  w `open-detail.ts` przestawia atrybut na „modal" powyżej
+  `WORK_DESKTOP_MIN_PX` (przy starcie i na `desktopMQ` change).
+  **Nie usuwaj tej synchronizacji i nie dawaj `kind="sheet"` na sztywno
+  nowej nakładce, która na desktopie jest modalem** — objawem nie jest
+  „modal skacze", tylko ZGUBIONY KLIK: panel wraca na miejsce po
+  puszczeniu myszy, a jedyny ślad to przycisk, który „nie zadziałał".
+  Kontrakt: para testów w `work-index.spec.ts` (desktop „niedokładny
+  klik… nie ginie na geście szuflady" / mobile „wariant mobilny zostaje
+  szufladą").
+- **`.dt-gal` na desktopie klipuje przez `overflow: clip`, nie `hidden`**
+  (lekcja 4.4 cz. 1 pkt 5): slajdy toru wystają poza kadr, a pudełko
+  `hidden` jest kontenerem scrolla — jedno programowe
+  `scrollIntoView`/fokus ustawia mu `scrollLeft` o szerokość slajdu
+  i wypycha pasek galerii ze strzałkami poza panel na stałe (aż do
+  zamknięcia detalu). `clip` kontenera scrolla nie tworzy.
 - Lightbox eha (E7): mechanika szablonu + DWIE adaptacje — kadr = całe
   zdjęcie `object-fit: contain` na czarnym pełnym ekranie (bez ramy;
   wideo też `contain` — filmy klienta bywają pion/poziom) oraz

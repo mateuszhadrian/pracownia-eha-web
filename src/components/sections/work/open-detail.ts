@@ -588,9 +588,32 @@ document.addEventListener("click", (e) => {
    elementowe (odpalają PRZED dokumentowymi), stopPropagation gwarantuje,
    że delegacja overlay.ts nie uzna kliknięcia za „klik w tło" ── */
 
+/** Gest „przeciągnij w dół, by zamknąć” z overlay.ts jest mechaniką
+ *  SZUFLADY: uzbraja go `data-overlay-kind="sheet"` i przy `moved`
+ *  nadpisuje panelowi transform inline'owym `translateY(dy)`. Na mobile
+ *  składa się to z klasowym `translateY(0/101%)`, ale desktopowy modal
+ *  jest WYŚRODKOWANY przez `translate(-50%, -50%)` — inline transform
+ *  kasuje wyśrodkowanie i panel odskakuje o pół swojego rozmiaru
+ *  (zmierzone: 1260×774 px skacze z 90,63 na 720,455, strzałka kadru
+ *  z 732,763 na 1362,1161 — poza ekran 1440×900). Po puszczeniu myszy
+ *  finishDrag przywraca panel, więc jedynym śladem jest ZGUBIONY KLIK.
+ *  Wystarczy 9 px dryfu w dół między wciśnięciem a puszczeniem — czyli
+ *  zwykły niedokładny klik gładzikiem (potwierdzone w chromium, webkit
+ *  i firefox).
+ *  overlay.ts jest generyczny i nie zna progu, więc atrybut trzyma
+ *  zgodny z REALNYM wariantem ten moduł — właściciel dualizmu
+ *  modal ↔ sheet. SSR zostaje przy „sheet”: bez JS nakładki nie ma. */
+function syncOverlayKind() {
+  overlayEl()?.setAttribute(
+    "data-overlay-kind",
+    desktopMQ.matches ? "modal" : "sheet",
+  );
+}
+
 function bindChrome() {
   const el = overlayEl();
   if (!el) return;
+  syncOverlayKind();
   el.querySelector("[data-prevproj]")?.addEventListener("click", (e) => {
     e.stopPropagation();
     stepProject(-1);
@@ -698,5 +721,6 @@ document.addEventListener(
 // Zmiana progu (modal ↔ sheet CSS) przy otwartym detalu: zamknij — layout
 // i miejsce galerii w DOM są per-próg (reguła sections.md).
 desktopMQ.addEventListener("change", () => {
+  syncOverlayKind();
   if (current) window.overlay?.close(OVERLAY_ID);
 });
