@@ -314,13 +314,15 @@ test("kolek wjeżdża po dojechaniu do sekcji trwałości", async ({
 });
 
 // ── reveal nagłówka po dojechaniu (bramka js-motion, mobile) ──
-test("reveal kickera mikroklimatu odpala po dojechaniu scrollem", async ({
+// Sonda siedziała na kickerze „MIKROKLIMAT"; po jego usunięciu
+// (poprawki klienta) pierwszym [data-rev] główki jest h2.
+test("reveal nagłówka mikroklimatu odpala po dojechaniu scrollem", async ({
   page,
   isMobile,
 }) => {
   test.skip(!isMobile, "reveale [data-rev] istnieją tylko w układzie mobile");
   await gotoReady(page, PATH);
-  const kick = page.locator(".mik-head .trd-kick");
+  const kick = page.locator(".mik-head h2");
   await expect(kick).toHaveCSS("opacity", "0");
   await kick.scrollIntoViewIfNeeded();
   await settle(page, 400);

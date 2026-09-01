@@ -35,7 +35,7 @@ import { CONTACT_PATH } from "@/lib/routes";
 
 // Jedyna treść powtórzona na obu progach (hero dOnly / wstęp mOnly) —
 // jedno źródło, żeby kopie nie mogły się rozjechać.
-const MOTTO = "Twój święty spokój.";
+const MOTTO = "Twój spokój.";
 ---
 
 <BaseLayout
@@ -101,12 +101,12 @@ const MOTTO = "Twój święty spokój.";
         <p class="obs-lead mOnly">{MOTTO}</p>
         <p class="obs-p int-p">
           Decyzja o ucieczce z miasta i remoncie starego domu na prowincji to
-          spełnienie marzeń, które w dzisiejszych realiach nazbyt często
-          zamienia się w logistyczny koszmar. Setki telefonów, opóźnienia,
-          niedowiezione materiały i konieczność ciągłego gaszenia pożarów na
-          placu boju. W Pracowni EH/A doskonale to rozumiemy. Dlatego
-          stworzyliśmy model współpracy, w którym naszą najważniejszą usługą –
-          obok tradycyjnego rzemiosła – jest Twój absolutny spokój umysłu.
+          spełnienie marzeń, które w dzisiejszych realiach często zamienia się w
+          logistyczny koszmar. Setki telefonów, opóźnienia, niedowiezione
+          materiały i konieczność ciągłego gaszenia pożarów na placu budowy. W
+          Pracowni EH/A doskonale to rozumiemy. Dlatego stworzyliśmy model
+          współpracy, w którym naszą najważniejszą usługą – obok tradycyjnego
+          rzemiosła – jest Twój absolutny spokój umysłu.
         </p>
       </section>
     </div>
@@ -129,10 +129,7 @@ const MOTTO = "Twój święty spokój.";
         <span class="obs-ph-veil" aria-hidden="true"></span>
       </div>
       <div class="obs-head s1-head">
-        <p class="obs-kick" data-rev>JEDEN PUNKT KONTAKTU</p>
-        <h2 data-rev data-rev-d="1">
-          Jeden punkt kontaktu. My przejmujemy chaos
-        </h2>
+        <h2 data-rev>Jeden punkt kontaktu. My przejmujemy chaos</h2>
       </div>
       <div class="obs-body s1-body">
         <img
@@ -187,8 +184,7 @@ const MOTTO = "Twój święty spokój.";
         <span class="obs-ph-veil" aria-hidden="true"></span>
       </div>
       <div class="obs-head s2-head">
-        <p class="obs-kick" data-rev>PEŁNA KONTROLA Z DYSTANSU</p>
-        <h2 data-rev data-rev-d="1">Przyjeżdżasz i patrzysz.</h2>
+        <h2 data-rev>Przyjeżdżasz i patrzysz.</h2>
       </div>
       <div class="obs-body s2-body">
         <img
@@ -251,17 +247,16 @@ const MOTTO = "Twój święty spokój.";
         <span class="obs-ph-veil" aria-hidden="true"></span>
       </div>
       <div class="obs-txt s3-txt">
-        <p class="obs-kick" data-rev>PODSUMOWANIE</p>
-        <h2 data-rev data-rev-d="1">Czas na Twój ruch</h2>
+        <h2 data-rev>Czas na Twój ruch</h2>
         <span class="obs-rule s3-rule dOnly" aria-hidden="true"></span>
-        <p class="obs-p s3-p1" data-rev data-rev-d="2">
+        <p class="obs-p s3-p1" data-rev data-rev-d="1">
           Twój czas jest zbyt cenny, by marnować go na nerwy i logistykę, na
           której nie musisz się znać.
         </p>
         <p class="obs-p s3-p2">
           Oddaj swój dom w ręce pasjonatów, którzy z równym zaangażowaniem
-          podchodzą do <em>ratowania historycznej cegły</em>, co do żelaznego
-          pilnowania harmonogramów inwestycji.
+          podchodzą do ratowania <em>substancji zabytkowej</em>, oraz utrzymania
+          płynnego postępu prac na budowie w zgodzie z technologią.
         </p>
       </div>
       <div class="obs-cta">
@@ -360,14 +355,6 @@ const MOTTO = "Twój święty spokój.";
   }
 
   /* ── wspólne klocki typograficzne ── */
-  .obs-kick {
-    margin: 0;
-    font-family: var(--font-mono), monospace;
-    font-weight: 500;
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    color: rgba(87, 101, 74, 0.95);
-  }
   .obs h2 {
     margin: 0;
     font-family: var(--font-serif), serif;
@@ -839,9 +826,6 @@ const MOTTO = "Twój święty spokój.";
     }
 
     /* typografia sekcji */
-    .obs-kick {
-      font-size: var(--mono);
-    }
     .obs h2 {
       font-size: var(--h2);
       line-height: 1.12;
@@ -1017,13 +1001,9 @@ const MOTTO = "Twój święty spokój.";
       row-gap: clamp(16px, 1.6vw, 26px);
       align-items: start;
       grid-template-areas:
-        "kick kick"
         "h2 h2"
         "rule rule"
         "p1 p2";
-    }
-    .s3-txt > .obs-kick {
-      grid-area: kick;
     }
     .s3-txt h2 {
       grid-area: h2;

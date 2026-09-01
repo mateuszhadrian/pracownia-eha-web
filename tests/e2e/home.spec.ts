@@ -489,14 +489,17 @@ test.describe("hero mobile: logo skaluje się wolną przestrzenią", () => {
   });
 });
 
-// ── ryciny hero vs kicker zajawki 01 (sesja poprawek; zgłoszenie
+// ── ryciny hero vs nagłówek zajawki 01 (sesja poprawek; zgłoszenie
 // Mateusza z telefonu). `.hr-m2`/`.hr-m3` są kotwiczone do DOŁU hero
 // i CELOWO zeń wystają (bottom −92 / −70 px), więc lądowały na
-// „01 · EKIPA EH/A". Osadzenie rycin zostaje — odsunięta jest treść
+// eyebrowie „01 · EKIPA EH/A". Eyebrow wypadł w sesji poprawek
+// klienta i najwyższym elementem sekcji jest teraz h2 `.s-title` —
+// sonda pilnuje tego samego zapasu względem niego. Osadzenie rycin
+// zostaje — odsunięta jest treść
 // (`.ek-txt` padding-top 74 → 106 px). Sonda układu, nie pixel-diff:
 // mierzymy najgorszy przypadek przez CAŁY przejazd scrolla, bo ryciny
 // mają parallax [data-plxr] ±15 px i pojedynczy pomiar go przegapia.
-test("ryciny hero nie nachodzą na kicker zajawki 01 (mobile)", async ({
+test("ryciny hero nie nachodzą na nagłówek zajawki 01 (mobile)", async ({
   page,
   isMobile,
 }) => {
@@ -505,7 +508,7 @@ test("ryciny hero nie nachodzą na kicker zajawki 01 (mobile)", async ({
   const base = await page.evaluate(
     () =>
       document
-        .querySelector<HTMLElement>(".ek .s-eyebrow")!
+        .querySelector<HTMLElement>(".ek .s-title")!
         .getBoundingClientRect().top + window.scrollY,
   );
   const vh = page.viewportSize()!.height;
@@ -515,7 +518,7 @@ test("ryciny hero nie nachodzą na kicker zajawki 01 (mobile)", async ({
     const gap = await page.evaluate(() => {
       const box = (sel: string) =>
         document.querySelector<HTMLElement>(sel)!.getBoundingClientRect();
-      const k = box(".ek .s-eyebrow");
+      const k = box(".ek .s-title");
       return {
         m2: k.top - box(".hr-m2").bottom,
         m3: k.top - box(".hr-m3").bottom,
@@ -523,8 +526,8 @@ test("ryciny hero nie nachodzą na kicker zajawki 01 (mobile)", async ({
     });
     worst = { m2: Math.min(worst.m2, gap.m2), m3: Math.min(worst.m3, gap.m3) };
   }
-  expect(worst.m2, "dolna krawędź .hr-m2 nad kickerem 01").toBeGreaterThan(0);
-  expect(worst.m3, "dolna krawędź .hr-m3 nad kickerem 01").toBeGreaterThan(0);
+  expect(worst.m2, "dolna krawędź .hr-m2 nad nagłówkiem 01").toBeGreaterThan(0);
+  expect(worst.m3, "dolna krawędź .hr-m3 nad nagłówkiem 01").toBeGreaterThan(0);
 });
 
 // ── karuzela realizacji: scroll-snap (korekta Mateusza — brak snapa
@@ -650,7 +653,9 @@ test("reveal nagłówka sekcji odpala po dojechaniu scrollem", async ({
 }) => {
   test.skip(!isMobile, "reveale [data-rev] istnieją tylko w układzie mobile");
   await gotoReady(page, PATH);
-  const eyebrow = page.locator(".ob-head .s-eyebrow");
+  // eyebrow „04 · OBSŁUGA BUDOWY" usunięty na życzenie klienta —
+  // pierwszym [data-rev] główki jest teraz h2.
+  const eyebrow = page.locator(".ob-head .s-title");
   // stan startowy uzbrojony (js-motion): niewidoczny przed dojazdem
   await expect(eyebrow).toHaveCSS("opacity", "0");
   await eyebrow.scrollIntoViewIfNeeded();

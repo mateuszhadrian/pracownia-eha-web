@@ -70,6 +70,18 @@ w tym samym PR (ostatni wpis = skasowanie pliku).
   nie jest przy tym ruszany. Tańsze i pewniejsze niż budowanie `main`
   w `git worktree` (Etap 6: `polityka-top` na trzech profilach mobilnych
   przechodził na zielono z NIEAKTUALNĄ datą dokumentu prawnego — 42–43 px).
+- **Kontrakt geometryczny mierz SUB-PIKSELOWO** (`getBoundingClientRect`),
+  nigdy przez `offsetHeight`. Sonda D-U1 w `obsluga.spec.ts` porównywała
+  dwie niezależnie zaokrąglone liczby całkowite i rozjechały się
+  w PRZECIWNE strony: kadr 241,594 → 242 (w górę), obraz 285,078 → 285
+  (w dół), więc próg `round(kadr × 1,18)` wypadł 1 px NAD realną
+  geometrią przy faktycznym niedoborze **0,0029 px**. Test przechodził
+  wcześniej z zapasem DOKŁADNIE 0 px, więc wywracała go dowolna zmiana
+  wysokości sekcji (na mobile kadr bierze wysokość nagłówka z komórki
+  gridu). Lekarstwo: rect + jawna stała tolerancji (`SUBPIXEL_TOL_PX
+= 0.5`) — realne naruszenie to dziesiątki pikseli, więc tolerancja go
+  nie przepuści. Objaw diagnostyczny: **czerwone także w IZOLACJI, czyli
+  z definicji NIE flake**, przy mikroskopijnej różnicy.
 - ZAKAZ regenerowania baseline'u w celu „naprawienia" czerwonego testu bez
   pokazania diffu Mateuszowi i jego zgody (blokada Edit/Write także
   w settings.json). Nigdy nie „naprawiaj" rozjazdu darwin↔linux globalnym

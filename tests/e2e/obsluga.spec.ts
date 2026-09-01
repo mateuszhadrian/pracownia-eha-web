@@ -54,7 +54,7 @@ test.describe("bez JS strona jest kompletna treściowo", () => {
     // motto istnieje w DWÓCH kopiach (hero dOnly + czoło wstępu mOnly) —
     // na każdym profilu widoczna jest dokładnie jedna
     await expect(
-      page.locator("p:visible", { hasText: "Twój święty spokój." }),
+      page.locator("p:visible", { hasText: "Twój spokój." }),
     ).toHaveCount(1);
     // sekcje 03–05 idą JEDNYM markupem — treść bez duplikatów
     await expect(
@@ -171,6 +171,21 @@ test.describe("układ desktop", () => {
 });
 
 // ── D-U1: zapas kadru ≥ ruch parallaxu (testy wizualne tego nie łapią) ──
+// Mierzymy SUB-PIKSELOWO (getBoundingClientRect), a nie przez offsetHeight.
+// Powód zmierzony w sesji poprawek klienta: zapas robi CSS-owe
+// `height: 118%`, więc jest spełniony z definicji, ale `offsetHeight`
+// zaokrągla kadr i obraz NIEZALEŻNIE i w różne strony — kadr 241,594 → 242
+// (w górę), obraz 285,078 → 285 (w dół) — przez co próg
+// round(242 × 1,18) = 286 wypadał o 1 px nad realną geometrią. Prawdziwy
+// niedobór wynosił 0,0029 px, czyli resztkę zmiennoprzecinkową. Sonda
+// przechodziła wcześniej z zapasem DOKŁADNIE 0 px, więc wywracała ją
+// dowolna zmiana wysokości sekcji (tu: usunięcie kickera na życzenie
+// klienta — na mobile kadr dzieli komórkę gridu z nagłówkiem i bierze
+// jego wysokość). Realne naruszenie D-U1 (brak `max-width: none`, zła
+// wartość height) to dziesiątki pikseli, więc tolerancja 0,5 px go nie
+// przepuści.
+const SUBPIXEL_TOL_PX = 0.5;
+
 test("kadry [data-plx] mają zapas wysokości większy niż ruch parallaxu", async ({
   page,
   isMobile,
@@ -180,8 +195,9 @@ test("kadry [data-plx] mają zapas wysokości większy niż ruch parallaxu", asy
   const rows = await page.evaluate(() =>
     Array.from(document.querySelectorAll<HTMLElement>("[data-plx]")).map(
       (img) => ({
-        img: img.offsetHeight,
-        frame: (img.parentElement as HTMLElement).offsetHeight,
+        img: img.getBoundingClientRect().height,
+        frame: (img.parentElement as HTMLElement).getBoundingClientRect()
+          .height,
       }),
     ),
   );
@@ -189,18 +205,22 @@ test("kadry [data-plx] mają zapas wysokości większy niż ruch parallaxu", asy
   for (const r of rows) {
     // ruch = ±(PLX_AMT / 2) × wysokość kadru, więc zapas musi wynosić
     // co najmniej tyle po KAŻDEJ stronie
-    expect(r.img).toBeGreaterThanOrEqual(Math.round(r.frame * (1 + PLX_AMT)));
+    expect(r.img).toBeGreaterThanOrEqual(
+      r.frame * (1 + PLX_AMT) - SUBPIXEL_TOL_PX,
+    );
   }
 });
 
 // ── reveal nagłówka po dojechaniu (bramka js-motion, mobile) ──
-test("reveal kickera podsumowania odpala po dojechaniu scrollem", async ({
+// Sonda siedziała na kickerze „PODSUMOWANIE"; po jego usunięciu
+// (poprawki klienta) pierwszym [data-rev] sekcji jest h2.
+test("reveal nagłówka podsumowania odpala po dojechaniu scrollem", async ({
   page,
   isMobile,
 }) => {
   test.skip(!isMobile, "reveale [data-rev] istnieją tylko w układzie mobile");
   await gotoReady(page, PATH);
-  const kick = page.locator(".s3-txt .obs-kick");
+  const kick = page.locator(".s3-txt h2");
   await expect(kick).toHaveCSS("opacity", "0");
   await kick.scrollIntoViewIfNeeded();
   await settle(page, 400);
