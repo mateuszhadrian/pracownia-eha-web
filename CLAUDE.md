@@ -2123,6 +2123,47 @@ clamp(11.5px,1.6vw,13px) * 1.5)` — czyli dawny `padding` + dawny
     14 724 vs 14 678 px, te same pasma). Szum rastra nie powtarza się
     między OS-ami — treść tak. Sześć plików ZOSTAJE, bo przywrócenie
     ich cofnęłoby baseline do stanu, którego na produkcji nie ma.
+  - **PRÓG `index-full` 0.006 → 0.008** (decyzja Mateusza; stała
+    `FULLPAGE_MAX_DIFF_RATIO` w `tests/visual/index.spec.ts`, globalny
+    0.0005 NIETKNIĘTY). Pierwsze CI z kompletem baseline'ów dało
+    **1 failed / 125 passed**: `index-full` na `webkit-iphone-14`,
+    **15 604 px = 0.00622** przy limicie 15 055 — przekroczenie o 549 px
+    (3,6 %). `quality`, `lighthouse` i `test:e2e` zielone. - Rozpoznanie z artefaktu CI (`gh run download … -n
+playwright-report`; nazwa pliku PNG w `data/` to jego własna suma
+    sha1, więc `expected` poznaje się po zgodności z zacommitowanym
+    baselinem): surowa różnica **158 521 px w DWÓCH zwartych pasmach**
+    — `y 3699–3956` (258 wierszy) i `y 4574–4781` (208 wierszy).
+    Oględziny obu wycinków: tekst, kropki osi kroków i mono-podpisy
+    stoją PIKSEL W PIKSEL, przesuwa się WYŁĄCZNIE zdjęcie w tle. - **SUFIT KLASY POLICZONY — to jest nowa liczba w projekcie.** `/`
+    ma na mobile **dokładnie DWA** kadry `[data-plx]`, o wysokości
+    **258 i 209 px**, czyli te same 258 i 208 wierszy, które widać
+    w diffie (dopasowanie co do wiersza = mechanizm potwierdzony bez
+    wątpliwości). Razem 467 px na 6434 px dokumentu = **7,3 % strony**;
+    pozostałe 92,7 % to tekst zablokowany co do piksela. Ta klasa
+    awarii NIE MOŻE więc przekroczyć **ratio 0.0726 surowo**, a że
+    Playwright liczy PERCEPCYJNIE (~10× łagodniej — zmierzone: surowe
+    0.0632 → zgłoszone 0.00622), **sufit percepcyjny ≈ 0.0071**.
+    Próg 0.008 leży POWYŻEJ sufitu, więc pokrywa całą klasę, a do
+    realnej regresji layoutu na `/` (0.10–0.27 — zmierzone w TEJ
+    sesji na tym samym zrzucie) zostaje **12–34× zapasu**.
+    To pierwszy ratchet tego zrzutu oparty na policzonym suficie,
+    a nie na szacunku „3–8× zapasu". - Wyzwalaczem było skrócenie pasa zajawki 04 o 51,25 px (pkt 4
+    klienta) — kadr siedzi w innym miejscu dokumentu, więc punkt
+    osiadania parallaxu przesunął się bliżej granicy. Rerun ODRZUCONY
+    jako strategia: mechanizm zależy od obciążenia runnera, więc raz
+    wygra, raz nie, i wróci przy następnym PR-ze dotykającym `/`.
+  - **Przesłanka odkładająca lekarstwo strukturalne PRZESTAŁA
+    OBOWIĄZYWAĆ.** Zapis z Etapu 5 mówił, że zamrożenie transformów
+    `[data-plx]` przed zrzutem fullPage w `revealSweep` „unieważniłoby
+    baseline'y wszystkich widoków z kadrami". Zmierzone w tej sesji:
+    jedyne zrzuty `*-full*` POZA regenerowaną osiemdziesiątką to
+    `polityka-full` (**zero `[data-plx]`** — pilnuje tego kontrakt e2e)
+    i `work-detail-fullscreen` (zrzut lightboxa, nie strony). Czyli fix
+    unieważnia dziś wyłącznie baseline'y, które i tak przepisujemy —
+    jest **prawie darmowy pierwszy raz od Etapu 5**. Świadomie NIE
+    wchodzi do tego PR-a (mieszanie zmiany infrastruktury testowej
+    z poprawkami treści klienta zaciera, co co zepsuło) — **osobny PR
+    zaraz po merge'u**.
   - **JEDEN prawdziwy intruz, przywrócony**: `firefox-desktop/chrome-bar`
     na linuksie — **14 px w polu 6×10 px, `maxΔ 19`, jeden profil
     z sześciu**, a na darwinie ten sam plik NIE zmienił się wcale.

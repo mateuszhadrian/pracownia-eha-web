@@ -82,6 +82,19 @@ w tym samym PR (ostatni wpis = skasowanie pliku).
 = 0.5`) — realne naruszenie to dziesiątki pikseli, więc tolerancja go
   nie przepuści. Objaw diagnostyczny: **czerwone także w IZOLACJI, czyli
   z definicji NIE flake**, przy mikroskopijnej różnicy.
+- **Próg per-shot podnoś dopiero po POLICZENIU SUFITU klasy, nie „z
+  zapasem".** Wzorzec z sesji poprawek klienta (`index-full` 0.006 →
+  0.008): awaria „parallax osiadł na innej klatce" może dotknąć
+  WYŁĄCZNIE kadrów `[data-plx]`, bo reszta strony jest zablokowana co
+  do piksela. Policz więc, ile procent dokumentu zajmują te kadry
+  (`/` mobile: dwa kadry 258 + 209 px na 6434 px = 7,3 %) — to jest
+  surowy sufit klasy (0.0726). Playwright liczy PERCEPCYJNIE, ~10×
+  łagodniej (zmierzone: surowe 0.0632 → zgłoszone 0.00622), więc sufit
+  percepcyjny ≈ 0.0071 i próg 0.008 pokrywa klasę CAŁĄ, zamiast
+  „chyba wystarczy". Kontrolnie: realna regresja layoutu na tej samej
+  stronie to 0.10–0.27, czyli 12–34× wyżej. Dopasowanie pasm diffu do
+  wysokości kadrów co do wiersza (258/208 vs 258/209) jest dowodem
+  mechanizmu — bez niego nie podnoś progu.
 - ZAKAZ regenerowania baseline'u w celu „naprawienia" czerwonego testu bez
   pokazania diffu Mateuszowi i jego zgody (blokada Edit/Write także
   w settings.json). Nigdy nie „naprawiaj" rozjazdu darwin↔linux globalnym
