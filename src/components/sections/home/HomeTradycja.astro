@@ -21,8 +21,6 @@ const ROWS = [
   { t: "Materiał z drugiego życia", s: "STARA CEGŁA, BELKI, CAŁE ZRĘBY" },
   { t: "Złącza ciesielskie", s: "DREWNIANE KOŁKI, BEZ ŚRUB" },
 ];
-const QUOTE =
-  "Najbardziej ekologiczny dom to ten, którego nie trzeba budować drugi raz.";
 ---
 
 <section class="sec td">
@@ -80,17 +78,13 @@ const QUOTE =
   </div>
 
   <div class="td-txt">
-    <HomeSectionHead
-      num="05"
-      label="TRADYCJA I EKOLOGIA"
-      title="Tradycja i ekologia."
-      lead="Dom, który oddycha."
-    >
+    <HomeSectionHead title="Tradycja i ekologia." lead="Dom, który oddycha.">
       Ekologia to dla nas fizyka, nie slogan. Zamiast zamykać stary dom w
       szczelnym termosie ze styropianu i folii, ocieplamy go wełną drzewną i
-      tynkiem wapiennym. Taka ściana przyjmuje i oddaje wilgoć. Ratujemy
-      materiał, który już istnieje: starą cegłę, belki, całe zręby. Konstrukcję
-      spinamy kołkami i złączami ciesielskimi, bez śrub, które korodują.
+      pokrywamy tynkiem wapiennym. Taka ściana współpracuje z wilgocią. Ratujemy
+      to, co wartościowe: starą cegłę, belki i oryginalne detale. Do budowy
+      konstrukcji używamy zarówno drewna z odzysku, jak i nowego, dopasowując
+      się do życzeń inwestora. Całość spinamy kołkami i złączami ciesielskimi.
     </HomeSectionHead>
 
     {/* desktop: wiersze w kolumnie tekstu */}
@@ -132,11 +126,9 @@ const QUOTE =
         }
       </div>
     </div>
-    <p class="td-quote">{QUOTE}</p>
   </div>
 
   <div class="dOnly td-side">
-    <p class="td-quote">{QUOTE}</p>
     <a class="zaj-out" href={TRADYCJA_PATH}>
       Zobacz, jak rozumiemy ekologię
       <svg width="15" height="10" viewBox="0 0 16 10" aria-hidden="true"
@@ -263,23 +255,6 @@ const QUOTE =
     letter-spacing: 0.12em;
     /* design .72 na gradiencie — zostaje (AA na ciemnym tle kadru) */
     color: rgba(245, 239, 227, 0.78);
-  }
-  .td-flow .td-quote {
-    width: 100%;
-    max-width: var(--smax);
-    margin-inline: auto;
-    padding-inline: var(--sp);
-    box-sizing: border-box;
-  }
-  .td-quote {
-    margin: 0;
-    font-family: var(--font-serif), serif;
-    font-style: italic;
-    font-weight: 500;
-    font-size: clamp(17px, 2.4vw, 20px);
-    line-height: 1.5;
-    color: var(--sepia);
-    text-wrap: pretty;
   }
 
   /* ════ DESKTOP ≥1024 (para: HOME_DESKTOP_MIN_PX) ════ */

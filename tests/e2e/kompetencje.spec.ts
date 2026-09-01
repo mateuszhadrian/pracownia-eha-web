@@ -237,13 +237,15 @@ test.describe("desktop pokazuje pełny tekst", () => {
 });
 
 // ── reveal płyty po dojechaniu (bramka js-motion, mobile) ──
-test("reveal kickera płyty granic odpala po dojechaniu scrollem", async ({
+// Sonda siedziała na kickerze „ŚWIADOME GRANICE"; po jego usunięciu
+// (poprawki klienta) pierwszym [data-rev] płyty jest h2.
+test("reveal nagłówka płyty granic odpala po dojechaniu scrollem", async ({
   page,
   isMobile,
 }) => {
   test.skip(!isMobile, "reveale [data-rev] istnieją tylko w układzie mobile");
   await gotoReady(page, PATH);
-  const kick = page.locator(".gran-head .kmp-kick");
+  const kick = page.locator(".gran-head h2");
   await expect(kick).toHaveCSS("opacity", "0");
   await kick.scrollIntoViewIfNeeded();
   await settle(page, 400);

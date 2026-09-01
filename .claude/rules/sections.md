@@ -28,6 +28,19 @@ która przeżyła kopię w całości (work) i mechaniki formularza (contact).
   realizacji (1 kolumna → 2 kolumny; Etap 4.3) — do kontraktu breakpoint
   obok 1024. Progów 760/768/861 z wcześniejszych szablonów w kodzie
   nie ma.
+- **Eyebrows (mono-kickery „NN · TYTUŁ" / „NAZWA SEKCJI" nad h1/h2) NIE
+  ISTNIEJĄ** — 29 sztuk wypadło z 7 tras na życzenie klienta (sesja
+  poprawek klienta). Eksporty designów je MAJĄ, więc przy porcie nowej
+  sekcji nie odtwarzaj ich z makiety. `HomeSectionHead` jest odtąd
+  TRÓJKĄ (h2 → lead → akapit), bez propów `num`/`label`. Zostały
+  wyłącznie etykiety INNEGO gatunku: nad listami/kartami (`ZAKRES PRAC
+…`, `TWORZYMY I ODTWARZAMY`), nad cytatem (`.s3-kick`), opis diagramu,
+  badge na zdjęciu, podpis marki na hero i cała `/polityka-prywatnosci/`.
+  ⚠️ Kicker bywał elementem gridu z nazwanym obszarem — **pusty wiersz
+  gridu schodzi do zera wysokości, ale jego `row-gap` ZOSTAJE**, więc
+  usunięcie takiego elementu wymaga też wycięcia wiersza z
+  `grid-template-areas` (złapane na `/obsluga-budowy/` sekcja 05
+  i na hero `/kontakt/`).
 - Warstwy testów po zmianie: `.claude/rules/testing.md`; sekcje dostają
   własne specy w `tests/visual/` razem z widokami (Etap 4).
 

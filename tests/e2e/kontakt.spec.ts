@@ -620,13 +620,15 @@ test("gołąb sekcji social jest odbity na mobile, w oryginale na desktopie", as
   }
 });
 
-test("reveal kickera sekcji social odpala po dojechaniu scrollem", async ({
+// Sonda siedziała na kickerze „MEDIA SPOŁECZNOŚCIOWE"; po jego
+// usunięciu (poprawki klienta) pierwszym [data-rev] sekcji jest h2.
+test("reveal nagłówka sekcji social odpala po dojechaniu scrollem", async ({
   page,
   isMobile,
 }) => {
   test.skip(!isMobile, "reveale [data-rev] istnieją tylko w układzie mobile");
   await gotoReady(page, PATH);
-  const kick = page.locator(".kt-social .kt-kick");
+  const kick = page.locator(".kt-social h2");
   await expect(kick).toHaveCSS("opacity", "0");
   await kick.scrollIntoViewIfNeeded();
   await settle(page, 400);

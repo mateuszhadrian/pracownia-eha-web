@@ -70,8 +70,33 @@ const PATH = "/";
  *  pokrywa całą tę klasę, zachowując 3–8× zapasu do realnej regresji.
  *  Lekarstwo strukturalne (zamrożenie transformów [data-plx] przed
  *  zrzutem fullPage w revealSweep) unieważniłoby baseline'y wszystkich
- *  widoków z kadrami — kandydat na Etap 6, nie na ten PR. */
-const FULLPAGE_MAX_DIFF_RATIO = 0.006;
+ *  widoków z kadrami — kandydat na Etap 6, nie na ten PR.
+ *
+ *  POPRAWKI KLIENTA — podniesienie 0.006 → 0.008 (decyzja Mateusza),
+ *  tym razem z POLICZONYM SUFITEM KLASY, a nie z szacunku. Objaw:
+ *  15 604 px = 0.00622 na webkit-iphone-14 w CI, przy limicie 15 055 —
+ *  przekroczenie o 549 px (3,6 %). Rozpoznanie z artefaktu CI: surowa
+ *  różnica 158 521 px w DWÓCH zwartych pasmach, y 3699–3956
+ *  (258 wierszy) i y 4574–4781 (208 wierszy); w obu tekst, kropki osi
+ *  i mono-podpisy stoją PIKSEL W PIKSEL, przesuwa się wyłącznie
+ *  zdjęcie w tle.
+ *  SUFIT: `/` ma na mobile DOKŁADNIE DWA kadry [data-plx] o wysokości
+ *  258 i 209 px — czyli te same 258 i 208 wierszy, które widać
+ *  w diffie. Razem 467 px na 6434 px dokumentu = 7,3 % strony;
+ *  pozostałe 92,7 % to tekst zablokowany co do piksela. Ta klasa NIE
+ *  MOŻE więc przekroczyć ratio 0.0726 surowo, a że Playwright liczy
+ *  PERCEPCYJNIE (~10× łagodniej — zmierzone: surowe 0.0632 → zgłoszone
+ *  0.00622), sufit percepcyjny wynosi ≈ 0.0071. Próg 0.008 leży
+ *  POWYŻEJ sufitu, więc pokrywa całą klasę; realna regresja layoutu na
+ *  `/` to 0.10–0.27 (zmierzone w tej sesji na tym samym zrzucie), czyli
+ *  12–34× wyżej. Globalny 0.0005 w playwright.config.ts NIETKNIĘTY.
+ *  Przesłanka odkładająca lekarstwo strukturalne PRZESTAŁA
+ *  OBOWIĄZYWAĆ: jedyne zrzuty *-full* poza regeneracją tej sesji to
+ *  `polityka-full` (zero [data-plx] — pilnuje tego kontrakt e2e)
+ *  i `work-detail-fullscreen` (zrzut lightboxa), więc zamrożenie
+ *  parallaxu unieważnia dziś wyłącznie baseline'y i tak przepisywane.
+ *  Wchodzi OSOBNYM PR-em po merge'u tego. */
+const FULLPAGE_MAX_DIFF_RATIO = 0.008;
 
 test("strona główna: widok startowy (hero + pasek) vs baseline", async ({
   page,

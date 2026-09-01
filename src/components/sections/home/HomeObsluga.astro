@@ -1,6 +1,7 @@
 ---
-// Zajawka 04 — Obsługa budowy (analiza §1): wspólny motyw „ZAKRES
-// PROWADZENIA INWESTYCJI" (4 kroki, ostatni ciemny „tu kończymy").
+// Zajawka 04 — Obsługa budowy (analiza §1): oś 4 kroków, ostatni ciemny.
+// Etykieta „ZAKRES PROWADZENIA INWESTYCJI" i podpisy kroków (.ob-s)
+// wypadły na życzenie klienta — zostały same nazwy etapów.
 // Mobile: pas zdjęcia pod papierem .72 z parallaxem [data-plx] + pionowa
 // oś kroków + cytat + pasek CTA; desktop: górny pas zdjęcia, dwie kolumny
 // (tekst | cytat+CTA), kroki w 4 kolumnach na kreskowanej linii.
@@ -14,13 +15,13 @@ import { OBSLUGA_PATH } from "@/lib/routes";
 import HomeSectionHead from "./HomeSectionHead.astro";
 
 const STEPS = [
-  { t: "Wykopy i fundamenty", s: "ciężki sprzęt na placu" },
-  { t: "Konstrukcja i mury", s: "ciesielstwo, zaprawa wapienna" },
-  { t: "Dach i stolarka", s: "więźba, pokrycie, okna" },
-  { t: "Stan surowy zamknięty +", s: "tu kończymy", final: true },
+  { t: "Wykopy i fundamenty" },
+  { t: "Konstrukcja i mury" },
+  { t: "Dach i stolarka" },
+  { t: "Stan surowy zamknięty +", final: true },
 ];
 const QUOTE =
-  "Cała logistyka między tymi etapami jest naszym problemem, nie Twoim.";
+  "My koordynujemy całą logistykę między tymi etapami. Tobie pozostaje ocena postępów.";
 ---
 
 <section class="sec ob">
@@ -78,16 +79,12 @@ const QUOTE =
   </div>
 
   <div class="ob-head">
-    <HomeSectionHead
-      num="04"
-      label="OBSŁUGA BUDOWY"
-      title="Obsługa budowy."
-      lead="Przyjeżdżasz i patrzysz."
-    >
-      Remont starego domu to kilka ekip, dostawy, terminy i telefony. Bierzemy
-      to na siebie. Jeden punkt kontaktu zamiast rozmów z każdym fachowcem
-      osobno. Zamawiamy materiały, pilnujemy dostaw, wprowadzamy sprzęt na plac.
-      Ty dostajesz regularne raporty i zdjęcia z budowy.
+    <HomeSectionHead title="Obsługa budowy." lead="Przyjeżdżasz i patrzysz.">
+      Remont starego domu to kilka ekip, dostawy, terminy i telefony. Zajmujemy
+      się tym wszystkim kompleksowo. Jeden punkt kontaktu zamiast rozmów z
+      każdym fachowcem osobno. Zamawiamy materiały, pilnujemy dostaw,
+      wprowadzamy sprzęt na plac. Ty dostajesz regularne raporty i zdjęcia z
+      budowy.
     </HomeSectionHead>
   </div>
 
@@ -122,7 +119,6 @@ const QUOTE =
         <span class="ob-veil"></span>
       </div>
       <div class="ob-bandin">
-        <div class="ob-label">ZAKRES PROWADZENIA INWESTYCJI</div>
         <div class="ob-steps">
           {
             STEPS.map((step) => (
@@ -133,7 +129,6 @@ const QUOTE =
                 </span>
                 <span class="ob-body">
                   <span class="ob-t">{step.t}</span>
-                  <span class="ob-s">{step.s}</span>
                 </span>
               </div>
             ))
@@ -146,7 +141,6 @@ const QUOTE =
 
   {/* desktop: kroki w 4 kolumnach */}
   <div class="dOnly ob-zakres">
-    <div class="ob-label">ZAKRES PROWADZENIA INWESTYCJI</div>
     <div class="ob-grid-wrap">
       <span class="ob-line" aria-hidden="true"></span>
       <div class="ob-grid">
@@ -155,7 +149,6 @@ const QUOTE =
             <a class="ob-col" href={OBSLUGA_PATH}>
               <i class:list={["ob-dot", { "is-final": step.final }]} />
               <span class="ob-t">{step.t}</span>
-              <span class="ob-s">{step.s}</span>
             </a>
           ))
         }
@@ -249,23 +242,12 @@ const QUOTE =
     position: relative;
     padding: clamp(22px, 3vw, 32px) 0 clamp(24px, 3.2vw, 34px);
   }
-  .ob-label {
-    font-family: var(--font-mono), monospace;
-    font-weight: 500;
-    font-size: clamp(10px, 1.32vw, 11px);
-    letter-spacing: 0.2em;
-    color: rgba(33, 29, 24, 0.64);
-  }
-  .ob-bandin .ob-label,
   .ob-steps {
     width: 100%;
     max-width: var(--smax);
     margin-inline: auto;
     padding-inline: var(--sp);
     box-sizing: border-box;
-  }
-  .ob-bandin .ob-label {
-    padding-bottom: 16px;
   }
   .ob-step {
     display: grid;
@@ -298,11 +280,17 @@ const QUOTE =
       transparent 4px 8px
     );
   }
+  /* Podpisy kroków (.ob-s) wypadły na życzenie klienta, ale rytm osi ma
+     zostać ten sam — rezerwujemy dokładnie ich wysokość: dawny gap 3 px
+     + interlinia podpisu (jego font-size × 1.5). Ostatni krok nie ma
+     następnika, więc regułę zeruje :last-child i oś nie kończy się
+     pustym pasem. */
   .ob-body {
     display: flex;
     flex-direction: column;
-    gap: 3px;
-    padding-bottom: clamp(18px, 2.5vw, 26px);
+    padding-bottom: calc(
+      clamp(18px, 2.5vw, 26px) + 3px + clamp(11.5px, 1.6vw, 13px) * 1.5
+    );
   }
   .ob-step:last-child .ob-body {
     padding-bottom: 0;
@@ -313,15 +301,6 @@ const QUOTE =
     font-size: clamp(21px, 2.95vw, 25px);
     line-height: 1.16;
     color: var(--ink);
-  }
-  .ob-s {
-    font-family: var(--font-mono), monospace;
-    font-size: clamp(11.5px, 1.6vw, 13px);
-    line-height: 1.5;
-    color: var(--faint);
-  }
-  .ob-step:last-child .ob-s {
-    color: var(--accent-ink);
   }
   .ob-flow .ob-quote {
     width: 100%;
@@ -419,10 +398,6 @@ const QUOTE =
       margin-top: auto;
       padding: clamp(44px, 8vh, 88px) var(--g) clamp(48px, 9vh, 96px);
     }
-    .ob-zakres .ob-label {
-      font-size: var(--monos);
-      padding-bottom: clamp(22px, 3.6vh, 36px);
-    }
     .ob-grid-wrap {
       position: relative;
     }
@@ -462,13 +437,6 @@ const QUOTE =
     .ob-col .ob-t {
       font-size: var(--item);
       line-height: 1.1;
-    }
-    .ob-col .ob-s {
-      font-family: var(--font-mono), monospace;
-      font-weight: 500;
-      font-size: var(--eyebrow);
-      line-height: 1.5;
-      color: inherit;
     }
   }
 </style>

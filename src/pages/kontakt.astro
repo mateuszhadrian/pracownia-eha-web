@@ -38,10 +38,6 @@ import { MESSAGE_MAX, NAME_MAX, PLACE_MAX } from "@/lib/contact-form";
 import { FACEBOOK_URL, INSTAGRAM_URL, localBusiness } from "@/lib/jsonld";
 import { POLICY_PATH } from "@/lib/routes";
 
-// Mapa obszaru działania — link z eksportu (wyszukiwarka, nie osadzona
-// ramka: iframe Map to trzeci-party skrypt, którego polityka nie deklaruje).
-const MAP_URL = "https://www.google.com/maps/search/Jelenia+G%C3%B3ra";
-
 // Powtarzane mono-tagi — jedno źródło, żeby kopie nie mogły się rozjechać.
 // Tag godzin idzie w DWÓCH członach: na mobile stoją jeden pod drugim
 // (korekta sesji poprawek — patrz .kt-tag-hours w stylach), na desktopie
@@ -106,9 +102,8 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
         decoding="async"
       />
       <div class="kt-hero-in">
-        <p class="kt-kick kt-hero-kick" data-rev>KONTAKT</p>
-        <h1 data-rev data-rev-d="1">Skontaktuj się z&nbsp;nami</h1>
-        <p class="kt-hero-lead" data-rev data-rev-d="2">
+        <h1 data-rev>Skontaktuj się z&nbsp;nami</h1>
+        <p class="kt-hero-lead" data-rev data-rev-d="1">
           Wierzymy, że wielkie projekty zaczynają się od dobrej rozmowy.
           Zadzwoń, aby porozmawiać o Twojej wizji, sprawdzić statykę
           historycznej struktury lub omówić logistykę relokacji budynku.
@@ -217,12 +212,6 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
                 >dojazd do ok. godziny drogi</span
               >
             </p>
-            <a
-              class="kt-map"
-              href={MAP_URL}
-              target="_blank"
-              rel="noopener noreferrer">ZOBACZ OBSZAR NA MAPIE →</a
-            >
           </div>
           <div class="kt-legal">
             <p class="kt-lb">DANE REJESTROWE</p>
@@ -259,8 +248,7 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
             loading="lazy"
             decoding="async"
           />
-          <p class="kt-kick" data-rev>NAPISZ WIADOMOŚĆ</p>
-          <h2 data-rev data-rev-d="1">Wolisz formę pisemną?</h2>
+          <h2 data-rev>Wolisz formę pisemną?</h2>
           <p class="kt-p">
             Wyślij nam e-mail z opisem swojej inwestycji, lokalizacją i
             ewentualnymi załącznikami (rzuty, zdjęcia). Odpowiemy tak szybko,
@@ -285,12 +273,7 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
               novalidate
             >
               <div class="kt-form-hd">
-                <p class="kt-kick" data-rev>FORMULARZ</p>
-                <h2 data-rev data-rev-d="1">Albo wypełnij formularz</h2>
-                <p class="kt-p kt-form-lead">
-                  Kilka zdań o budynku i lokalizacji wystarczy, żebyśmy mogli
-                  wstępnie ocenić zakres prac.
-                </p>
+                <h2 data-rev>Albo wypełnij formularz</h2>
               </div>
 
               <div class="kt-fields">
@@ -418,7 +401,6 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
         </section>
 
         <section class="kt-firm">
-          <p class="kt-kick" data-rev>DANE FIRMOWE I OBSZAR</p>
           <p class="kt-p kt-firm-p">
             Pracujemy na Dolnym Śląsku, w okolicach Jeleniej Góry — w sercu
             krainy domów przysłupowych. Dojeżdżamy na budowy w promieniu około
@@ -448,10 +430,9 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
             decoding="async"
           />
           <div class="kt-social-txt">
-            <p class="kt-kick" data-rev>MEDIA SPOŁECZNOŚCIOWE</p>
-            <h2 data-rev data-rev-d="1">Śledź nasze realizacje</h2>
+            <h2 data-rev>Śledź nasze realizacje</h2>
             <p class="kt-p">
-              Zobacz, jak przywracamy statykę i duszę wiekowym budynkom i jak
+              Zobacz, jak przywracamy życie i duszę wiekowym budynkom i jak
               wygląda upcycling na wielką skalę w naszym wykonaniu.
             </p>
           </div>
@@ -537,14 +518,6 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
   }
 
   /* ── wspólne klocki typograficzne ── */
-  .kt-kick {
-    margin: 0;
-    font-family: var(--font-mono), monospace;
-    font-weight: 500;
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    color: rgba(87, 101, 74, 0.95);
-  }
   .kt h2 {
     margin: 0;
     font-family: var(--font-serif), serif;
@@ -637,9 +610,6 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
     flex-direction: column;
     gap: 14px;
   }
-  .kt-hero-kick {
-    color: rgba(228, 220, 200, 0.75);
-  }
   .kt-hero h1 {
     margin: 0;
     max-width: 280px;
@@ -684,15 +654,9 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
       padding-inline: var(--g);
       display: grid;
       grid-template-columns: 1fr 1fr;
-      grid-template-areas:
-        "kick lead"
-        "title lead";
+      grid-template-areas: "title lead";
       gap: clamp(14px, 1.3vw, 21px) var(--gapx);
       align-items: end;
-    }
-    .kt-hero-kick {
-      grid-area: kick;
-      font-size: var(--mono);
     }
     .kt-hero h1 {
       grid-area: title;
@@ -1006,22 +970,6 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
     font-size: 13px;
     color: var(--faint);
   }
-  .kt-map {
-    align-self: flex-start;
-    margin-top: 6px;
-    font-family: var(--font-mono), monospace;
-    font-weight: 500;
-    font-size: 10px;
-    letter-spacing: 0.14em;
-    color: var(--accent);
-    text-decoration: none;
-    border-bottom: 1px solid rgba(87, 101, 74, 0.5);
-    padding-bottom: 2px;
-  }
-  .kt-map:hover,
-  .kt-map:focus-visible {
-    color: var(--accent-ink);
-  }
   .kt-legal {
     padding-top: 16px;
     border-top: 1px dashed rgba(33, 29, 24, 0.3);
@@ -1066,8 +1014,7 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
     .kt-area-t {
       font-size: calc(var(--lead) * 1.02);
     }
-    .kt-area-t span,
-    .kt-map {
+    .kt-area-t span {
       font-size: var(--monos);
     }
     .kt-legal-l {
@@ -1106,9 +1053,6 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
   @media (min-width: 1024px) {
     .kt-write {
       gap: clamp(12px, 1.2vw, 19px);
-    }
-    .kt-write .kt-kick {
-      font-size: var(--mono);
     }
     .kt-write h2 {
       font-size: var(--h2);
@@ -1161,11 +1105,6 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
     display: flex;
     flex-direction: column;
     gap: 8px;
-  }
-  .kt-form-lead {
-    font-size: 13.5px;
-    line-height: 1.65;
-    color: var(--faint);
   }
   .kt-fields {
     display: flex;
@@ -1346,17 +1285,9 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
     .kt-form-hd {
       gap: 10px;
     }
-    .kt-form-hd .kt-kick {
-      font-size: var(--mono);
-    }
     .kt-form-hd h2 {
       font-size: calc(var(--h2) * 0.82);
       line-height: 1.14;
-    }
-    .kt-form-lead {
-      font-size: calc(var(--body) * 0.94);
-      max-width: clamp(420px, 44vw, 660px);
-      text-wrap: pretty;
     }
     .kt-fields {
       display: grid;
@@ -1425,9 +1356,6 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
       gap: clamp(14px, 1.4vw, 22px);
       padding-top: clamp(30px, 3vw, 48px);
       border-top: 1px dashed rgba(33, 29, 24, 0.3);
-    }
-    .kt-firm .kt-kick {
-      font-size: var(--mono);
     }
     .kt-firm-p {
       font-size: var(--body);
@@ -1503,9 +1431,6 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
     .kt-social-txt {
       gap: clamp(10px, 1vw, 16px);
       min-height: 0;
-    }
-    .kt-social .kt-kick {
-      font-size: var(--mono);
     }
     .kt-social h2 {
       font-size: calc(var(--h2) * 0.8);

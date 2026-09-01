@@ -1904,6 +1904,280 @@ p=none`. DMARC bez `sp=` i bez ostrego dopasowania ⇒ maile
     dla faviconu przy dpr 1, (c) ratchet budżetów LHCI po zielonym CI
     (font count 8 → 12, nowy font size ≤ 230 000, numberOfRuns 3 → 5).
 
+- **Poprawki klienta (Etap 7 wstrzymany) — WYKONANE** (2026-09-01, branch
+  `fix/poprawki-klienta`). Klient przejrzał produkcję i odesłał uwagi:
+  usunięcie 29 eyebrows z całego serwisu + 18 poprawek treści na
+  6 trasach. ZERO nowych mechanik; dwa punkty unieważniają wcześniejsze
+  zapisy, a jeden odsłonił kruchość sondy z Etapu 4.5.
+  - **1. Eyebrows (mono-kickery nad h1/h2) — USUNIĘTE z 7 tras.**
+    Lista klienta miała 28 pozycji; **`ŚWIADOME GRANICE` na
+    kompetencjach dopisał Mateusz** po tym, jak diagnoza pokazała, że
+    jest to strukturalnie ten sam gatunek (`<p class="kmp-kick"
+data-rev>` w `.kmp-sec-head-in`) co sześć wymienionych, tylko
+    przeoczony. Razem **29**: `/` ×6 (`HomeSectionHead`),
+    `/ekipa-eha/` ×3, `/kompetencje-i-technologie/` ×7, `/tradycja-i-
+ekologia/` ×4, `/realizacje/` ×1, `/obsluga-budowy/` ×3,
+    `/kontakt/` ×5. Każdy występował DOKŁADNIE RAZ (główki sekcji są
+    wspólne dla obu progów — duplikacje dOnly/mOnly dotyczą akapitów
+    i kadrów), więc to jedno usunięcie na pozycję. - **ZOSTAJĄ świadomie** (inny gatunek, nie nagłówki sekcji):
+    `ZAKRES PRAC CIESIELSKICH` ×2, `ZAKRES PRAC MURARSKICH` ×2,
+    `TWORZYMY I ODTWARZAMY` ×2 (etykiety nad listami/kartami),
+    `NASZ MODEL DZIAŁANIA JEST PROSTY` (`.s3-kick` nad cytatem),
+    `UKŁAD WARSTW OTWARTYCH DYFUZYJNIE` (opis diagramu),
+    `BEZKOMPROMISOWO · RELOKACJA BUDYNKÓW` (badge na zdjęciu),
+    podpis marki hero `PRACOWNIA EH/A / REMONTY DOMÓW Z HISTORIĄ`
+    (obsługa + tradycja) oraz WSZYSTKIE `pp-kick` na polityce
+    (klient nie tknął tej trasy). - **DWIE PUŁAPKI STRUKTURALNE — pusty wiersz gridu NIE zabiera ze
+    sobą swojego `row-gap`.** Reszta kickerów siedziała w kolumnach
+    flex z `gap` (usunięcie czyste), ale dwa były elementami gridu
+    z nazwanym obszarem: `/obsluga-budowy/` sekcja 05 desktop
+    (`grid-template-areas: "kick kick" / "h2 h2" / "rule rule" /
+"p1 p2"`, `row-gap: clamp(16px,1.6vw,26px)`) i `/kontakt/` hero
+    desktop (`"kick lead" / "title lead"`, `gap: clamp(14px,1.3vw,
+21px)`). Samo skasowanie `<p>` zostawiłoby w obu martwy odstęp.
+    Lekarstwo = wycięcie wiersza z `grid-template-areas` i reguły
+    `grid-area`. Zmierzone po zmianie: obsługa `.s3-txt` ma 3 wiersze
+    (`51,08 / 12,52 / 137,44 px`) i **0,0 px** nad h2; kontakt
+    `.kt-hero-in` ma JEDEN wiersz `"title lead"` (23 px nad h1 to
+    `align-items: end`, czyli h1 dosuwany do dołu wiersza wyznaczonego
+    przez lead — nie martwy gap). - Miejsca z `display: contents` na kompetencjach (`.cies-head`,
+    `.skl-head`, `.inst-head`) sprawdzone osobno: rozpuszczają się do
+    kolumn **flex**, nie do gridu z auto-placementem, więc usunięcie
+    jednego dziecka nic nie przesuwa w bok. Na tej trasie nie ma ani
+    jednego `grid-template-areas`. - **Przesunięcie zmierzone: 27,0 px na sekcję** (15 px eyebrow +
+    12 px `gap`), identycznie na `webkit-iphone-se`, `-14`
+    i `chromium-pixel-5` — i **h2 wchodzi DOKŁADNIE w miejsce
+    eyebrowa** (Δ < 0,6 px). To jest istotne, bo od tego zależy
+    kontrakt rycin hero (niżej). - Martwe reguły CSS usunięte razem z elementami: `.home .s-eyebrow`,
+    `.eka-kick` ×2, `.wk-kick` ×2, `.obs-kick` ×3, `.kt-kick` ×5 +
+    `.kt-hero-kick` ×2, `.gran-head .kmp-kick`. **ZOSTAJĄ** `.kmp-kick`
+    (6 użyć) i `.trd-kick` (3 użycia) — mają jeszcze konsumentów.
+    Propy `num`/`label` wypadły z `HomeSectionHead` i z 6 wywołań
+    (komponent jest odtąd TRÓJKĄ nagłówkową, nie czwórką). - **Kaskada `data-rev-d` przenumerowana** wszędzie tam, gdzie
+    kicker był elementem bez opóźnienia: h2 dostaje `data-rev` bez
+    `-d`, kolejne elementy schodzą o jeden szczebel. Bez tego reveal
+    startowałby od 0,09 s zamiast od zera. **Drabiny opóźnień
+    w CSS (`="1"`/`="2"`/`="3"`) zostawione nietknięte** — to skala,
+    nie kontrakt konkretnego elementu; skasowanie nieużywanego
+    szczebla wywróciłoby po cichu przyszły dopisany akapit. - **SZEŚĆ sond e2e siedziało na kasowanym kickerze** (żaden test
+    nie asertował ich TREŚCI — sprawdzone dla wszystkich 29 ciągów;
+    trafienia były wyłącznie w komentarzach). Przepięte na pierwszy
+    `[data-rev]` sekcji, czyli h2: `home.spec` (`.ob-head`),
+    `ekipa.spec`, `kompetencje.spec` (`.gran-head`), `obsluga.spec`,
+    `tradycja.spec`, `kontakt.spec`. - **Kontrakt rycin hero z poprzedniej sesji PRZEŻYŁ bez dostrajania.**
+    `home.spec.ts` „ryciny hero nie nachodzą na kicker zajawki 01"
+    mierzył zapas względem `.ek .s-eyebrow` (poprawka pkt 6 z sesji
+    przed Etapem 6: `.ek-txt` padding-top 74 → 106 px). Ponieważ h2
+    wchodzi w miejsce eyebrowa co do 0,6 px, zapas się NIE zmienił —
+    sonda tylko przepięta na `.ek .s-title`. Zmierzony najgorszy
+    przypadek przez cały przejazd scrolla: `.hr-m2` **14,3–16,1 px**,
+    `.hr-m3` **37,0–38,9 px** na trzech profilach mobilnych.
+    ⚠️ Te liczby NIE są porównywalne z zapisanymi w poprzedniej sesji
+    (8–11 / 31–34 px) — inna sonda i inne osiadanie parallaxu.
+    Rozstrzyga DELTA mierzona na tej samej stronie, nie wartości
+    bezwzględne z dwóch różnych narzędzi.
+  - **2. Osiemnaście poprawek treści** (numeracja klienta). `/`:
+    (1) „do sieci słupowo-ryglowych" → „do konstrukcji…" w podpisie
+    Łukasza; (2) skasowane „Zdjęcia są z placu, nie z katalogu.";
+    (3) akapit kompetencji („spinamy" → „murujemy", „Bierzemy też to,
+    czego inni nie chcą" → „Lubimy też wyzwania — pasjonuje nas
+    murowanie sklepień i kopuł"); (4) obsługa — „Bierzemy to na siebie."
+    → „Zajmujemy się tym wszystkim kompleksowo.", nowy cytat
+    („My koordynujemy całą logistykę…"), etykieta `ZAKRES PROWADZENIA
+INWESTYCJI` i podpisy kroków `.ob-s` skasowane w OBU drzewach;
+    (5) akapit tradycji przepisany + skasowany cytat „Najbardziej
+    ekologiczny dom…" (razem ze stałą `QUOTE` i regułami `.td-quote`);
+    (6) akapit kontaktu + JEDEN KRÓJ w karcie „ZADZWOŃ".
+    `/kontakt/`: (7) skasowany lead formularza; (8) „przywracamy
+    statykę" → „przywracamy życie"; **+ link „ZOBACZ OBSZAR NA MAPIE"
+    usunięty CAŁKOWICIE** (razem ze stałą `MAP_URL` i regułami
+    `.kt-map`). `/obsluga-budowy/`: (9) `MOTTO` „Twój święty spokój." →
+    „Twój spokój."; (10) „nazbyt" wypadło, „placu boju" → „placu
+    budowy"; (11) nowy akapit CTA, `<em>` przeniesione z „ratowania
+    historycznej cegły" na „substancji zabytkowej". `/ekipa-eha/`:
+    (12) biogram Maćka + akapit o ciesielstwie tradycyjnym; (13) opis
+    karty FACHWERK; (14) „Ustrój słupowo-ryglowy" → „Konstrukcja
+    słupowo-ryglowa"; (15) „dawną statykę i duszę" → „duszę" (w OBU
+    kopiach dOnly/mOnly). `/kompetencje-i-technologie/`: (16) karta
+    WIĘŹBY DACHOWE; (17) zdanie o obliczeniach cieplno-wilgotnościowych.
+    `/tradycja-i-ekologia/`: (18) „ustroje przysłupowe" → „konstrukcje". - **Wszystkie teksty powtarzane zmieniane W STAŁEJ**, nie
+    w wystąpieniach (`MOTTO`, `QUOTE`, `STEPS`, `CIES_CARDS`,
+    `TRW_P`) — kopie dOnly/mOnly nie mogą się rozjechać. Weryfikacja
+    na `dist` z normalizacją białych znaków: 13 ciągów „ma być 0" =
+    0, 17 ciągów „ma być >0" = obecne (dublety 2× wyłącznie tam,
+    gdzie duplikacja jest zamierzona). - **CZTERY ŚWIADOME ODSTĘPSTWA od dosłownego zapisu klienta**
+    (drobne, ale zapisane, żeby nikt ich nie „naprawiał" wstecz):
+    (a) pkt 3 — przywrócona kropka na końcu akapitu i dywiz `-`
+    zamieniony na pauzę `—` (reszta akapitu i całego serwisu używa
+    pauzy); (b) pkt 14 — „Konstrukcja słupowo**-**ryglowa"
+    z DYWIZEM, bo klient sam użył go w pkt 1, a bez niego jedna
+    trasa pisałaby to inaczej niż wszystkie pozostałe; (c) pkt 11 —
+    przecinek przed „oraz" ZOSTAWIONY dosłownie (to interpunkcyjny
+    błąd, ale tekst jest klienta — do jego decyzji); (d) pkt 6 —
+    zmieniona WYŁĄCZNIE `font-family`, zgodnie z żądaniem; wagi,
+    rozmiary, tracking, wersaliki i kolory nietknięte.
+  - **Rytm osi kroków zachowany „tak, jakby małe litery były"**
+    (wyraźne życzenie klienta w pkt 4). Podpis `.ob-s` znikł, ale
+    `.ob-body` rezerwuje dokładnie jego wysokość:
+    `padding-bottom: calc(clamp(18px,2.5vw,26px) + 3px +
+clamp(11.5px,1.6vw,13px) * 1.5)` — czyli dawny `padding` + dawny
+    `gap` + interlinia podpisu, tą SAMĄ formułą, więc rezerwa jedzie
+    za viewportem identycznie jak jechał tekst. Zmierzone przed i po,
+    na trzech profilach mobilnych: **kropka→kropka 62,61 px w obu
+    stanach** (bez zmian). Regułę zeruje istniejące
+    `.ob-step:last-child .ob-body` — ostatni krok nie ma następnika,
+    więc oś nie kończy się pustym pasem; pas skrócił się o **51,25 px**,
+    czyli dokładnie o etykietę (16 px padding + wiersz) i podpis
+    ostatniego kroku (3 + 17,25 px).
+  - **Karta „ZADZWOŃ" na `/` w jednym kroju** (pkt 6): `.kt-call-label`,
+    `.kt-phones b` i `.kt-panel a[data-tel] b` oraz `.kt-hours`
+    przestawione z `var(--font-mono)` na `var(--font-serif)`; numery
+    i mail już tam były. **ZERO kosztu w fontach** — Garamond jest
+    ZMIENNY z zakresem `font-weight: 400 800`, więc wagi 500 i 600
+    obsługuje ten sam plik, który strona i tak ładuje pod h1/h2
+    (potwierdzone: 12 `@font-face` w arkuszu `/`, bez zmian).
+    Zweryfikowane w przeglądarce na obu progach: cały blok raportuje
+    `"EB Garamond Variable"` przy nietkniętych wagach 600/600/500/500
+    i trackingu. `.kt-area` („DOLNY ŚLĄSK") ZOSTAJE monospaced —
+    klient go nie wymienił.
+    ⚠️ Bliźniaczy blok na `/kontakt/` (`.kt-call-hd` „ZADZWOŃ DO NAS")
+    dalej jest monospaced — poprawka była zaadresowana do zajawki 06.
+  - **LEKCJA (nowa): sonda D-U1 mierzyła ZAOKRĄGLENIA, nie geometrię.**
+    Po usunięciu kickerów `obsluga.spec.ts` „kadry [data-plx] mają
+    zapas wysokości większy niż ruch parallaxu" zaczął padać na
+    `webkit-iphone-se` — **czerwony także w IZOLACJI, więc z definicji
+    nie flake**. Przyczyna nie leżała w układzie: zapas robi CSS-owe
+    `height: 118%`, więc jest spełniony z konstrukcji, ale test
+    porównywał `offsetHeight`, a ten zaokrągla kadr i obraz
+    NIEZALEŻNIE i w PRZECIWNE strony — kadr 241,594 → **242** (w górę),
+    obraz 285,078 → **285** (w dół) — przez co próg
+    `round(242 × 1,18) = 286` wypadał o 1 px NAD realną geometrią.
+    Prawdziwy niedobór: **0,0029 px**, czyli resztka
+    zmiennoprzecinkowa. Sonda przechodziła wcześniej z zapasem
+    **DOKŁADNIE 0 px** (`round(267 × 1,18) = 315`, obraz 315), więc
+    wywracała ją dowolna zmiana wysokości sekcji — a na mobile kadr
+    dzieli komórkę gridu z nagłówkiem i BIERZE JEGO WYSOKOŚĆ
+    (`analiza-obsluga`: „bez zgadywania pikseli"), więc kicker
+    ciągnął ją za sobą. Naprawa: pomiar przez
+    `getBoundingClientRect()` + `SUBPIXEL_TOL_PX = 0.5`. Realne
+    naruszenie D-U1 (brak `max-width: none`, zły `height`) to
+    DZIESIĄTKI pikseli, więc tolerancja go nie przepuści. Sonda jest
+    w projekcie JEDNA (tylko `obsluga.spec.ts`).
+    **Wniosek do reużycia: kontrakt geometryczny nie może stać na
+    `offsetHeight` — dwie niezależnie zaokrąglone liczby całkowite
+    potrafią rozjechać się o 1 px w złą stronę i zamienić kontrakt
+    w loterię wysokości sekcji.**
+  - Bramki 2026-09-01: format:check / lint / typecheck (0 errors) /
+    unit **91 passed** (w tym strażnik subsetów fontów — żaden nowy
+    tekst nie wprowadził znaku `latin-ext` spoza polskiego zakresu) /
+    build / e2e **664 passed, 0 failed** (542 skipped). Jedyna
+    poprawka kontraktu treści: `obsluga.spec.ts` asertował motto
+    „Twój święty spokój." (pkt 9).
+  - \*\*ZASIĘG BASELINE'ÓW: 80 zrzutów na platformę — 73 czerwone
+    - 7 „zielonych, ale nieaktualnych"\*_ (zmierzone, nie oszacowane;
+      126 zrzutów w zestawie, `polityka-_` NIETKNIĘTE).
+    * Czerwone wg trasy: `index-full` ×6, `ekipa-full` ×6 +
+      `-full-open` ×3, `kompetencje-full` ×6 + `-full-open` ×3 +
+      `-top` ×3 desktop, `tradycja-full` ×6 + `-full-open` ×3,
+      `kontakt-full` ×6 + `-top` ×6, `obsluga-full` ×6 + `-top` ×6,
+      `work-index-top`/`-full` ×3 mobile każdy, `chrome-dropdown` ×3,
+      `chrome-sheet` ×3, `chrome-sheet-akordeon` ×1.
+    * **Pomiar „zielone ≠ aktualne" przez zbicie progu do zera**
+      (`maxDiffPixelRatio: 0` + `maxDiffPixels: 0` w
+      `playwright.config.ts` na JEDEN przebieg, plik przywrócony,
+      `git diff` czysty; żaden baseline nie został przy tym ruszony)
+      wyłuskał **7 sztuk pod progiem**: `work-index-top` i
+      `work-index-full` na TRZECH profilach desktopowych (356 / 396 /
+      393 px) oraz `chrome-sheet-akordeon` na `webkit-iphone-14`
+      (10 px). To są glify skasowanego kickera `REALIZACJE`, a
+      globalny próg 0.0005 przy 1920×1080 daje 1036 px zapasu — czyli
+      podręcznikowy przypadek z `testing.md`. **Baseline pokazywałby
+      napis, którego na stronie już nie ma.**
+    * Wykonane w DWÓCH przebiegach workflow (`spec` przyjmuje kilka
+      ścieżek naraz, ale przebiegi MUSZĄ iść sekwencyjnie — oba robią
+      `git push` na tę samą gałąź): `mode=changed` dla sześciu specy
+      (index/ekipa/kompetencje/kontakt/obsluga/tradycja) i `mode=all`
+      dla `work-index` + `chrome`; darwin tą samą parą komend lokalnie.
+      Po komplecie **126 passed, 0 failed**, a przebieg weryfikacyjny
+      nie ruszył ani jednego baseline'u (kontrola sum kontrolnych).
+    * ZERO nierozpoznanych intruzów w rozumieniu regresji: wszystkie
+      czerwone leżą na trasach dotkniętych zmianą, a znany intruz
+      `ekipa-top` SE się NIE zapalił.
+  - **LEKCJA: `mode=all` SPŁACA DŁUG POPRZEDNIEJ SESJI — i to wygląda
+    jak intruzi.** Oba przebiegi ruszyły PONAD listę 80: linux 7 plików,
+    darwin 6. Sześć wspólnych (`work-detail-open` ×4 profile,
+    `work-detail-video` 1920, `chrome-sheet-akordeon` SE) to NIE był
+    szum. Oględziny wycinka pokazały wprost: na STARYM baselinie
+    `REALIZACJE` w pasku NIE MA PODKREŚLENIA, na nowym MA — czyli to
+    wskaźnik bieżącej strony z sesji poprzedzającej Etap 6 (pkt 4),
+    którego baseline'y zostały wtedy świadomie nieprzepisane, bo
+    różnica siedziała pod progiem. Zapis z tamtej sesji ostrzegał
+    dokładnie o tym („diff pokaże sumę starej i nowej różnicy").
+    Diffy siedzą w JEDNYM miejscu — w pasie strony widocznym przez
+    zasłonę nakładki (mobile: ciągłe pasmo `y 0–71`, czyli dokładnie
+    `--hdr-h` = 72 px; desktop: pasma `y 27–42`, `49–55`, `173–186`) —
+    a `work-detail-open` i `work-detail-video` na 1920 dały IDENTYCZNY
+    diff (2428 px / 37 wierszy na linuksie), co dla szumu jest
+    niemożliwe. **Rozstrzygnął pomiar na DWÓCH systemach**: darwin
+    oddał te same liczby w granicach 0,5 % (2417 vs 2428 px,
+    14 724 vs 14 678 px, te same pasma). Szum rastra nie powtarza się
+    między OS-ami — treść tak. Sześć plików ZOSTAJE, bo przywrócenie
+    ich cofnęłoby baseline do stanu, którego na produkcji nie ma.
+  - **PRÓG `index-full` 0.006 → 0.008** (decyzja Mateusza; stała
+    `FULLPAGE_MAX_DIFF_RATIO` w `tests/visual/index.spec.ts`, globalny
+    0.0005 NIETKNIĘTY). Pierwsze CI z kompletem baseline'ów dało
+    **1 failed / 125 passed**: `index-full` na `webkit-iphone-14`,
+    **15 604 px = 0.00622** przy limicie 15 055 — przekroczenie o 549 px
+    (3,6 %). `quality`, `lighthouse` i `test:e2e` zielone. - Rozpoznanie z artefaktu CI (`gh run download … -n
+playwright-report`; nazwa pliku PNG w `data/` to jego własna suma
+    sha1, więc `expected` poznaje się po zgodności z zacommitowanym
+    baselinem): surowa różnica **158 521 px w DWÓCH zwartych pasmach**
+    — `y 3699–3956` (258 wierszy) i `y 4574–4781` (208 wierszy).
+    Oględziny obu wycinków: tekst, kropki osi kroków i mono-podpisy
+    stoją PIKSEL W PIKSEL, przesuwa się WYŁĄCZNIE zdjęcie w tle. - **SUFIT KLASY POLICZONY — to jest nowa liczba w projekcie.** `/`
+    ma na mobile **dokładnie DWA** kadry `[data-plx]`, o wysokości
+    **258 i 209 px**, czyli te same 258 i 208 wierszy, które widać
+    w diffie (dopasowanie co do wiersza = mechanizm potwierdzony bez
+    wątpliwości). Razem 467 px na 6434 px dokumentu = **7,3 % strony**;
+    pozostałe 92,7 % to tekst zablokowany co do piksela. Ta klasa
+    awarii NIE MOŻE więc przekroczyć **ratio 0.0726 surowo**, a że
+    Playwright liczy PERCEPCYJNIE (~10× łagodniej — zmierzone: surowe
+    0.0632 → zgłoszone 0.00622), **sufit percepcyjny ≈ 0.0071**.
+    Próg 0.008 leży POWYŻEJ sufitu, więc pokrywa całą klasę, a do
+    realnej regresji layoutu na `/` (0.10–0.27 — zmierzone w TEJ
+    sesji na tym samym zrzucie) zostaje **12–34× zapasu**.
+    To pierwszy ratchet tego zrzutu oparty na policzonym suficie,
+    a nie na szacunku „3–8× zapasu". - Wyzwalaczem było skrócenie pasa zajawki 04 o 51,25 px (pkt 4
+    klienta) — kadr siedzi w innym miejscu dokumentu, więc punkt
+    osiadania parallaxu przesunął się bliżej granicy. Rerun ODRZUCONY
+    jako strategia: mechanizm zależy od obciążenia runnera, więc raz
+    wygra, raz nie, i wróci przy następnym PR-ze dotykającym `/`.
+  - **Przesłanka odkładająca lekarstwo strukturalne PRZESTAŁA
+    OBOWIĄZYWAĆ.** Zapis z Etapu 5 mówił, że zamrożenie transformów
+    `[data-plx]` przed zrzutem fullPage w `revealSweep` „unieważniłoby
+    baseline'y wszystkich widoków z kadrami". Zmierzone w tej sesji:
+    jedyne zrzuty `*-full*` POZA regenerowaną osiemdziesiątką to
+    `polityka-full` (**zero `[data-plx]`** — pilnuje tego kontrakt e2e)
+    i `work-detail-fullscreen` (zrzut lightboxa, nie strony). Czyli fix
+    unieważnia dziś wyłącznie baseline'y, które i tak przepisujemy —
+    jest **prawie darmowy pierwszy raz od Etapu 5**. Świadomie NIE
+    wchodzi do tego PR-a (mieszanie zmiany infrastruktury testowej
+    z poprawkami treści klienta zaciera, co co zepsuło) — **osobny PR
+    zaraz po merge'u**.
+  - **JEDEN prawdziwy intruz, przywrócony**: `firefox-desktop/chrome-bar`
+    na linuksie — **14 px w polu 6×10 px, `maxΔ 19`, jeden profil
+    z sześciu**, a na darwinie ten sam plik NIE zmienił się wcale.
+    Wycinki starej i nowej wersji są dla oka nierozróżnialne
+    (podkreślenie jest w OBU — `chrome-bar` dostał je już w poprzedniej
+    sesji). To rasteryzacja krawędzi glifu. Przywrócony przez
+    `git checkout <sha-przed-botem> -- <plik>`, zweryfikowany `cmp`
+    bajt w bajt.
+    **Metoda do reużycia przy pliku ruszonym PONAD listę: nie zgaduj —
+    (1) zmierz diff pikselowy blobów git (liczba, `maxΔ`, pasma `y`),
+    (2) obejrzyj wycinek regionu różnicy, (3) sprawdź, czy liczba
+    powtarza się na drugiej platformie.** Sama gęstość ani sam rozmiar
+    diffu NIE rozstrzygają.
+
 ## Dokumentacja
 
 - Decyzje projektu (zapadłe — nie otwieraj na nowo):
