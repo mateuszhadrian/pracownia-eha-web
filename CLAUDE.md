@@ -2093,12 +2093,49 @@ clamp(11.5px,1.6vw,13px) * 1.5)` — czyli dawny `padding` + dawny
       globalny próg 0.0005 przy 1920×1080 daje 1036 px zapasu — czyli
       podręcznikowy przypadek z `testing.md`. **Baseline pokazywałby
       napis, którego na stronie już nie ma.**
-    * Wniosek operacyjny: dla `work-index.spec.ts` i `chrome.spec.ts`
-      potrzebny jest `mode=all` (zawężony do jednego speca), dla
-      pozostałych sześciu wystarcza `mode=changed`.
-    * ZERO nierozpoznanych intruzów: wszystkie czerwone leżą na
-      trasach dotkniętych zmianą, a znany intruz `ekipa-top` SE się
-      NIE zapalił.
+    * Wykonane w DWÓCH przebiegach workflow (`spec` przyjmuje kilka
+      ścieżek naraz, ale przebiegi MUSZĄ iść sekwencyjnie — oba robią
+      `git push` na tę samą gałąź): `mode=changed` dla sześciu specy
+      (index/ekipa/kompetencje/kontakt/obsluga/tradycja) i `mode=all`
+      dla `work-index` + `chrome`; darwin tą samą parą komend lokalnie.
+      Po komplecie **126 passed, 0 failed**, a przebieg weryfikacyjny
+      nie ruszył ani jednego baseline'u (kontrola sum kontrolnych).
+    * ZERO nierozpoznanych intruzów w rozumieniu regresji: wszystkie
+      czerwone leżą na trasach dotkniętych zmianą, a znany intruz
+      `ekipa-top` SE się NIE zapalił.
+  - **LEKCJA: `mode=all` SPŁACA DŁUG POPRZEDNIEJ SESJI — i to wygląda
+    jak intruzi.** Oba przebiegi ruszyły PONAD listę 80: linux 7 plików,
+    darwin 6. Sześć wspólnych (`work-detail-open` ×4 profile,
+    `work-detail-video` 1920, `chrome-sheet-akordeon` SE) to NIE był
+    szum. Oględziny wycinka pokazały wprost: na STARYM baselinie
+    `REALIZACJE` w pasku NIE MA PODKREŚLENIA, na nowym MA — czyli to
+    wskaźnik bieżącej strony z sesji poprzedzającej Etap 6 (pkt 4),
+    którego baseline'y zostały wtedy świadomie nieprzepisane, bo
+    różnica siedziała pod progiem. Zapis z tamtej sesji ostrzegał
+    dokładnie o tym („diff pokaże sumę starej i nowej różnicy").
+    Diffy siedzą w JEDNYM miejscu — w pasie strony widocznym przez
+    zasłonę nakładki (mobile: ciągłe pasmo `y 0–71`, czyli dokładnie
+    `--hdr-h` = 72 px; desktop: pasma `y 27–42`, `49–55`, `173–186`) —
+    a `work-detail-open` i `work-detail-video` na 1920 dały IDENTYCZNY
+    diff (2428 px / 37 wierszy na linuksie), co dla szumu jest
+    niemożliwe. **Rozstrzygnął pomiar na DWÓCH systemach**: darwin
+    oddał te same liczby w granicach 0,5 % (2417 vs 2428 px,
+    14 724 vs 14 678 px, te same pasma). Szum rastra nie powtarza się
+    między OS-ami — treść tak. Sześć plików ZOSTAJE, bo przywrócenie
+    ich cofnęłoby baseline do stanu, którego na produkcji nie ma.
+  - **JEDEN prawdziwy intruz, przywrócony**: `firefox-desktop/chrome-bar`
+    na linuksie — **14 px w polu 6×10 px, `maxΔ 19`, jeden profil
+    z sześciu**, a na darwinie ten sam plik NIE zmienił się wcale.
+    Wycinki starej i nowej wersji są dla oka nierozróżnialne
+    (podkreślenie jest w OBU — `chrome-bar` dostał je już w poprzedniej
+    sesji). To rasteryzacja krawędzi glifu. Przywrócony przez
+    `git checkout <sha-przed-botem> -- <plik>`, zweryfikowany `cmp`
+    bajt w bajt.
+    **Metoda do reużycia przy pliku ruszonym PONAD listę: nie zgaduj —
+    (1) zmierz diff pikselowy blobów git (liczba, `maxΔ`, pasma `y`),
+    (2) obejrzyj wycinek regionu różnicy, (3) sprawdź, czy liczba
+    powtarza się na drugiej platformie.** Sama gęstość ani sam rozmiar
+    diffu NIE rozstrzygają.
 
 ## Dokumentacja
 
