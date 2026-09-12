@@ -39,7 +39,7 @@ test.describe("bez JS strona jest kompletna treściowo", () => {
     await page.goto(PATH, { waitUntil: "domcontentloaded" });
     await expect(page.locator("main h1")).toHaveText("Ekipa EH/A.");
     for (const h2 of [
-      "Od sieci korporacyjnych do sieci słupowo-ryglowych",
+      "Od sieci korporacyjnych do konstrukcji słupowo-ryglowych",
       "Geologiczna precyzja i zrozumienie materii",
       "Dolnośląskie dziedzictwo, zachodnia szkoła rzemiosła",
       "Im trudniej, tym lepiej",
@@ -50,7 +50,7 @@ test.describe("bez JS strona jest kompletna treściowo", () => {
       ).toBeVisible();
     }
     // końcówki zwijanych bloków są widoczne w całości (bez maski/kapu)
-    await expect(page.getByText("poznał Maćka.")).toBeVisible();
+    await expect(page.getByText("optymalne dla inwestora.")).toBeVisible();
     await expect(page.getByText("pełnego zaopiekowania.")).toBeVisible();
     // wszystkie przyciski zwijania siedzą w SSR z atrybutem hidden
     const btns = page.locator("[data-clp-btn]");
@@ -160,7 +160,7 @@ test.describe("zwijane akapity — układ mobile", () => {
       has: page.locator("#bio-lukasz"),
     });
     const btn = host.locator("[data-clp-btn]");
-    const tail = page.getByText("poznał Maćka.");
+    const tail = page.getByText("optymalne dla inwestora.");
 
     await expect(tail).not.toBeInViewport();
     await btn.scrollIntoViewIfNeeded();
@@ -197,7 +197,7 @@ test.describe("desktop pokazuje pełny tekst", () => {
       await expect(btn).toBeHidden();
     }
     await expect(page.locator("#bio-lukasz")).toHaveCSS("max-height", "none");
-    await expect(page.getByText("poznał Maćka.")).toBeVisible();
+    await expect(page.getByText("optymalne dla inwestora.")).toBeVisible();
   });
 });
 
