@@ -23,11 +23,24 @@ import { vpH } from "./home-viewport";
 // mobile są jednocześnie [data-plxr] (transform co klatkę), a maska na
 // przesuwanej warstwie to drogi wzorzec przemalowań z lekcji D-Q1.
 function armReveals(): void {
+  // Wołać PO nadaniu klasy .in (animacja rysowania jest definiowana
+  // dopiero przez `.in`, więc wcześniej animation-name i tak jest none).
+  // Gdy animacja w ogóle nie wystartowała — freeze.css testów wizualnych
+  // zdążył PRZED modułem i nadał `animation: none` — nie padnie ŻADNE
+  // zdarzenie, więc stan końcowy domykamy od ręki; bez tej gałęzi rycina
+  // zostaje w ZAMASKOWANYM stanie startowym zależnie od wyścigu ładowania
+  // (flake index-top/-full na profilach mobilnych, 2026-09-12). To ta sama
+  // konstrukcja, którą content-motion.ts ma od Etapu 4.4 cz. 1 — home-motion
+  // jej wtedy nie dostał.
   const drop = (el: HTMLElement, attr: string) => {
     const done = () => {
       el.removeAttribute(attr);
       el.classList.remove("in");
     };
+    if (getComputedStyle(el).animationName === "none") {
+      done();
+      return;
+    }
     el.addEventListener("animationend", done, { once: true });
     // freeze.css testów wizualnych anuluje bieg animacji (animation:none)
     // — bez tej gałęzi rycina zostałaby w połowie zamaskowana
@@ -65,8 +78,8 @@ function armReveals(): void {
   document
     .querySelectorAll<HTMLElement>("[data-ryc][data-ryc-auto]")
     .forEach((el) => {
-      drop(el, "data-ryc");
       el.classList.add("in");
+      drop(el, "data-ryc");
     });
 
   // Pozostałe ryciny — próg 30 % widoczności (skrypt eksportu).
@@ -76,8 +89,8 @@ function armReveals(): void {
         if (!en.isIntersecting) continue;
         const el = en.target as HTMLElement;
         reveal.unobserve(el);
-        if (el.hasAttribute("data-ryc")) drop(el, "data-ryc");
         el.classList.add("in");
+        if (el.hasAttribute("data-ryc")) drop(el, "data-ryc");
       }
     },
     { threshold: 0.3 },
@@ -94,8 +107,8 @@ function armReveals(): void {
         if (!en.isIntersecting) continue;
         const el = en.target as HTMLElement;
         draw.unobserve(el);
-        drop(el, "data-rycsb");
         el.classList.add("in");
+        drop(el, "data-rycsb");
       }
     },
     { rootMargin: "0px 0px -40% 0px" },

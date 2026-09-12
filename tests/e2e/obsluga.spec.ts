@@ -61,7 +61,7 @@ test.describe("bez JS strona jest kompletna treściowo", () => {
       page.getByText("aż po doprowadzenie budynku do stanu surowego"),
     ).toBeVisible();
     await expect(
-      page.getByText("przejrzystą komunikację z placu boju."),
+      page.getByText("przejrzystą komunikację z placu budowy."),
     ).toBeVisible();
     await expect(page.locator(".cta-btn")).toHaveAttribute(
       "href",
