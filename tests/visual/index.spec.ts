@@ -97,6 +97,16 @@ const PATH = "/";
  *  parallaxu unieważnia dziś wyłącznie baseline'y i tak przepisywane.
  *  Wchodzi OSOBNYM PR-em po merge'u tego. */
 const FULLPAGE_MAX_DIFF_RATIO = 0.008;
+/* Budżet zrzutu fullPage jak w każdym innym specu widoku (20 s): `/` to
+ * NAJWYŻSZY dokument projektu (1920×12272), a tryb `--update-snapshots=all`
+ * generuje referencję z DWÓCH kolejnych zrzutów, które muszą wyjść
+ * identyczne — para takich zrzutów plus porównanie nie mieszczą się
+ * w domyślnych 5 s na runnerze CI (workflow baseline'ów, run 34710056719:
+ * „generating new stable screenshot expectation" → Timeout 5000ms).
+ * Tryb `changed` tego nie ujawniał, bo robi jeden zrzut i porównuje go
+ * z gotowym baseline'em. Sam próg czasu nie rusza renderu ⇒ zero wpływu
+ * na baseline'y. */
+const FULLPAGE_SHOT_TIMEOUT_MS = 20_000;
 
 test("strona główna: widok startowy (hero + pasek) vs baseline", async ({
   page,
@@ -120,5 +130,6 @@ test("strona główna: pełna strona vs baseline", async ({ page }) => {
     fullPage: true,
     mask,
     maxDiffPixelRatio: FULLPAGE_MAX_DIFF_RATIO,
+    timeout: FULLPAGE_SHOT_TIMEOUT_MS,
   });
 });
