@@ -103,8 +103,10 @@
 **Etap 7 — umowa i przekazanie**
 
 - [ ] Umowa (draft → prawnik): abonament managed, **kill-switch z uwzględnieniem tego, że DOMENA NALEŻY DO KLIENTA** (§B.7.1)
-- [ ] Instrukcja panelu PL + flow mediów (Część C); 2FA `eha-cms` na telefonie klienta
-- [ ] Przekazanie: panel, konto Resend, ewentualne hasła The Camels (jeśli zmieniane); szkolenie na żywo
+- [ ] Instrukcja panelu PL (PDF) + flow mediów (Część C); 2FA `pracownia-eha-cms` na telefonie klienta
+- [ ] Backupy poziomu 1 (Część D): `rclone` + kopia `eha-media` na dysku Mateusza
+- [ ] Panele NIE-klienckie: Search Console (klient jako WŁAŚCICIEL, bez przenoszenia property), UptimeRobot i Web Analytics zostają przy Mateuszu
+- [ ] Przekazanie: panel, konto Resend, ewentualne hasła The Camels (jeśli zmieniane); szkolenie zdalne + edycja dwóch realizacji na materiałach klienta
 
 ---
 
@@ -579,8 +581,9 @@ sloty antyscrapingowe.
 ### Etap 5 — formularz kontaktowy + `/kontakt/`
 
 1. **Resend (E4):** załóż **osobne konto klienta** na
-   `eha@pracownia-eha.pl` (free plan = 1 domena/konto; Twoje konto
-   zajęte przez hadrianm, konto delunga przez delung). 2FA + Setup Key
+   `eha@pracownia-eha.pl` (⚠️ SPROSTOWANIE 2026-08-26: plan free daje
+   **3 domeny na konto**, nie jedną — osobne konto uzasadnia WŁASNOŚĆ
+   klienta i przekazanie w Etapie 7, a nie limit). 2FA + Setup Key
    i hasło u Ciebie do rozliczenia (przekazanie w Etapie 7). Domains →
    Add `send.pracownia-eha.pl`, **region EU** → w Cloudflare DNS
    rekordy wg wskazań Resend (MX feedback-smtp na `send.`, TXT SPF
@@ -662,7 +665,14 @@ sloty antyscrapingowe.
    flow wideo (Część C), R2 Secret Key przy pierwszym uploadzie na
    nowym urządzeniu, zasada „pierwsza pozycja galerii = zdjęcie",
    czego NIE ruszać.
-3. **2FA `eha-cms`** na telefonie klienta (TOTP); recovery codes u Ciebie.
+3. **2FA konta CMS** (nazwa konta to `pracownia-eha-cms` — login
+   `eha-cms` był zajęty) na telefonie klienta (TOTP); recovery codes
+   u Ciebie, w 1Password. ⚠️ **Pierwsze logowanie z urządzenia klienta
+   wywoła weryfikację GitHuba** — kod przyjdzie na `eha@`, więc miej to
+   w scenariuszu szkolenia jako osobny krok, zanim zaczniesz cokolwiek
+   pokazywać. Twoje własne konto `mateuszhadrian` też otwiera `/admin`
+   (jesteś collaboratorem), ale NIE MA bypassu rulesetu — nadaje się
+   do zrzutów ekranu, nie do zapisu wpisu.
 4. **Przekazanie dostępów:** panel (`eha-cms`), **konto Resend
    klienta** (2FA na jego telefonie, Setup Key u Ciebie do pełnego
    rozliczenia), hasła The Camels — jeśli były zmieniane, oddać/
@@ -670,8 +680,29 @@ sloty antyscrapingowe.
 5. **Szkolenie na żywo:** wspólnie dodajecie realizację od zera
    (zdjęcia + film + teksty) i patrzycie, jak po ~2 min build
    publikuje ją na `pracownia-eha.pl`.
-6. Po przekazaniu: wymiana treści testowych na docelowe (jeśli klient
-   chce inne) — przez panel, w jego rękach, z Twoją asystą.
+6. Po przekazaniu: wymiana treści testowych na docelowe — przez panel,
+   w jego rękach, z Twoją asystą. Stan wyjściowy: **6 wpisów testowych**
+   (w trzech ten sam film `0:31`), więc podmiana jest obowiązkowa, a nie
+   „jeśli klient chce inne".
+7. **Panele, które NIE idą do klienta — spisać w umowie i powiedzieć
+   wprost:** Cloudflare (Pages, R2, Workers, WAF, Web Analytics)
+   i GitHub zostają Twoje w modelu managed; **UptimeRobot zostaje przy
+   Tobie**, bo alert ma trafiać do tego, kto naprawia. Wyjątek:
+   **Google Search Console** — property domenowa jest na Twoim koncie
+   obok `delung.pl`, więc klienta DODAJ jako właściciela
+   (Ustawienia → Użytkownicy i uprawnienia), NIE przenoś property.
+8. **Backupy — Część D, poziom 1 (priorytet nr 1 całego projektu).**
+   Stan na 2026-09-14: `rclone` niezainstalowany, katalogu kopii nie ma,
+   czyli `eha-media` jest JEDYNĄ kopią mediów klienta. Robimy to
+   w Etapie 7, PRZED wgraniem jego materiałów: instalacja `rclone`,
+   remote na R2 z tokenu `eha-media-sveltia` (1Password),
+   `rclone sync` z `--backup-dir` na dysk Mateusza + harmonogram
+   (launchd, tygodniowo). Dysk zewnętrzny dojdzie później — przeniesienie
+   kopii to wtedy osobny, krótki proces, nie część Etapu 7.
+9. **Sekrety**: cały inwentarz jest skonsolidowany i zweryfikowany
+   w **1Password** (stan 2026-09-14) — hasła i Setup Key MFA Resenda,
+   recovery codes konta CMS, klucze R2, dane The Camels. Przekazanie
+   robisz z tej jednej listy; nic nie jest już rozsypane po notatnikach.
 
 ---
 

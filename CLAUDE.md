@@ -2428,12 +2428,55 @@ playwright-report`; nazwa pliku PNG w `data/` to jego własna suma
     `home-motion` (ma animacje dwustanowe na transitions, więc raczej
     nie — ale nie było to weryfikowane).
 
+- **PUNKT WYJŚCIA DO ETAPU 7** (2026-09-14) — zebrane w jednym miejscu,
+  bo dotąd było rozsypane po czterech wpisach powyżej.
+  - **Klient ZAAKCEPTOWAŁ poprawki** (2026-09-14) — warunek wstępny
+    Etapu 7 spełniony, przekazanie może ruszyć.
+  - **Sekrety: jedno źródło prawdy = 1Password** (stan 2026-09-14,
+    zweryfikowany). Wcześniej były rozsypane po kilku menedżerach
+    i notatniku — to już nieaktualne. Cała lista przekazania (hasło
+    i Setup Key MFA Resenda, recovery codes `pracownia-eha-cms`, klucze
+    R2, dane The Camels) idzie z tej jednej listy.
+  - **Co zostało do zrobienia** (szczegóły: `docs/pracownia-eha-web-creation-process.md`
+    §B.7, uzupełniona 2026-09-14): umowa (draft OD ZERA → prawnik),
+    instrukcja panelu PL jako **PDF**, 2FA konta CMS na telefonie
+    klienta, przekazanie konta Resend, **backupy Część D poziom 1**,
+    szkolenie ZDALNE (Mateusz udostępnia ekran; pierwszą realizację
+    edytują wspólnie, drugą klient sam przy nim), dodanie klienta jako
+    WŁAŚCICIELA w Search Console.
+  - **Backupy = największe otwarte ryzyko projektu.** Zmierzone
+    2026-09-14: `rclone` NIEZAINSTALOWANY, katalogu kopii brak ⇒
+    R2 `eha-media` (bez wersjonowania) jest JEDYNĄ kopią mediów.
+    Robić PRZED wgraniem materiałów klienta. Dysk zewnętrzny dojdzie
+    później — przeniesienie kopii to wtedy osobny proces.
+  - **Treść: 6 wpisów testowych** (w trzech ten sam film `0:31`).
+    Podmiana na materiały klienta jest częścią szkolenia, nie opcją.
+  - **Logowanie do `/admin` — dwa konta, różne możliwości** (sprawdzone
+    2026-09-14 w rulesecie): bypass `main-protection` ma WYŁĄCZNIE
+    `pracownia-eha-cms` (id 319944435). Konto `mateuszhadrian`
+    (id 51875278) otwiera panel jako collaborator, ale **zapis wpisu
+    odbije się o ruleset** — nadaje się do zrzutów ekranu do instrukcji,
+    nie do edycji treści. Pierwsze logowanie klienta z jego urządzenia
+    wywoła weryfikację GitHuba kodem na `eha@`.
+  - **Instrukcja panelu — ustalenia formy**: PDF, tekst bez zrzutów ALBO
+    ze zrzutami, jeśli logowanie do panelu przejdzie bez kodu; zrzuty
+    wpisu robić z **odznaczonymi „Show Preview" i „Sync Scrolling"**
+    (zaciemniają widok), a w instrukcji dać osobny punkt, żeby klient
+    odznaczył je przy pierwszym wejściu w realizację.
+  - **Pozycje ODŁOŻONE poza Etap 7** przeniesione do
+    `docs/optional-todos.md` (nowy plik): kolizja plakietki z `×`,
+    cięższy wariant znaku faviconu przy dpr 1, zamrożenie `[data-plx]`
+    w `revealSweep`, monospaced „ZADZWOŃ DO NAS" na `/kontakt/`,
+    backup poziomu 2 (off-site), przecinek przed „oraz" w CTA obsługi.
+    Tam też mieszka utrzymanie cykliczne (Worker auth, Sveltia 0.178.0).
+
 ## Dokumentacja
 
 - Decyzje projektu (zapadłe — nie otwieraj na nowo):
   `docs/pracownia-eha-web-entrance-analysis.md` (E1–E14 + tabela §2).
 - Instrukcja wykonawcza etapów: `docs/pracownia-eha-web-creation-process.md`
   (Część A: checklista; B: kroki; C: flow mediów klienta; D: backupy).
+- Zadania cykliczne i świadomie odłożone: `docs/optional-todos.md`.
 - Designy-referencje: `docs/design/README.md` + 8 plików HTML
   (breakpoint 1024 px, wzorce 390/1440; drugi próg 700 px w siatce
   realizacji).
