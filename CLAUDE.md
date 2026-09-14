@@ -2310,6 +2310,124 @@ playwright-report`; nazwa pliku PNG w `data/` to jego własna suma
     (548 skipped; było 664/542 — +6 to nowa para × 3 profile) / visual
     **121 passed** na progu zerowym.
 
+- **Podmiana portretu Łukasza + domknięcie poprawek klienta — WYKONANE**
+  (2026-09-12, branch `fix/portret-lukasza`, PR #26, squash `7074660`).
+  Zdjęcie Łukasza na `/` i `/ekipa-eha/` było TYMCZASOWYM portretem
+  wygenerowanym przez AI — klient dostarczył prawdziwe. ZERO nowych
+  mechanik w warstwie widoku, ale sesja odsłoniła **błąd w kodzie ruchu
+  strony głównej**, ukrywany dotąd przez baseline'y (niżej, lekcja 3).
+  - **1. Zdjęcie: jeden plik, oba miejsca.** `/` (zajawka 01,
+    `HomeEkipa.astro`) i `/ekipa-eha/` (biogram) ładują TEN SAM
+    `src/assets/lukasz-portrait.webp`, więc podmiana w miejscu pokryła
+    oba — markup i CSS NIETKNIĘTE (`sepia(.22) saturate(.88)`, mgiełka
+    „starego druku" `soft-light` na ekipie, `object-position`). Kadr 2:3
+    460×690 (18 008 B wobec 17 558 B), **głowa zajmuje 54 % wysokości
+    kafla** — dobrane pomiarem: surowe zdjęcie dawało 48 %, placeholder
+    AI 63 %, a widoczny pas kafla to `y 2,2–84,2 %` assetu (cover +
+    `object-position: center 12%` przy proporcji okna ~0,81).
+    **Korekta tonu WYPALONA W PLIK** (`modulate` sat 0,74 / bright 0,94,
+    `sharpen` 0,5): surowy plener z zielenią i czerwonym dachem po
+    nakładce CSS świecił jaśniej niż reszta serwisu i odstawał od
+    sąsiedniego kadru Maćka. Świadomie nie ruszono `filter` w CSS —
+    to rozjechałoby dwa portrety na poziomie kodu.
+  - **2. Treść.** Biogram Łukasza wymieniony w całości na finalną wersję
+    klienta (jeden `CollapsibleText`, więc oba progi naraz); nagłówek
+    „Od sieci korporacyjnych do **sieci** słupowo-ryglowych" →
+    „do **konstrukcji**…" (jeden `h2` wspólny dla progów, zgodnie
+    z podpisem, który zajawka `/` ma od 4.2). Domknięte cztery z pięciu
+    „bliźniaków tekstowych" odłożonych 2026-09-01: „ustrój/ustroje" →
+    „konstrukcja/konstrukcje" (ekipa ×1, kompetencje ×3, w tym stała
+    `CIES_CARDS`) i „placu boju" → „placu budowy" (obsługa).
+    **ZOSTAJE otwarty jeden**: blok „ZADZWOŃ DO NAS" na `/kontakt/`
+    wciąż monospaced (krój ujednolicono tylko w zajawce 06 na `/`);
+    przecinek przed „oraz" w CTA obsługi dalej dosłownie wg klienta.
+  - **Testy treści**: asercja nagłówka w `ekipa.spec.ts`, zdanie
+    o placu budowy w `obsluga.spec.ts` oraz TRZY sondy „końcówka
+    zwijanego bloku jest widoczna" — sentinel „poznał Maćka." →
+    „optymalne dla inwestora." (to kontrakt strukturalny, nie asercja
+    o treści; nowy biogram nie wspomina o poznaniu Maćka, czego biogram
+    Maćka niżej nadal się domyśla — świadomie zostawione, treść klienta).
+  - **ZASIĘG BASELINE'ÓW: 35 zrzutów na platformę**, zmierzone progiem
+    zbitym do zera (procedura `testing.md`; `git diff` na configu
+    i specach czysty). Każdy diff = JEDNO zwarte pasmo dokładnie tam,
+    gdzie zmiana, zero szumu parallaxu. Czerwonych przy dzisiejszych
+    progach: 17 na darwinie, 16 na linuksie (`obsluga-full` 1366
+    i `kompetencje-full` pixel-5 mieszczą się pod progiem zależnie od
+    platformy — progi per-shot mają różne SKUTKI na różnych OS-ach).
+    Regeneracja: **`mode=all` dla `index.spec.ts`, `mode=changed` dla
+    ekipy/kompetencji/obsługi** (decyzja Mateusza) — linux 22 pliki,
+    darwin 23. Świadomy dług: trzy słowa tekstu w `kompetencje-full*`
+    i `obsluga-full` pod progiem.
+  - **LEKCJA 1: „zielony ≠ aktualny" w najgroźniejszej postaci.**
+    WSZYSTKIE SZEŚĆ `index-full` przechodziło na zielono z NIEAKTUALNĄ
+    treścią: kafel portretu to ~0,8 % strony głównej, więc chował się
+    pod progiem **0,008**, podniesionym 2026-09-01 z powodu parallaxu.
+    Tryb `changed` zostawiłby w baselinie `/` **twarz człowieka, którego
+    nie ma na stronie**. Wniosek: przy podmianie MEDIUM zawsze mierz
+    progiem zerowym i rozważ `all` dla trasy, na której medium leży —
+    im wyższy per-shot próg, tym więcej pod nim się mieści.
+  - **LEKCJA 2: `mode=all` potrzebuje budżetu na DWA zrzuty, nie jeden.**
+    Pierwszy przebieg workflow (run 34710056719) padł na
+    `chromium-1920/index-full`: „generating new stable screenshot
+    expectation" → `Timeout 5000ms`. `changed` robi JEDEN zrzut
+    i porównuje z gotowym baselinem, a `all` musi wygenerować stabilną
+    referencję z DWÓCH kolejnych identycznych zrzutów. `index-full` był
+    **jedynym zrzutem fullPage w projekcie bez `FULLPAGE_SHOT_TIMEOUT_MS`
+    = 20 s** (ta sama anomalia co brakujący per-shot próg, domknięty
+    w Etapie 5), a `/` to najwyższy dokument projektu (1920×12272) —
+    lokalnie para zrzutów zajmuje ~13 s. Budżet dodany; czas nie rusza
+    renderu, więc zero wpływu na baseline'y.
+  - **LEKCJA 3 (BŁĄD W KODZIE, nie w teście): `home-motion.ts` nigdy nie
+    dostał poprawki `drop()` z Etapu 4.4 cz. 1.** Trzymał kształt sprzed
+    niej: nasłuchy `animationend`/`animationcancel` zakładane PRZED
+    nadaniem `.in` i BEZ gałęzi „`animation-name: none` → domknij stan
+    od ręki". Gdy `freeze.css` (wstrzykiwany 400 ms po załadowaniu)
+    zdąży przed dynamicznym importem modułu, animacja rysowania w ogóle
+    nie startuje, nie pada ŻADNE zdarzenie i ryciny hero `[data-ryc-auto]`
+    zostają w zamaskowanym stanie startowym. `content-motion.ts` ma tę
+    gałąź od 4.4 z komentarzem opisującym dokładnie ten flake — port
+    do `home-motion` to jedyna zmiana produkcyjna tego PR-a poza
+    treścią (przy normalnie biegnącej animacji zachowanie bez zmian).
+    Objaw: `index-top` SE przeskakiwał między „ryciny narysowane"
+    a „brak lewej" — **7 193 px w jednym paśmie y 180–339**, w JEDNYM
+    dniu w obie strony, i na linuksie (bot), i na darwinie. Po poprawce
+    ten sam zrzut różni się o **226 px włosowego szumu**, a trzy kolejne
+    przebiegi są identyczne. Podejrzewając „wyścig rysowania" na innym
+    module ruchu sprawdź NAJPIERW, czy ma gałąź `animationName === "none"`
+    i czy `drop()` leci PO `.in`.
+  - **LEKCJA 4: „intruz czy dług" rozstrzyga pomiar pasm, nie liczba
+    plików.** `mode=all` ruszył 10 plików zamiast oczekiwanych 6 —
+    doszły 4 × `index-top`, których podmiana portretu dotknąć nie może
+    (kafel jest głęboko pod zgięciem). Pomiar rozdzielił je co do jednego:
+    `chromium-pixel-5` 977 px / maxΔ 23 / 29 włosowych pasm,
+    `webkit-iphone-14` 351 px / maxΔ 24 / 24 pasma, `firefox-desktop`
+    125 px / maxΔ 94 / 7 pasm = szum rastra glifów; `webkit-iphone-se`
+    11 859 px w JEDNYM zwartym paśmie = treść. Dwa niezależne dowody
+    kierunku: (a) TEN SAM przebieg workflow złapał ryciny NARYSOWANE
+    w `index-full` na tym samym profilu i na pozostałych pięciu
+    profilach `index-top`; (b) lista porażek joba `e2e` w CI (przeciwko
+    starym baseline'om) NIE zawierała `index-top` SE, czyli CI renderuje
+    je narysowane. Wszystkie 4 przywrócone, `index-full` ×6 zostały.
+  - **Znani intruzi — AKTUALIZACJA**: `index-full` SE/14 i
+    `kompetencje-full` firefox-desktop zmieniały się w tym PR-ze
+    LEGALNIE (są na liście zmiany), więc lista intruzów nie jest
+    bezwarunkowa — czytaj ją razem ze zmierzonym zasięgiem konkretnego
+    PR-a. `index-top` na profilach mobilnych po lekcji 3 **przestaje
+    być kandydatem na intruza** (źródło flake'a usunięte w kodzie).
+  - Bramki 2026-09-12: format:check / lint / typecheck (0 errors) /
+    unit **91 passed** / build / e2e **670 passed, 0 failed** / visual
+    **126 passed**; CI na `dceb45c` zielone w komplecie (`quality`,
+    `e2e`, `lighthouse`), `prod-smoke` po merge'u zielony. Produkcja
+    zweryfikowana: nowy asset serwowany (`lukasz-portrait.Ci-Cx_Wr.webp`,
+    18 008 B), oba teksty na miejscu.
+  - UWAGI dla kolejnych sesji: kandydat **zamrożenia transformów
+    `[data-plx]` w `revealSweep`** przed zrzutem fullPage jest NADAL
+    otwarty (ten PR go nie ruszył, bo mieszanie infrastruktury testowej
+    z podmianą treści zaciera przyczyny); po lekcji 3 warto przy okazji
+    sprawdzić, czy `tradycja-motion.ts` nie ma tej samej luki co
+    `home-motion` (ma animacje dwustanowe na transitions, więc raczej
+    nie — ale nie było to weryfikowane).
+
 ## Dokumentacja
 
 - Decyzje projektu (zapadłe — nie otwieraj na nowo):
