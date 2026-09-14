@@ -138,8 +138,9 @@ zostają, widoki budowane od nowa wg `docs/design/` — patrz
     `wrangler deploy` bez `keep_vars = true` czyści zmienne); OAuth App „Panel
     treści — pracownia-eha.pl".
   - kod: schemat docelowy §6.1 w trzech miejscach (`place`, `paras[]`
-    min 1, `specs` min 1) + testy kontraktu (w tym strażnik „R2 bez
-    placeholderów": lokalnie skip z powodem, w CI pada).
+    min 1, `specs` min 1 — **od 2026-09-14 opcjonalne**, wpis niżej) +
+    testy kontraktu (w tym strażnik „R2 bez placeholderów": lokalnie
+    skip z powodem, w CI pada).
   - weryfikacje: logowanie `/admin` kontem `pracownia-eha-cms` OK;
     spike MP4 24 MB przez pole edytora → R2, `206` + `Content-Range`
     (plan A potwierdzony); 6 wpisów testowych wg `DATA` z designu
@@ -2469,6 +2470,44 @@ playwright-report`; nazwa pliku PNG w `data/` to jego własna suma
     w `revealSweep`, monospaced „ZADZWOŃ DO NAS" na `/kontakt/`,
     backup poziomu 2 (off-site), przecinek przed „oraz" w CTA obsługi.
     Tam też mieszka utrzymanie cykliczne (Worker auth, Sveltia 0.178.0).
+
+- **Parametry realizacji (specs) OPCJONALNE — WYKONANE** (2026-09-14,
+  branch `feat/specs-opcjonalne`). Klient nie zawsze ma komplet
+  parametrów, a schemat wymagał ≥1 pary — realizacji bez parametrów nie
+  dało się zapisać. Zmiana w TRZECH miejscach naraz (reguła
+  cms-realizacje): Zod `specs` → `.default([])` (brak klucza — tak
+  zapisuje Sveltia przy `omit_empty_optional_fields` — i pusta lista
+  równoważne, oba dają `[]`); panel `min: 1` → `required: false`
+  (dokumentacja Sveltii: przy `required: false` pusta lista = pusta
+  tablica; wersja 0.178.0 nie bumpowana); `WorkDetail.astro` renderuje
+  `.dt-specs` WARUNKOWO (`hasSpecs`), a `.dt-about` dostaje wtedy klasę
+  `dt-about--last` z dolnym odstępem do stopki (mobile 34 px = dawny
+  `padding-bottom` bloku; desktop `clamp(20px,1.81vw,29px)` = dawny
+  `margin-top` bloku przed linią CTA). Przy wpisie Z parametrami markup
+  i CSS identyczne jak dotąd. `paras`/`gallery` dalej min 1. Testy: unit
+  (obie postaci JSON akceptowane → `[]`; `config.yml`: `paras` min 1,
+  `specs` `required: false` bez `min`), e2e `work-index.spec.ts`
+  (z parametrami: nagłówek + wiersz na parę; bez parametrów: brak
+  `.dt-specs` — biega, gdy w kolekcji jest taki wpis, inaczej skip
+  z powodem). Fixture wizualny NIETKNIĘTY (wszystkie wpisy z parametrami)
+  ⇒ **zasięg baseline'ów ZERO, zmierzony** progiem zerowym
+  (`maxDiffPixelRatio: 0` + `maxDiffPixels: 0`, także per-shot
+  w `work-index`/`index`) na specach `work-index`/`index`/`chrome`:
+  43 z 45 zrzutów 0 px; dwa na `webkit-iphone-se` (`index-top` 43 px,
+  `index-full` 1656 px) w powtórce dały **0 px oba**, a w trzecim
+  przebiegu znów 43/0 — szum między przebiegami na tym samym buildzie,
+  nie zmiana. Pełny zestaw wizualny na progach domyślnych: 125 passed /
+  1 failed = `kompetencje-full-open` webkit-14 (znany flake, zielony
+  w izolacji ×2, trasa bez związku). Weryfikacja ręczna w dev
+  (`REALIZACJE_DIR` na katalog tymczasowy poza repo, 390/1440 px):
+  bez parametrów akapity kończą się odstępem 34 px / 26 px przed CTA,
+  z parametrami render bez zmian. Wpis testowy
+  `instalacje-w-zabytkowej-oficynie-sroda-slaska` dostał usunięty klucz
+  `specs` (ręcznie, przez Mateusza — panel na `main` miał jeszcze
+  `min: 1`), żeby kontrakt e2e „bez parametrów" biegał w CI. Do
+  weryfikacji na produkcji po merge'u: zapis wpisu z zerem parametrów
+  w panelu (jedyna rzecz, której lokalnie nie da się sprawdzić bez
+  commita na main).
 
 ## Dokumentacja
 

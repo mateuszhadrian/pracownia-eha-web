@@ -32,6 +32,8 @@ const pad = (n: number) => String(n).padStart(2, "0");
 // Kreski-wskaźniki tylko przy krótkiej galerii (korekta Mateusza) —
 // powyżej progu rząd przestaje się mieścić, zostaje sam licznik.
 const showDashes = p.gallery.length <= WORK_GALLERY_DASHES_MAX;
+// Parametry są opcjonalne w CMS — bez nich blok PARAMETRY nie istnieje.
+const hasSpecs = p.specs.length > 0;
 ---
 
 <div class="dt-head">
@@ -231,27 +233,34 @@ const showDashes = p.gallery.length <= WORK_GALLERY_DASHES_MAX;
   </div>
 </div>
 
-<div class="dt-about">
+{
+  /* Parametry są opcjonalne (CMS): przy pustej liście blok PARAMETRY nie
+    istnieje w ogóle, a `.dt-about` jako ostatni blok treści przejmuje
+    jego dolny odstęp przed stopką (`dt-about--last`). */
+}
+<div class:list={["dt-about", { "dt-about--last": !hasSpecs }]}>
   {p.paras.map((t) => <p class="dt-desc">{t}</p>)}
 </div>
 
-<div class="dt-specs">
-  <div class="dt-specs-h">
-    <span>PARAMETRY</span>
-    <i aria-hidden="true"></i>
-  </div>
-  <div class="dt-spec-list">
-    {
-      p.specs.map((s) => (
-        <div class="dt-spec">
-          <b>{s.label}</b>
-          <i aria-hidden="true" />
-          <span>{s.value}</span>
-        </div>
-      ))
-    }
-  </div>
-</div>
+{
+  hasSpecs && (
+    <div class="dt-specs">
+      <div class="dt-specs-h">
+        <span>PARAMETRY</span>
+        <i aria-hidden="true" />
+      </div>
+      <div class="dt-spec-list">
+        {p.specs.map((s) => (
+          <div class="dt-spec">
+            <b>{s.label}</b>
+            <i aria-hidden="true" />
+            <span>{s.value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 <div class="dt-foot">
   <span class="dt-ask-k">CHCESZ WIĘCEJ INFORMACJI?</span>
@@ -492,6 +501,10 @@ const showDashes = p.gallery.length <= WORK_GALLERY_DASHES_MAX;
   /* ── Akapity ── */
   .dt-about {
     padding: 22px 24px 0;
+  }
+  /* Bez parametrów: ten sam odstęp do stopki, który dawał .dt-specs */
+  .dt-about--last {
+    padding-bottom: 34px;
   }
   .dt-desc {
     margin: 0;
@@ -838,6 +851,10 @@ const showDashes = p.gallery.length <= WORK_GALLERY_DASHES_MAX;
 
     .dt-about {
       padding: clamp(20px, 1.81vw, 29px) clamp(34px, 3.33vw, 53px) 0;
+    }
+    /* Bez parametrów: rytm jak z blokiem (= jego margin-top) przed linią CTA */
+    .dt-about--last {
+      padding-bottom: clamp(20px, 1.81vw, 29px);
     }
     .dt-desc {
       font-size: clamp(13.5px, 1.08vw, 17px);

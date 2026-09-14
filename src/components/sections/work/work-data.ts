@@ -37,7 +37,7 @@ export interface WorkProject {
   year: string;
   paras: string[]; // opis detalu jako akapity (min 1; design: 3)
   gallery: WorkGalleryItem[];
-  specs: WorkSpec[];
+  specs: WorkSpec[]; // opcjonalne w CMS — schemat daje [] (blok PARAMETRY ukryty)
 }
 
 // Postać widokowa: wpis + WYLICZONY kafel.

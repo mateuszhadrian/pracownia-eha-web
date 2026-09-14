@@ -45,8 +45,13 @@ paths:
 
 - Schemat DOCELOWY (§6.1 analizy, od Etapu 2): `slug`, `order`, `title`,
   `place`, `year`, `paras[]` (min 1, hint „najlepiej 3 akapity"),
-  `gallery[]` (min 1), `specs[] {label, value}` (min 1, hint „7 par jak
-  w designie"). **BEZ pola `category`** (E5 — eha nie ma kategorii ani
+  `gallery[]` (min 1), `specs[] {label, value}` — **opcjonalne**
+  (od 2026-09-14; wcześniej min 1): `required: false` w panelu,
+  `.default([])` w Zodzie, więc brak klucza (tak zapisuje Sveltia przy
+  `omit_empty_optional_fields`) i pusta lista są równoważne; **pusta
+  lista = blok PARAMETRY ukryty** w detalu (`WorkDetail.astro` renderuje
+  go warunkowo, `.dt-about--last` przejmuje odstęp do stopki). Hint
+  w panelu: wzór 7 par z designu. **BEZ pola `category`** (E5 — eha nie ma kategorii ani
   filtrów) i bez `description` (zastąpione przez `paras`).
 - **Pola `cover` NIE MA.** Kaflem realizacji na `/realizacje/` i w zajawce
   na stronie głównej jest **pierwsza pozycja galerii**; `viewProject()`

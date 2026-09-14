@@ -436,7 +436,9 @@ lądują w R2, treści testowe wgrane ścieżką docelową (E13).
    Sveltii: Zdjęcie {image, position?} ALBO Film {video, duration?};
    min 1; `.superRefine`: pierwsza pozycja MUSI być zdjęciem —
    komunikat pisany dla klienta + `hint` pod polem), `specs[]`
-   {label, value} (min 1, hint „7 par jak w designie"). BEZ pól:
+   {label, value} (w Etapie 2 min 1, hint „7 par jak w designie";
+   **od 2026-09-14 OPCJONALNE** — `required: false` / `.default([])`,
+   pusta lista = blok PARAMETRY ukryty w detalu). BEZ pól:
    `category`, `cover`, opis SEO. JSON-y pisze wyłącznie Sveltia
    (guard-hook + `.prettierignore`).
 8. **Weryfikacja uploadu wideo (dawny spike):** wgraj przez panel

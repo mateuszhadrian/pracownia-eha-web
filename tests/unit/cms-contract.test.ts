@@ -89,10 +89,12 @@ describe("kontrakt CMS: src/content/realizacje/*.json", () => {
     });
   });
 
-  // Schemat docelowy §6.1 (Etap 2): opis jako akapity i parametry mają
-  // minimum 1 pozycję, miejscowość jest wymagana. Panel pokazuje hinty
-  // („najlepiej 3 akapity", „7 par"), ale egzekwuje to dopiero schemat.
-  describe("schemat §6.1: place, paras[] (min 1), specs[] (min 1)", () => {
+  // Schemat docelowy §6.1 (Etap 2): opis jako akapity ma minimum 1 pozycję,
+  // miejscowość jest wymagana. Panel pokazuje hinty („najlepiej 3 akapity",
+  // „7 par"), ale egzekwuje to dopiero schemat. Parametry są OPCJONALNE
+  // (2026-09-14): klient nie zawsze ma komplet — brak klucza (tak zapisuje
+  // Sveltia przy `omit_empty_optional_fields`) i pusta lista dają `[]`.
+  describe("schemat §6.1: place, paras[] (min 1), specs[] opcjonalne", () => {
     const ok = {
       slug: "test",
       order: 1,
@@ -111,10 +113,21 @@ describe("kontrakt CMS: src/content/realizacje/*.json", () => {
     });
 
     it.each([
+      ["pusta lista parametrów", { ...ok, specs: [] }],
+      [
+        "brak klucza specs (omit_empty_optional_fields)",
+        { ...ok, specs: undefined },
+      ],
+    ])("%s: akceptowany, specs = []", (_name, data) => {
+      const res = realizacjaSchema.safeParse(data);
+      expect(res.success).toBe(true);
+      expect(res.success && res.data.specs).toEqual([]);
+    });
+
+    it.each([
       ["brak miejscowości", { ...ok, place: undefined }],
       ["pusta lista akapitów", { ...ok, paras: [] }],
       ["pusty akapit", { ...ok, paras: [""] }],
-      ["pusta lista parametrów", { ...ok, specs: [] }],
       [
         "stare pole description zamiast paras",
         { ...ok, paras: undefined, description: "opis" },
@@ -160,13 +173,21 @@ describe("kontrakt CMS: pola §6.1 w config.yml", () => {
     expect(yml).not.toContain('name: "description"');
   });
 
-  it("paras i specs mają min: 1 (jak schemat Zod)", () => {
-    for (const field of ["paras", "specs"]) {
-      const block = yml.slice(yml.indexOf(`name: "${field}"`));
-      const nextField = block.indexOf("\n      - ", 1);
-      const own = nextField === -1 ? block : block.slice(0, nextField);
-      expect(own, `pole ${field}`).toMatch(/^\s*min: 1/m);
-    }
+  // Blok definicji pola listy (do następnego pola na tym samym poziomie).
+  const fieldBlock = (field: string) => {
+    const block = yml.slice(yml.indexOf(`name: "${field}"`));
+    const nextField = block.indexOf("\n      - ", 1);
+    return nextField === -1 ? block : block.slice(0, nextField);
+  };
+
+  it("paras ma min: 1 (jak schemat Zod)", () => {
+    expect(fieldBlock("paras")).toMatch(/^\s*min: 1/m);
+  });
+
+  it("specs jest opcjonalne: required: false i bez min (jak schemat Zod)", () => {
+    const own = fieldBlock("specs");
+    expect(own).toMatch(/^\s*required: false/m);
+    expect(own).not.toMatch(/^\s*min:/m);
   });
 
   // Placeholder `<ACCOUNT_ID>` = panel nie wgra ani jednego zdjęcia.

@@ -23,31 +23,5 @@
       "type": "photo",
       "image": "https://media.pracownia-eha.pl/realizacje/technical-ryc.webp"
     }
-  ],
-  "specs": [
-    {
-      "label": "Rodzaj obiektu",
-      "value": "Oficyna zabytkowa"
-    },
-    {
-      "label": "Zakres prac",
-      "value": "Instalacje i posadzki"
-    },
-    {
-      "label": "Powierzchnia",
-      "value": "124 m²"
-    },
-    {
-      "label": "Czas realizacji",
-      "value": "8 miesięcy"
-    },
-    {
-      "label": "Ogrzewanie",
-      "value": "Podłogowe"
-    },
-    {
-      "label": "Posadzka",
-      "value": "Jastrych wapienny"
-    }
   ]
 }
