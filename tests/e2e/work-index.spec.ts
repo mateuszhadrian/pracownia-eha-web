@@ -41,6 +41,9 @@ interface Entry {
     | { type: "photo"; image: string }
     | { type: "video"; video: string; duration?: string }
   )[];
+  // Parametry są opcjonalne: Sveltia przy `omit_empty_optional_fields`
+  // w ogóle nie zapisuje klucza, więc brak = pusta lista.
+  specs?: { label: string; value: string }[];
 }
 const ENTRIES = readRealizacje<Entry>();
 
@@ -49,6 +52,9 @@ const VIDEO_ENTRY = ENTRIES.find((e) =>
   e.gallery.some((g) => g.type === "video"),
 );
 const PAGES = Math.ceil(ENTRIES.length / WORK_PAGE_SIZE);
+const specsOf = (e: Entry) => e.specs ?? [];
+const SPECS_ENTRY = ENTRIES.find((e) => specsOf(e).length > 0);
+const NO_SPECS_ENTRY = ENTRIES.find((e) => specsOf(e).length === 0);
 
 usePreviewGuard();
 
@@ -285,6 +291,53 @@ test.describe("„pokaż więcej” mobile", () => {
 });
 
 // ── detal desktop: modal, galeria (strzałki + KLAWIATURA), projnav ──
+// ── Parametry (specs) są OPCJONALNE w CMS: z parami renderuje się blok
+// PARAMETRY (nagłówek + tyle wierszy, ile par), bez nich blok nie istnieje
+// w ogóle — na obu progach (jeden markup dt-*). Treść czytana z kolekcji,
+// więc każdy wariant biega tylko wtedy, gdy ma w kolekcji swój wpis. ──
+test.describe("detal: blok PARAMETRY tylko przy niepustej liście", () => {
+  test("wpis z parametrami: nagłówek PARAMETRY i wiersz na każdą parę", async ({
+    page,
+  }) => {
+    test.skip(!SPECS_ENTRY, "żaden wpis w kolekcji nie ma parametrów");
+    const entry = SPECS_ENTRY!;
+    await gotoReady(page, PATH);
+    const detail = await openDetail(page, await showEntry(page, entry.slug));
+
+    const specs = detail.locator(".dt-specs");
+    await expect(specs).toHaveCount(1);
+    await expect(specs.locator(".dt-specs-h span")).toHaveText("PARAMETRY");
+    await expect(specs.locator(".dt-spec")).toHaveCount(specsOf(entry).length);
+    await expect(specs.locator(".dt-spec b").first()).toHaveText(
+      specsOf(entry)[0].label,
+    );
+    await expect(detail.locator(".dt-about")).not.toHaveClass(/dt-about--last/);
+  });
+
+  test("wpis bez parametrów: brak bloku, akapity przejmują odstęp do stopki", async ({
+    page,
+  }) => {
+    test.skip(
+      !NO_SPECS_ENTRY,
+      "żaden wpis w kolekcji nie ma pustych parametrów — wariant bez bloku PARAMETRY nie ma treści do sprawdzenia",
+    );
+    const entry = NO_SPECS_ENTRY!;
+    await gotoReady(page, PATH);
+    const detail = await openDetail(page, await showEntry(page, entry.slug));
+
+    await expect(detail.locator(".dt-title")).toHaveText(entry.title);
+    await expect(detail.locator(".dt-specs")).toHaveCount(0);
+    await expect(detail.getByText("PARAMETRY", { exact: true })).toHaveCount(0);
+    await expect(detail.locator(".dt-about")).toHaveClass(/dt-about--last/);
+    // akapity i stopka CTA są (treść nie „znika” razem z blokiem)
+    await expect(detail.locator(".dt-desc")).not.toHaveCount(0);
+    await expect(detail.locator(".dt-foot .dt-ask")).toHaveAttribute(
+      "href",
+      CONTACT_PATH,
+    );
+  });
+});
+
 test.describe("detal desktop: modal, galeria, projnav", () => {
   test.skip(({ isMobile }) => !!isMobile, "układ modala tylko na desktop");
 

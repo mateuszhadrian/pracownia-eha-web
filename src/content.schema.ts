@@ -11,7 +11,10 @@
 // musi być zdjęciem.
 //
 // Schemat DOCELOWY eha (§6.1 analizy, Etap 2): `place`, `paras[]` (min 1)
-// zamiast `description`, `specs` min 1.
+// zamiast `description`. `specs` OPCJONALNE (od 2026-09-14): klient nie
+// zawsze ma komplet parametrów — brak klucza (tak zapisuje Sveltia przy
+// `omit_empty_optional_fields`) ORAZ pusta lista dają `[]`, a detal nie
+// renderuje wtedy bloku PARAMETRY w ogóle.
 // Zmiana schematu = zmiana w TRZECH miejscach naraz (reguła cms-realizacje):
 // ten plik, public/admin/config.yml, src/components/sections/work/*.
 import { z } from "zod";
@@ -65,6 +68,10 @@ export const realizacjaSchema = z.object({
         });
       }
     }),
-  // RODZAJ OBIEKTU / ZAKRES / ROK … — pary z designu (7 par; min 1).
-  specs: z.array(z.object({ label: z.string(), value: z.string() })).min(1),
+  // RODZAJ OBIEKTU / ZAKRES / ROK … — pary z designu (wzór: 7 par).
+  // Opcjonalne: brak klucza i pusta lista są równoważne i dają `[]`
+  // (blok PARAMETRY znika z detalu — WorkDetail.astro).
+  specs: z
+    .array(z.object({ label: z.string(), value: z.string() }))
+    .default([]),
 });

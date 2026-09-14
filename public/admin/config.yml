@@ -164,10 +164,11 @@ collections:
         label_singular: "Parametr"
         summary: "{{fields.label}}: {{fields.value}}"
         hint: >-
-          7 par jak w projekcie strony: Rodzaj obiektu, Zakres prac,
-          Powierzchnia, Czas realizacji, Materiał, Ciesiołka/Zaprawa,
-          Rok zakończenia. Minimum 1.
-        min: 1 # schemat Zod wymaga ≥1 pary
+          Opcjonalne. Jeśli chcesz pokazać tabelę parametrów, wzór
+          z projektu to 7 par: Rodzaj obiektu, Zakres prac, Powierzchnia,
+          Czas realizacji, Materiał, Ciesiołka/Zaprawa, Rok zakończenia.
+          Bez parametrów blok w ogóle się nie wyświetla.
+        required: false # pusta lista = brak bloku PARAMETRY w detalu
         fields:
           - {
               label: "Etykieta (np. MATERIAŁY / BLAT / ZAKRES)",
