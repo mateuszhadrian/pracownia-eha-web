@@ -2,43 +2,53 @@
   "slug": "sklepienie-zaglaste-ze-starej-cegly-proszowka",
   "order": 30,
   "title": "Sklepienie żaglaste ze starej cegły",
-  "place": "Sobótka",
+  "place": "Proszówka",
   "year": "2024",
   "paras": [
-    "Pierwotne sklepienie runęło jeszcze w latach dziewięćdziesiątych, a strop zastąpiono płytą żelbetową opartą na murach, które nie były na to przygotowane. Zaczęliśmy od zdjęcia płyty i przywrócenia murom właściwej pracy statycznej.",
-    "Sklepienie odtworzyliśmy na krążynach, w cegle rozbiórkowej dobranej pod wymiar historyczny, na zaprawie wapiennej. Każdy pas murowaliśmy z osobnym pomiarem strzałki wysklepka.",
+    "Pierwotne sklepienie w wyniku uszkodzeń strukturalnych ścian budynku i rozpięciu się łuków nośnych było w bardzo złej kondycji. W związku z decyzją inwestorów mieliśmy przyjemność wykonać przemurowanie sklepienia w oparciu o wykonany na podstawie pomiarów na miejscu szalunek krążynowy.",
+    "Sklepienie odtworzyliśmy na krążynach, z cegły rozbiórkowej, na zaprawie wapiennej.",
     "Po rozdeskowaniu sklepienie przejęło obciążenie bez najmniejszego pęknięcia. Wnętrze wróciło do pierwotnej proporcji i skali."
   ],
   "gallery": [
     {
       "type": "photo",
-      "image": "https://media.pracownia-eha.pl/realizacje/sklepienie-zagliste-web.webp"
+      "image": "https://media.pracownia-eha.pl/realizacje/IMG20240722141801.jpg",
+      "position": "0% 0%"
     },
     {
       "type": "photo",
-      "image": "https://media.pracownia-eha.pl/realizacje/cegla-i-kamien.webp"
+      "image": "https://media.pracownia-eha.pl/realizacje/IMG20240708140048.jpg"
+    },
+    {
+      "type": "photo",
+      "image": "https://media.pracownia-eha.pl/realizacje/IMG20240716113845.jpg"
+    },
+    {
+      "type": "photo",
+      "image": "https://media.pracownia-eha.pl/realizacje/IMG20240717101644.jpg"
+    },
+    {
+      "type": "video",
+      "video": "https://media.pracownia-eha.pl/realizacje/Img 9635.mp4",
+      "duration": "0:9"
     }
   ],
   "specs": [
     {
       "label": "Rodzaj obiektu",
-      "value": "Oficyna murowana"
+      "value": "Strop pomieszczenia inwentarskiego"
     },
     {
-      "label": "Zakres prac",
-      "value": "Odtworzenie sklepień"
-    },
-    {
-      "label": "Rozpiętość",
-      "value": "4,2 m"
+      "label": "Wymiary",
+      "value": "4m x 4m"
     },
     {
       "label": "Czas realizacji",
-      "value": "4 miesiące"
+      "value": "2 miesiące"
     },
     {
       "label": "Materiał",
-      "value": "Cegła rozbiórkowa"
+      "value": "Cegła"
     },
     {
       "label": "Zaprawa",
@@ -47,6 +57,10 @@
     {
       "label": "Rok zakończenia",
       "value": "2024"
+    },
+    {
+      "label": "Zakres prac",
+      "value": "Przemurowanie sklepienia"
     }
   ]
 }
