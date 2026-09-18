@@ -20,8 +20,6 @@ import "@fontsource/ibm-plex-mono/latin-600.css";
 import "@/styles/fonts.css";
 import "@/styles/global.css";
 
-import LoadingOverlay from "@/components/ui/LoadingOverlay.astro";
-
 // Preload krojów above-the-fold — skraca okno font-display:swap (mniejszy
 // „przeskok" z fontu systemowego przy nawigacji). Import ?url zamiast
 // hardkodu: hash pliku woff2 zmienia się co build. Strona jest PL-only,
@@ -44,12 +42,17 @@ interface Props {
    *  (mobile 1:1 desktop, bez redirectów — §9 analizy); prop zostaje na
    *  wypadek przyszłych wyjątków. */
   canonicalPath?: string;
+  /** Strona spoza indeksu (404): `robots noindex` i BEZ canonicala/og:url —
+   *  canonical wskazywałby na adres, który nie istnieje (Cloudflare Pages
+   *  serwuje 404.html pod KAŻDYM błędnym adresem). */
+  noindex?: boolean;
 }
 const {
   title = "Pracownia EH/A — remonty domów z historią",
   lang = "pl",
   description,
   canonicalPath,
+  noindex = false,
 } = Astro.props;
 
 // Adresy absolutne dla podglądów linków (iMessage/Messenger/X wymagają pełnego URL).
@@ -139,7 +142,13 @@ const ogImageUrl = new URL("/og-image.png", urlBase);
     </script>
     <style is:global>
       /* Bramka mikro-fade — patrz inline skrypt wyżej. Stan bazowy (bez
-         .nav-fade) jest w pełni widoczny. */
+         .nav-fade) jest w pełni widoczny.
+         ⚠️ `opacity` na body NIE gasi jego TŁA: tło body przechodzi na
+         płótno okna (html nie ma własnego), a płótna opacity nie dotyczy.
+         Przez te ≤ 300 ms (na wolnym łączu — pełne, bo fonty nie zdążą)
+         widać więc gołe tło body — dlatego w global.css jest ono GŁADKĄ
+         bazą widoków, a nie kafelkiem (zgłoszenie ze szkolenia klienta:
+         „powielony wzór w pełnej intensywności" przy przejściu). */
       html.nav-fade body {
         opacity: 0;
       }
@@ -158,7 +167,7 @@ const ogImageUrl = new URL("/og-image.png", urlBase);
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="pracownia-eha.pl" />
     <meta property="og:title" content={title} />
-    <meta property="og:url" content={canonicalUrl} />
+    {!noindex && <meta property="og:url" content={canonicalUrl} />}
     <meta property="og:image" content={ogImageUrl} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -172,10 +181,15 @@ const ogImageUrl = new URL("/og-image.png", urlBase);
          zredukowałby podgląd do miniaturki-kwadracika (D-E2). */
     }
     <meta name="twitter:card" content="summary_large_image" />
-    <link rel="canonical" href={canonicalUrl} />
+    {
+      noindex ? (
+        <meta name="robots" content="noindex" />
+      ) : (
+        <link rel="canonical" href={canonicalUrl} />
+      )
+    }
   </head>
   <body>
-    <LoadingOverlay />
     <slot />
   </body>
 </html>

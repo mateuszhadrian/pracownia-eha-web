@@ -82,10 +82,18 @@ html {
   }
 }
 
-/* Tło „papieru" na każdej stronie: mały tileable WebP wycięty
-   z paper-background.png eksportów (Etap 0.6) na kolorze bazowym. */
+/* Tło body = GŁADKA baza kremowa, identyczna z bazą kontenera widoku.
+   Papier każdej trasy maluje PaperBackdrop (skan z opacity .2 na
+   --bg-cream) — od Etapu 5 używa go wszystkie 8 tras, więc body jest
+   widoczne WYŁĄCZNIE w chwili ładowania (HTML dopływa, a treść `main`
+   jeszcze nie). Wcześniej stał tu kafelek paper-tile w PEŁNEJ
+   intensywności, powtarzany w siatkę — na wolnym łączu mignął jako
+   „powielony wzór" zamiast tła (zgłoszenie ze szkolenia klienta).
+   Teraz ładowanie pokazuje ten sam krem, na który po chwili wchodzi
+   delikatna tekstura. paper-tile zostaje w Navbarze (pasek solid, sheet
+   menu mobilnego). */
 body {
-  background: var(--bg) url("../assets/paper-tile.webp") repeat;
+  background: var(--bg-cream);
   color: var(--muted);
 }
 
