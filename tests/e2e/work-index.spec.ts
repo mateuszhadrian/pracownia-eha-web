@@ -538,6 +538,43 @@ test.describe("detal desktop: modal, galeria, projnav", () => {
     await expect(detail).toHaveClass(/is-open/);
   });
 
+  test("podgląd ignoruje pole „Kadr”: kadr zawsze na środku", async ({
+    page,
+  }) => {
+    await gotoReady(page, PATH);
+    const detail = await openDetail(page, await revealFirstCard(page));
+    const lb = detail.locator("[data-lightbox]");
+    // Wpis z panelu z „Kadr: 0% 0%” (zgłoszenie ze szkolenia) — odtwarzamy
+    // go na kadrze galerii, żeby kontrakt nie zależał od treści kolekcji.
+    // Podgląd klonuje kadry przy otwarciu, więc klon dostaje ten styl.
+    const galeria = await detail
+      .locator("[data-track] > *")
+      .first()
+      .evaluate((slide) => {
+        const media = slide.querySelector<HTMLElement>("img, video");
+        media?.style.setProperty("object-position", "0% 0%");
+        return media ? getComputedStyle(media).objectPosition : null;
+      });
+    expect(galeria, "w galerii pole Kadr dalej działa").toBe("0% 0%");
+
+    await detail.locator("[data-slide]").first().click();
+    await expect(lb).toBeVisible();
+    const podglad = await lb.evaluate((el) => {
+      const media = el.querySelector<HTMLElement>(
+        ".lb-slide:first-child .lb-media img, .lb-slide:first-child .lb-media video",
+      );
+      return media
+        ? {
+            inline: media.style.objectPosition,
+            computed: getComputedStyle(media).objectPosition,
+          }
+        : null;
+    });
+    // klon niesie styl z galerii, a mimo to podgląd centruje
+    expect(podglad?.inline).toBe("0% 0%");
+    expect(podglad?.computed).toBe("50% 50%");
+  });
+
   test("wideo (E8): kamera + badge, poster dwiema drogami, autoplay w podglądzie, tap = pauza↔play", async ({
     page,
   }) => {
