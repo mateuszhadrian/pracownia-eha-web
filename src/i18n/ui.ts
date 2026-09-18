@@ -28,6 +28,8 @@ export const ui = {
     "policyPage.title": "Polityka prywatności — Pracownia EH/A",
     "policyPage.description":
       "Polityka prywatności serwisu pracownia-eha.pl — kto jest administratorem danych, jakie dane przetwarzamy, na jakiej podstawie, jak długo i jakie masz prawa.",
+    // Strona 404 (src/pages/404.astro) — bez description: noindex.
+    "notFoundPage.title": "Nie znaleziono strony — Pracownia EH/A",
     "contactPage.title": "Kontakt — Pracownia EH/A",
     "contactPage.description":
       "Skontaktuj się z Pracownią EH/A — formularz kontaktowy, telefon i e-mail. Opisz dom i zakres prac, odezwiemy się, aby porozmawiać o remoncie.",

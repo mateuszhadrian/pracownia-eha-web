@@ -40,6 +40,8 @@ const PATHS: { path: string; projects?: string[] }[] = [
   { path: OBSLUGA_PATH },
   { path: CONTACT_PATH },
   { path: POLICY_PATH },
+  // strona 404 (dowolny nieistniejący adres serwuje dist/404.html)
+  { path: "/nie-ma-takiej-strony/" },
 ];
 
 for (const { path, projects } of PATHS) {
