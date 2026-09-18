@@ -48,25 +48,35 @@ const DESKTOP_CARDS = [
     loading="lazy"
     decoding="async"
   />
-  <img
-    class="dOnly re-remont"
-    data-rycsb="l"
-    src={domRemont.src}
-    width={domRemont.width}
-    height={domRemont.height}
-    alt=""
-    loading="lazy"
-    decoding="async"
-  />
-  <img
-    class="dOnly re-house"
-    src={house8.src}
-    width={house8.width}
-    height={house8.height}
-    alt=""
-    loading="lazy"
-    decoding="async"
-  />
+  {
+    /* Ryciny desktopowe w WŁASNEJ warstwie przycinającej (a nie przez
+    overflow sekcji): polaroidy mają prawo wystawać poza sekcję na
+    kolejną, gdy ekran jest niski, a ryciny nadal kończą się na jej
+    krawędzi. Warstwa nie tworzy kontekstu układania (bez z-index/
+    isolation), więc multiply spłaszczonych rycin dalej miesza się
+    z papierem pod spodem. */
+  }
+  <div class="dOnly re-rycd" aria-hidden="true">
+    <img
+      class="re-remont"
+      data-rycsb="l"
+      src={domRemont.src}
+      width={domRemont.width}
+      height={domRemont.height}
+      alt=""
+      loading="lazy"
+      decoding="async"
+    />
+    <img
+      class="re-house"
+      src={house8.src}
+      width={house8.width}
+      height={house8.height}
+      alt=""
+      loading="lazy"
+      decoding="async"
+    />
+  </div>
 
   <div class="re-txt">
     <HomeSectionHead
@@ -374,8 +384,11 @@ const DESKTOP_CARDS = [
 
   /* ════ DESKTOP ≥1024 (para: HOME_DESKTOP_MIN_PX) ════ */
   @media (min-width: 1024px) {
-    .re {
+    .re-rycd {
+      position: absolute;
+      inset: 0;
       overflow: hidden;
+      pointer-events: none;
     }
     .re-remont {
       position: absolute;
@@ -413,7 +426,28 @@ const DESKTOP_CARDS = [
 
     .re-pol {
       position: absolute;
-      width: clamp(235px, 22.64vw, 362px);
+      /* nad kolejną sekcją (jej panel jest absolutny i późniejszy
+         w drzewie), gdy niski ekran wypycha kartę poza sekcję */
+      z-index: 1;
+      /* Szerokość z eksportu, a na NISKIM ekranie limit z wysokości
+         sekcji (max(--svh, 550px) — ta sama formuła co min-height .sec):
+         karty stoją procentowo (top 60,5 % dla trzeciej), więc przy niskiej
+         sekcji dolna wystaje na kolejną. Dopuszczamy to (karta leży NAD
+         sekcją kompetencji), ale nie głębiej niż ~20 px, żeby
+         nie weszła na jej nagłówek (56 px pod krawędzią sekcji przy
+         niskich ekranach — zmierzone). Wysokość karty ≈ 0,75·szer + 75 px,
+         stąd: 0,605·H + 0,75·w + 75 ≤ H + 21 ⇒ w ≤ 0,5267·H − 72 px
+         (zmierzone po zmianie: ≥ 28 px odstępu od nagłówka).
+         Na zwykłych ekranach (≥ ~770 px wysokości) limit nie działa. */
+      width: min(
+        clamp(235px, 22.64vw, 362px),
+        calc(max(var(--svh), 550px) * 0.5267 - 72px)
+      );
+      /* tytuł skaluje się razem z kartą (cqi = szerokość treści karty),
+         żeby zmniejszenie było PROPORCJONALNE; 7,8 cqi ≥ bazowego rozmiaru
+         przy każdej szerokości z eksportu (najciaśniej przy 1024: 17 px na
+         221 px = 7,69 %), więc bez limitu tytuł się nie zmienia */
+      container-type: inline-size;
       transform: rotate(var(--rot));
       background: var(--bg-card);
       border: 1px solid rgba(33, 29, 24, 0.18);
@@ -453,7 +487,7 @@ const DESKTOP_CARDS = [
     .re-poltitle {
       font-family: var(--font-serif), serif;
       font-weight: 500;
-      font-size: clamp(17px, 1.46vw, 23px);
+      font-size: min(clamp(17px, 1.46vw, 23px), 7.8cqi);
       line-height: 1.18;
       color: var(--ink);
     }
