@@ -31,6 +31,18 @@ test.describe("smoke", { tag: "@prod-smoke" }, () => {
     await expect(page.locator(".kt-f")).toHaveCount(4);
   });
 
+  test("nieistniejący adres: status 404 i strona 404 (nie soft-404)", async ({
+    request,
+  }) => {
+    // Bez dist/404.html Cloudflare Pages odpowiada stroną główną z kodem
+    // 200 — ten test pilnuje, że na deployu działa prawdziwe 404.
+    const res = await request.get("/nie-ma-takiej-strony-smoke/");
+    expect(res.status()).toBe(404);
+    const html = await res.text();
+    expect(html).toContain("Strona o podanym adresie nie istnieje");
+    expect(html).toContain('name="robots" content="noindex"');
+  });
+
   test("kluczowe zasoby odpowiadają", async ({ request }) => {
     for (const path of ["/favicon.svg", "/site.webmanifest", "/og-image.png"]) {
       const res = await request.get(path);

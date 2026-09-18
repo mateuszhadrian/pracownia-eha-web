@@ -13,7 +13,10 @@ import {
 import {
   CONTACT_PATH,
   EKIPA_PATH,
+  HOME_PATH,
+  KOMPETENCJE_PATH,
   OBSLUGA_PATH,
+  POLICY_PATH,
   TRADYCJA_PATH,
   WORK_INDEX_PATH,
 } from "../../src/lib/routes";
@@ -511,4 +514,43 @@ test("strona główna ładuje się bez błędów konsoli i 404", async ({ page }
   await gotoReady(page);
   await settle(page);
   expect(issues()).toEqual([]);
+});
+
+// Zgłoszenie ze szkolenia klienta: na wolnym łączu, zanim dopłynęła treść
+// `main`, widać było tło BODY — kafelek papieru w pełnej intensywności,
+// powtarzany w siatkę. Papier każdej trasy maluje PaperBackdrop na
+// kontenerze widoku, więc body musi mieć DOKŁADNIE jego gładką bazę:
+// wtedy ładowanie wygląda jak strona bez (delikatnej) tekstury.
+test.describe("tło w chwili ładowania = baza widoku", () => {
+  for (const path of [
+    HOME_PATH,
+    EKIPA_PATH,
+    KOMPETENCJE_PATH,
+    TRADYCJA_PATH,
+    WORK_INDEX_PATH,
+    OBSLUGA_PATH,
+    CONTACT_PATH,
+    POLICY_PATH,
+  ]) {
+    test(`${path}: body bez obrazka, kolor = baza kontenera PaperBackdrop`, async ({
+      page,
+    }) => {
+      await page.goto(path);
+      const tla = await page.evaluate(() => {
+        const host = document.querySelector(".pbk")?.parentElement;
+        const body = getComputedStyle(document.body);
+        return {
+          bodyImage: body.backgroundImage,
+          bodyColor: body.backgroundColor,
+          hostColor: host ? getComputedStyle(host).backgroundColor : null,
+        };
+      });
+      expect(tla.bodyImage).toBe("none");
+      // nakładka ładowania z szablonu (mobile, płaski krem + romb) wycięta
+      // z tego samego powodu — przejście ma pokazywać wyłącznie tło
+      await expect(page.locator("[data-loading-overlay]")).toHaveCount(0);
+      expect(tla.hostColor, "trasa bez PaperBackdrop").not.toBeNull();
+      expect(tla.bodyColor).toBe(tla.hostColor);
+    });
+  }
 });

@@ -586,6 +586,79 @@ test.describe("karuzela realizacji przyciąga kafle", () => {
   });
 });
 
+// ── polaroidy zajawki 02 na NISKIM ekranie desktop (zgłoszenie ze
+// szkolenia klienta). Karty stoją procentowo w sekcji o wysokości
+// max(svh, 550px), więc przy niskim oknie dolna wystaje poza sekcję —
+// wcześniej ucinało ją `overflow: hidden` sekcji. Kontrakt: karta leży
+// NAD kolejną sekcją (nie jest przycięta), a na bardzo niskich ekranach
+// wszystkie karty zmniejszają się proporcjonalnie, żeby nie weszły na
+// nagłówek „Kompetencje i technologie". Na zwykłych ekranach — bez zmian.
+test.describe("polaroidy zajawki 02 na niskim ekranie (desktop)", () => {
+  test.skip(BRAK_REALIZACJI, POWOD_BRAKU);
+  test.skip(
+    ({ isMobile }) => isMobile,
+    "polaroidy istnieją tylko na desktopie",
+  );
+
+  /** Minimalny odstęp karty od nagłówka kolejnej sekcji (zmierzone ≥ 31 px). */
+  const TITLE_GAP_MIN_PX = 16;
+
+  for (const height of [560, 600, 700]) {
+    test(`wysokość ${height} px: karta nad kolejną sekcją, nagłówek wolny`, async ({
+      page,
+      viewport,
+    }) => {
+      // wysokość PRZED wejściem — sekcja liczy się z przypinanego --svh
+      await page.setViewportSize({ width: viewport!.width, height });
+      await gotoReady(page, PATH);
+      const km = page.locator(".km");
+      await scrollPageTo(
+        page,
+        (await km.evaluate((el) => el.getBoundingClientRect().top + scrollY)) -
+          height / 2,
+      );
+      const geo = await page.evaluate(() => {
+        const title = document
+          .querySelector(".km .s-title")!
+          .getBoundingClientRect();
+        const cards = [
+          ...document.querySelectorAll<HTMLElement>(".re-pol"),
+        ].map((c) => c.getBoundingClientRect());
+        const low = cards.reduce((a, b) => (b.bottom > a.bottom ? b : a));
+        const card = [...document.querySelectorAll<HTMLElement>(".re-pol")][
+          cards.indexOf(low)
+        ];
+        // punkt przy dolnej krawędzi najniższej karty: jeśli karta wystaje
+        // poza sekcję, musi go trafiać KARTA (nie przycięta, nie pod spodem)
+        const hit = document.elementFromPoint(
+          low.left + low.width / 2,
+          low.bottom - 4,
+        );
+        return {
+          gap: title.top - Math.max(...cards.map((c) => c.bottom)),
+          onTop: !!hit && card.contains(hit),
+        };
+      });
+      expect(geo.onTop, "najniższa karta przykryta albo przycięta").toBe(true);
+      expect(geo.gap).toBeGreaterThanOrEqual(TITLE_GAP_MIN_PX);
+    });
+  }
+
+  test("zwykła wysokość: szerokość kart z eksportu (limit nie działa)", async ({
+    page,
+    viewport,
+  }) => {
+    await gotoReady(page, PATH);
+    // offsetWidth = szerokość PRZED obrotem karty (rect obróconej jest szerszy)
+    const ow = await page
+      .locator(".re-pol")
+      .first()
+      .evaluate((el) => (el as HTMLElement).offsetWidth);
+    const expected = Math.min(362, Math.max(235, viewport!.width * 0.2264));
+    expect(Math.abs(ow - expected)).toBeLessThanOrEqual(1);
+  });
+});
+
 // ── tag godzin zajawki 06 (sesja poprawek; ten sam defekt i to samo
 // lekarstwo co na /kontakt/). Jeden ciąg zawijał się na KAŻDEJ
 // szerokości mobilnej i zrzucał sierotę: przy 430 px samo „16",

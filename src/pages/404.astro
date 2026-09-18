@@ -1,0 +1,190 @@
+---
+// Strona 404 (poprawki po szkoleniu klienta, 2026-09-18). Astro buduje ją
+// jako dist/404.html, a Cloudflare Pages serwuje ten plik pod KAŻDYM
+// nieistniejącym adresem z prawdziwym statusem 404. Bez niego Pages
+// uznawał serwis za SPA i odpowiadał na śmieciowy adres stroną główną
+// z kodem 200 (soft-404 — Google indeksowałby takie adresy jako kopie „/").
+//
+// Dobre praktyki stron 404, które tu obowiązują:
+// — `noindex`, bez canonicala i og:url (prop BaseLayout), bez JSON-LD
+//   i poza sitemapą (@astrojs/sitemap pomija strony 404 sam — kontrakt
+//   w tests/e2e/seo.spec.ts);
+// — pełny chrome (navbar + stopka), żeby z błędnego adresu dało się
+//   wyjść w dowolne miejsce serwisu, a nie tylko na stronę główną;
+// — jeden jasny komunikat i jedna akcja; h1 niesie dla czytników pełną
+//   nazwę błędu („Błąd 404 — nie znaleziono strony"), wizualnie samo 404;
+// — linki ABSOLUTNE od „/" — ta sama treść odpowiada pod adresami
+//   dowolnej głębokości (/a/b/c/), więc ścieżki względne by się rozjechały
+//   (Astro i tak emituje assety absolutnie);
+// — zero JS widoku i zero nowych assetów (rycina z repo, z alfą).
+//
+// Wygląd = język tras treściowych: papier (PaperBackdrop na bazie
+// --bg-cream), navbar domyślny bez [data-navref] (jak polityka — pasek
+// wchodzi w solid na fallbacku 8 px), Garamond + Plex Sans, obrysowy
+// przycisk jak „Zobacz wszystkie realizacje" na „/".
+import house from "@/assets/dom-ryc-house1.webp";
+import Footer from "@/components/Footer.astro";
+import Navbar from "@/components/navbar/Navbar.astro";
+import PaperBackdrop from "@/components/PaperBackdrop.astro";
+import { ui } from "@/i18n/ui";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { HOME_PATH } from "@/lib/routes";
+---
+
+<BaseLayout title={ui.pl["notFoundPage.title"]} noindex>
+  <Navbar />
+
+  <main class="nf">
+    <PaperBackdrop />
+
+    <div class="nf-in">
+      <img
+        class="nf-ryc"
+        src={house.src}
+        width={house.width}
+        height={house.height}
+        alt=""
+        aria-hidden="true"
+        decoding="async"
+      />
+      <h1 class="nf-code">
+        <span class="sr-only">Błąd </span>404<span class="sr-only">
+          — nie znaleziono strony</span
+        >
+      </h1>
+      <span class="nf-rule" aria-hidden="true"></span>
+      <p class="nf-txt">
+        Strona o podanym adresie nie istnieje. Sprawdź adres i spróbuj ponownie.
+      </p>
+      <a class="nf-btn" href={HOME_PATH}>
+        <svg width="16" height="12" viewBox="0 0 16 12" aria-hidden="true"
+          ><path
+            d="M15 6H2M6.5 1.5L2 6l4.5 4.5"
+            stroke="currentColor"
+            stroke-width="1.4"
+            fill="none"></path></svg
+        >
+        <span>Powrót na stronę główną</span>
+      </a>
+    </div>
+  </main>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .nf {
+    /* tło jak pozostałe trasy: baza kremowa + skan papieru (PaperBackdrop,
+       z-index -1 — stąd isolation) */
+    position: relative;
+    isolation: isolate;
+    background: var(--bg-cream);
+    /* komunikat zajmuje pierwszy ekran (pod fixed paskiem), stopka pod
+       zgięciem — 404 nie „wisi" nad stopką na wysokim ekranie */
+    min-height: 100svh;
+    display: grid;
+    place-items: center;
+    box-sizing: border-box;
+    padding: calc(var(--hdr-h) + 32px) 24px 72px;
+  }
+
+  .nf-in {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 560px;
+    text-align: center;
+  }
+
+  .nf-ryc {
+    display: block;
+    width: 118px;
+    height: auto;
+    margin-bottom: 6px;
+    opacity: 0.42;
+    pointer-events: none;
+  }
+
+  .nf-code {
+    margin: 0;
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: clamp(104px, 30vw, 150px);
+    line-height: 0.95;
+    letter-spacing: -0.01em;
+    /* cyfry nautyczne (domyślne w EB Garamond) mają „4" z ogonkiem pod
+       linią — w dużym formacie czyta się to jak błąd składu */
+    font-variant-numeric: lining-nums;
+    color: var(--ink);
+  }
+
+  .nf-rule {
+    display: block;
+    width: 56px;
+    height: 1px;
+    margin: 22px 0 24px;
+    background: rgba(87, 101, 74, 0.55);
+  }
+
+  .nf-txt {
+    margin: 0;
+    max-width: 30ch;
+    font-family: var(--font-body), sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--muted);
+    text-wrap: balance;
+  }
+
+  .nf-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 11px;
+    margin-top: 32px;
+    padding: 14px 22px;
+    border: 1px solid rgba(87, 101, 74, 0.55);
+    color: var(--accent);
+    font-family: var(--font-body), sans-serif;
+    font-weight: 500;
+    font-size: 16px;
+    text-decoration: none;
+    transition:
+      background 0.2s ease,
+      color 0.2s ease;
+  }
+  .nf-btn:hover {
+    background: rgba(87, 101, 74, 0.09);
+    color: var(--accent-ink);
+  }
+  .nf-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+  .nf-btn svg {
+    flex: none;
+  }
+
+  /* ════ DESKTOP ≥1024 (breakpoint projektu) ════ */
+  @media (min-width: 1024px) {
+    .nf {
+      padding: calc(var(--hdr-h) + 48px) var(--g) 96px;
+    }
+    .nf-ryc {
+      width: clamp(130px, 10vw, 160px);
+    }
+    .nf-code {
+      font-size: clamp(150px, 13vw, 220px);
+    }
+    .nf-rule {
+      margin: clamp(22px, 2vw, 32px) 0 clamp(24px, 2.2vw, 34px);
+    }
+    .nf-txt {
+      font-size: clamp(16px, 1.2vw, 19px);
+    }
+    .nf-btn {
+      margin-top: clamp(32px, 2.8vw, 44px);
+      padding: clamp(12px, 1.04vw, 17px) clamp(19px, 1.67vw, 27px);
+      font-size: clamp(14px, 1.01vw, 16px);
+    }
+  }
+</style>

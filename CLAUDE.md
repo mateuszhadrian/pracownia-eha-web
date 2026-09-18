@@ -40,7 +40,7 @@ zostają, widoki budowane od nowa wg `docs/design/` — patrz
 
 ## Mapa projektu (czym eha różni się od szablonu delung)
 
-- **8 tras** (`src/lib/routes.ts`): `/`, `/ekipa-eha/`,
+- **8 tras** + strona 404 (`src/pages/404.astro`, noindex, poza sitemapą) (`src/lib/routes.ts`): `/`, `/ekipa-eha/`,
   `/kompetencje-i-technologie/`, `/tradycja-i-ekologia/`, `/realizacje/`,
   `/obsluga-budowy/`, `/kontakt/`, `/polityka-prywatnosci/`. Mobile 1:1
   desktop — ŻADNYCH redirectów. Breakpoint projektu: **1024 px**;
@@ -2508,6 +2508,88 @@ playwright-report`; nazwa pliku PNG w `data/` to jego własna suma
   weryfikacji na produkcji po merge'u: zapis wpisu z zerem parametrów
   w panelu (jedyna rzecz, której lokalnie nie da się sprawdzić bez
   commita na main).
+
+- **Poprawki po szkoleniu klienta + strona 404 — WYKONANE** (2026-09-18,
+  branch `fix/poprawki-po-szkoleniu`; szkolenie z panelu 2026-09-17).
+  Od szkolenia treść realizacji edytuje WYŁĄCZNIE klient przez panel —
+  wpisów nie ruszamy (także testowego z „Kadr: 0% 0%").
+  - **1. Pole „Kadr" ignorowane w podglądzie pełnoekranowym.** Podgląd
+    klonuje kadry galerii RAZEM z inline `object-position`; przy `cover`
+    (galeria/siatka/zajawka) pozycja wybiera wycinek, ale przy `contain`
+    przesuwa CAŁE zdjęcie w obrębie ekranu — „0% 0%" stało przy lewej
+    krawędzi. Lekarstwo: `object-position: center !important` w
+    `.lb-media` (WorkDetailOverlay.astro; `!important`, bo inline wygrywa
+    z klasą). Mechanizm open-detail NIETKNIĘTY, panel i schemat bez zmian
+    (decyzja Mateusza). Kontrakt e2e wstrzykuje „0% 0%" na kadr galerii —
+    niezależny od treści kolekcji.
+  - **2. Tło w chwili ładowania = gładki krem.** PRAWDZIWY MECHANIZM:
+    mikro-fade nawigacji wewnętrznej (`html.nav-fade body { opacity: 0 }`
+    w BaseLayout, ≤ 300 ms do `document.fonts.ready`) NIE gasi tła body —
+    tło body przechodzi na PŁÓTNO okna, którego opacity nie dotyczy. Przez
+    te 300 ms (na wolnym łączu pełne — fonty nie zdążą) widać było gołe
+    tło body, a to był kafelek `paper-tile` w PEŁNEJ intensywności,
+    powielony w siatkę (odtworzone wymuszeniem `nav-fade` — obraz 1:1
+    ze zgłoszenia). Wszystkie trasy malują papier przez PaperBackdrop,
+    więc body = `var(--bg-cream)` (baza widoków) i przejście wygląda jak
+    strona bez delikatnej tekstury. `paper-tile` zostaje tylko w Navbarze.
+    **Mobile: `LoadingOverlay` z szablonu USUNIĘTY** (komponent, import
+    w BaseLayout, reguła w `freeze.css`) — po 250 ms wolnej nawigacji
+    wjeżdżał płaski krem `#f5efe3` (inny odcień niż strona) z zielonym
+    rombem i logo odwróconym do BIELI (niewidoczne); nigdy nie dostał
+    „finalnego wyglądu Etapu 4/6", a próg 861 px był z delunga. Teraz na
+    wolnym przejściu zostaje stara strona (pasek postępu przeglądarki),
+    potem nowa na tym samym kremie — jak na desktopie. Kontrakt e2e na
+    8 trasach: body bez obrazka, kolor = baza kontenera PaperBackdrop,
+    brak `[data-loading-overlay]`.
+  - **3. Polaroidy zajawki 02 na niskim ekranie desktop.** Karty stoją
+    procentowo (trzecia `top: 60.5%`) w sekcji `max(--svh, 550px)`, więc
+    na niskim oknie wystawały i `overflow: hidden` sekcji je UCINAŁ.
+    Teraz: (a) ryciny desktopowe w WŁASNEJ warstwie przycinającej
+    `.re-rycd` (bez z-index/isolation — multiply spłaszczonych rycin dalej
+    miesza się z papierem; ⚠️ z-index na `.re` stworzyłby kontekst
+    układania i zabił blend), sekcja bez overflow; (b) `.re-pol`
+    `z-index: 1` — karta leży NAD sekcją kompetencji; (c) limit szerokości
+    z wysokości sekcji `min(clamp(235px,22.64vw,362px),
+max(--svh,550px)·0.5267 − 72px)` + tytuł `min(…, 7.8cqi)`
+    (`container-type` na karcie) — PROPORCJONALNE zmniejszenie wszystkich
+    kart, żeby nie weszły na nagłówek „Kompetencje i technologie" (stoi
+    56 px pod krawędzią sekcji przy niskich ekranach). Zmierzone: przy
+    ≥ 720 px wysokości karty BEZ ZMIAN (1920×1080 … 1280×720 — te same
+    szer./wys. co przed zmianą); przy 560–700 px odstęp od nagłówka
+    31–51 px. Kontrakt e2e: 3 wysokości × profile desktop (karta
+    trafiana `elementFromPoint` przy dolnej krawędzi = nieucięta i na
+    wierzchu, odstęp ≥ 16 px) + „zwykła wysokość = szerokość z eksportu".
+  - **4. Strona 404** (`src/pages/404.astro` → `dist/404.html`). Bez niej
+    Cloudflare Pages odpowiadał na śmieciowy adres STRONĄ GŁÓWNĄ z kodem
+    200 (soft-404). Teraz prawdziwy status 404 pod adresem dowolnej
+    głębokości (preview też). BaseLayout dostał prop `noindex`
+    (`robots noindex`, BEZ canonicala i og:url); sitemapa pomija 404 sama
+    (@astrojs/sitemap — kontrakt seo „dokładnie 8 tras" bez zmian); bez
+    JSON-LD; pełny navbar (domyślny, bez `[data-navref]`) + stopka;
+    PaperBackdrop; duże „404" Garamond z `lining-nums` (cyfry nautyczne
+    EB Garamond dają „4" z ogonkiem), h1 dla czytników „Błąd 404 — nie
+    znaleziono strony" (`sr-only`), komunikat „Strona o podanym adresie
+    nie istnieje. Sprawdź adres i spróbuj ponownie.", przycisk obrysowy
+    „← Powrót na stronę główną" (wzorzec `zaj-out`); rycina house1 z alfą
+    z repo; ZERO JS widoku i ZERO nowych assetów. Linki absolutne (ta sama
+    treść pod `/a/b/c/`). Testy: `tests/e2e/not-found.spec.ts` (status,
+    meta, SSR bez JS, nawigacja z adresu zagnieżdżonego, środek
+    pierwszego ekranu, tło, tylko moduły chrome'u), axe na 404 (allowlista
+    PUSTA), smoke prod (status 404 + noindex na deployu), visual
+    `tests/visual/not-found.spec.ts` (not-found-top / -full).
+  - Bramki 2026-09-18: format:check / lint / typecheck (0 errors) / unit
+    93 passed / build / e2e **795 passed, 0 failed** / visual not-found
+    `--ignore-snapshots` 12 passed.
+  - **ZASIĘG BASELINE'ÓW pkt 1–3 = ZERO, zmierzony** progiem zerowym
+    (config + per-shot, przywrócone `git checkout`): 113 passed,
+    13 czerwonych wyłącznie w `kompetencje-full*`, `obsluga-full`,
+    `tradycja-full-open` 14 — **PRZEBIEG KONTROLNY ze STARYM tłem body
+    dał IDENTYCZNE liczby co do piksela** (9852 / 5964 / 11533 / 417 /
+    1856 / 4706 / 189 / 174 / 105 / 145 / 149 / 3352 / 2492), czyli to
+    świadomy dług z sesji portretu + znane flake'i, nie ta zmiana.
+    Polaroidy: profile desktop mają 1080/768 px wysokości, gdzie limit
+    nie działa ⇒ `index-*` 0 px. **Do wygenerowania: `not-found-*`
+    (12 plików na platformę)** — workflow linux → darwin na końcu.
 
 ## Dokumentacja
 

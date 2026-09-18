@@ -570,6 +570,12 @@
     width: 100%;
     height: 100%;
     object-fit: contain;
+    /* Pole „Kadr" z panelu (inline `object-position` na klonie kadru)
+       wybiera WYCINEK przy `cover` w galerii/siatce/zajawce, ale przy
+       `contain` przesuwa CAŁE zdjęcie w obrębie ekranu — „0% 0%" lądowało
+       przy lewej krawędzi (zgłoszenie ze szkolenia klienta). Podgląd
+       zawsze centruje; !important, bo inline style wygrywa z klasą. */
+    object-position: center !important;
     /* pełny podgląd pokazuje zdjęcie bez filtra galerii */
     filter: none;
   }
