@@ -79,19 +79,25 @@ test("komunikat zajmuje środek pierwszego ekranu pod paskiem", async ({
   await gotoReady(page, MISSING[1]);
   const geo = await page.evaluate(() => {
     const box = document.querySelector(".nf-in")!.getBoundingClientRect();
+    const main = document.querySelector(".nf")!.getBoundingClientRect();
     const hdr = document.querySelector(".hdr")!.getBoundingClientRect();
     return {
       top: box.top,
       bottom: box.bottom,
       cx: box.left + box.width / 2,
+      // Środek liczony z pudełka `main`, NIE z okna: na linuksowym runnerze
+      // pasek przewijania jest klasyczny (15 px), a `scrollbar-gutter:
+      // stable` na html rezerwuje mu miejsce — środek okna i środek obszaru
+      // treści rozjeżdżają się o pół paska (7,5 px, CI 2026-09-18). Na
+      // macOS paski są nakładkowe, więc lokalnie tego nie widać.
+      mainCx: main.left + main.width / 2,
       hdrBottom: hdr.bottom,
-      vw: document.documentElement.clientWidth,
       vh: window.innerHeight,
     };
   });
   expect(geo.top).toBeGreaterThanOrEqual(geo.hdrBottom);
   expect(geo.bottom).toBeLessThanOrEqual(geo.vh);
-  expect(Math.abs(geo.cx - geo.vw / 2)).toBeLessThanOrEqual(1);
+  expect(Math.abs(geo.cx - geo.mainCx)).toBeLessThanOrEqual(1);
 });
 
 test("tło = baza widoku (PaperBackdrop)", async ({ page }) => {
