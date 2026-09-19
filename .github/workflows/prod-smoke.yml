@@ -37,7 +37,11 @@ jobs:
           # deskryptor gęstości ("…webp 1.8x, …webp 3x") — [^"]+ łykał
           # całość, a word-splitting robił z deskryptorów śmieciowe tokeny
           # i strażnik curl-ował "pracownia-eha.pl1.8x," aż do timeoutu.
-          assets=$(grep -oE '/_astro/[^" ,]+' dist/index.html | sort -u)
+          # Od PR #30 (2026-09-18) index.html ma też inline'owe style z
+          # url('/_astro/…') — apostrof i nawias MUSZĄ być wykluczone,
+          # inaczej strażnik curl-uje "…svg')" i dostaje 404 aż do timeoutu
+          # (czerwony prod-smoke na d59cb6c).
+          assets=$(grep -oE "/_astro/[^\"' ,)]+" dist/index.html | sort -u)
           if [ -z "$assets" ]; then
             echo "Nie znalazłem zahashowanych assetów w dist/index.html" >&2
             exit 1
@@ -48,7 +52,9 @@ jobs:
             html=$(curl -s -H "Cache-Control: no-cache" https://pracownia-eha.pl/)
             fresh=1
             for a in $assets; do
-              if ! echo "$html" | grep -q "$a"; then fresh=0; break; fi
+              # test wbudowany zamiast echo|grep -q — grep zamykał potok
+              # wcześniej i każda próba sypała "echo: write error: Broken pipe"
+              if [[ "$html" != *"$a"* ]]; then fresh=0; break; fi
               code=$(curl -s -o /dev/null -w '%{http_code}' "https://pracownia-eha.pl$a")
               if [ "$code" != "200" ]; then fresh=0; break; fi
             done
