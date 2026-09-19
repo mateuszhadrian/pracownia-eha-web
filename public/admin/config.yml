@@ -15,6 +15,15 @@ backend:
 # account_id i access_key_id są jawne (autoryzuje dopiero sekret).
 # Token R2 `eha-media-sveltia` (Object R&W, scope: tylko bucket `eha-media`).
 media_libraries:
+  # Nazwy WGRYWANYCH plików przez te same reguły co slug wpisu (blok `slug:`
+  # niżej): spacje → myślniki, polskie znaki transliterowane, małe litery.
+  # Bez tego plik z telefonu ląduje w R2 jako "Img 9635.mp4" (stan z
+  # 2026-09-17) — działa (przeglądarka koduje URL), ale adresy są brzydkie,
+  # a instrukcja klienta obiecuje, że panel poprawi nazwę. Zakres `all`
+  # obejmuje też upload do R2 (dialog Select File → Upload; sprawdzone
+  # w bundle'u 0.178.0). Nazwy plików już wgranych NIE zmienia.
+  all:
+    slugify_filename: true
   cloudflare_r2:
     # ⚠️ Account ID = 32 znaki hex (Cloudflare → R2 → Overview → Account ID),
     # NIE „Token value" z ekranu tworzenia tokenu.
