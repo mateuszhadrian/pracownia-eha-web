@@ -12,15 +12,19 @@ import {
   POLICY_PATH,
   TRADYCJA_PATH,
   WORK_INDEX_PATH,
+  workDetailPath,
 } from "../../src/lib/routes";
 import { useChromium1920Only } from "../helpers/guards";
+import { readRealizacje } from "../helpers/realizacje";
 import { gotoReady } from "../helpers/scroll";
 
 const SITE = "https://pracownia-eha.pl";
 
 // Wszystkie trasy mają własny canonical (mobile 1:1 desktop, bez
-// redirectów — §9 analizy), więc sitemapa = komplet 8.
-const CANONICAL_ROUTES = [
+// redirectów — §9 analizy): 8 tras stałych + podstrona KAŻDEJ realizacji
+// (`/realizacje/<plik>/` — sesja linków; liczba zależy od treści z panelu,
+// więc czytamy ją z kolekcji, jak build).
+const FIXED_ROUTES = [
   HOME_PATH,
   EKIPA_PATH,
   KOMPETENCJE_PATH,
@@ -30,6 +34,10 @@ const CANONICAL_ROUTES = [
   CONTACT_PATH,
   POLICY_PATH,
 ];
+const WORK_DETAIL_ROUTES = readRealizacje<{ order: number }>().map((e) =>
+  workDetailPath(e.slug),
+);
+const CANONICAL_ROUTES = [...FIXED_ROUTES, ...WORK_DETAIL_ROUTES];
 
 useChromium1920Only(
   "meta/sitemap/crawl są niezależne od profilu — jeden projekt wystarczy",

@@ -1,0 +1,128 @@
+---
+// Treść realizacji BEZ JS — renderowana wyłącznie w <noscript> podstrony
+// `/realizacje/<id>/` (WorkIndexView). Z JS ten sam wpis otwiera się
+// w detalu (#work-detail), więc tego bloku nikt z JS nie zobaczy, a bez
+// JS link od klienta i tak pokazuje to, po co ktoś kliknął
+// (docs/analiza-linki-realizacji.md, decyzja D2). Świadomie prosty: jedna
+// kolumna w kontenerze siatki, zdjęcia jedno pod drugim, film z natywnymi
+// kontrolkami (bez JS nie ma podglądu pełnoekranowego). Nagłówek h2 — h1
+// strony to „Nasze realizacje".
+import { imgAt } from "@/lib/img";
+import type { ViewProject } from "./work-data";
+
+interface Props {
+  project: ViewProject;
+}
+const { project: p } = Astro.props;
+---
+
+<article class="wks">
+  <p class="wks-meta">{p.place} · {p.year}</p>
+  <h2 class="wks-title">{p.title}</h2>
+  {p.paras.map((t) => <p class="wks-desc">{t}</p>)}
+  {
+    p.specs.length > 0 && (
+      <dl class="wks-specs">
+        {p.specs.map((s) => (
+          <div>
+            <dt>{s.label}</dt>
+            <dd>{s.value}</dd>
+          </div>
+        ))}
+      </dl>
+    )
+  }
+  <div class="wks-gal">
+    {
+      p.gallery.map((item, i) =>
+        item.type === "photo" ? (
+          <img
+            src={imgAt(item.image, "full")}
+            alt={`${p.title} — zdjęcie ${i + 1}`}
+            loading="lazy"
+            decoding="async"
+          />
+        ) : (
+          /* eslint-disable-next-line astro/jsx-a11y/media-has-caption --
+            klipy realizacji to nieme b-rolle z placu budowy */
+          <video src={item.video} preload="none" controls playsinline />
+        ),
+      )
+    }
+  </div>
+</article>
+
+<style>
+  .wks {
+    position: relative;
+    max-width: var(--wmax);
+    margin: 26px auto 0;
+    padding: 0 26px 8px;
+    box-sizing: border-box;
+    color: var(--ink);
+  }
+  .wks-meta {
+    margin: 0;
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+  .wks-title {
+    margin: 8px 0 14px;
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: clamp(28px, 3vw, 44px);
+    line-height: 1.12;
+  }
+  .wks-desc {
+    margin: 0 0 12px;
+    max-width: 70ch;
+    font-family: var(--font-body), sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+  .wks-specs {
+    margin: 18px 0 0;
+    max-width: 70ch;
+    font-family: var(--font-mono), monospace;
+    font-size: 12.5px;
+  }
+  .wks-specs div {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 6px 0;
+    border-bottom: 1px dotted rgba(33, 29, 24, 0.3);
+  }
+  .wks-specs dt {
+    font-weight: 600;
+  }
+  .wks-specs dd {
+    margin: 0;
+    text-align: right;
+  }
+  .wks-gal {
+    margin-top: 22px;
+    display: grid;
+    gap: 12px;
+  }
+  .wks-gal img,
+  .wks-gal video {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: #26221b;
+  }
+  @media (min-width: 1024px) {
+    .wks {
+      margin-top: clamp(32px, 6.2vh, 58px);
+      padding: 0 var(--g) 8px;
+    }
+    .wks-gal {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+</style>

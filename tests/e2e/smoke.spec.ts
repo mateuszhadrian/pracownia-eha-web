@@ -5,7 +5,9 @@
 // Etapu 0 na docelowe widoki bez edycji smoke'a. Od Etapu 5 dochodzi
 // asercja samego formularza (.kt-form) — to on jest sensem tej trasy.
 import { expect, test } from "@playwright/test";
+import { workDetailPath } from "../../src/lib/routes";
 import { collectPageIssues } from "../helpers/guards";
+import { readRealizacje } from "../helpers/realizacje";
 
 test.describe("smoke", { tag: "@prod-smoke" }, () => {
   test("/ wstaje: 200, lang=pl, hero renderuje, bez błędów konsoli", async ({
@@ -41,6 +43,29 @@ test.describe("smoke", { tag: "@prod-smoke" }, () => {
     const html = await res.text();
     expect(html).toContain("Strona o podanym adresie nie istnieje");
     expect(html).toContain('name="robots" content="noindex"');
+  });
+
+  test("podstrona realizacji: 200, detal w HTML, podgląd linku to obraz", async ({
+    request,
+  }) => {
+    // Sesja linków: stały adres /realizacje/<plik>/ rozsyłany przez klienta.
+    // og:image idzie przez /cdn-cgi/image (TYLKO produkcja) — sprawdzamy
+    // content-type, nie samo 200 (lekcja Etapu 6: Pages odpowiada 200
+    // także HTML-em). Lokalnie /cdn-cgi nie istnieje → część obrazkowa
+    // wyłącznie na deployu (BASE_URL).
+    const first = readRealizacje<{ order: number }>()[0];
+    test.skip(!first, "brak realizacji w kolekcji — brak podstron");
+    const res = await request.get(workDetailPath(first.slug));
+    expect(res.status()).toBe(200);
+    const html = await res.text();
+    expect(html).toContain(`data-work-detail="${first.slug}"`);
+    const og = /property="og:image" content="([^"]+)"/.exec(html)?.[1];
+    expect(og).toBeTruthy();
+    if (process.env.BASE_URL) {
+      const img = await request.get(og!);
+      expect(img.status()).toBe(200);
+      expect(img.headers()["content-type"]).toContain("image/jpeg");
+    }
   });
 
   test("kluczowe zasoby odpowiadają", async ({ request }) => {

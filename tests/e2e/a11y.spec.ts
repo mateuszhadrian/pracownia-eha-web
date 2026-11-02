@@ -14,7 +14,9 @@ import {
   POLICY_PATH,
   TRADYCJA_PATH,
   WORK_INDEX_PATH,
+  workDetailPath,
 } from "../../src/lib/routes";
+import { readRealizacje } from "../helpers/realizacje";
 import { gotoReady } from "../helpers/scroll";
 
 const A11Y_PROJECTS = ["chromium-1920", "chromium-pixel-5"];
@@ -42,6 +44,12 @@ const PATHS: { path: string; projects?: string[] }[] = [
   { path: POLICY_PATH },
   // strona 404 (dowolny nieistniejący adres serwuje dist/404.html)
   { path: "/nie-ma-takiej-strony/" },
+  // podstrona realizacji = lista z OTWARTYM detalem (sesja linków) —
+  // jedna wystarczy, wszystkie mają ten sam markup; brak wpisów = brak
+  // podstron (stan dopuszczalny)
+  ...readRealizacje<{ order: number }>()
+    .slice(0, 1)
+    .map((e) => ({ path: workDetailPath(e.slug) })),
 ];
 
 for (const { path, projects } of PATHS) {

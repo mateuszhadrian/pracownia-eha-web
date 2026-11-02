@@ -23,9 +23,27 @@ paths:
   w formie ROZŁOŻONEJ (NFD) — wygląda identycznie, ale na macOS git widzi
   wtedy ten sam plik dwa razy (śledzony pod NFD, nieśledzony pod NFC).
   **Nigdy `git add .` / `git add -A` w tym repo** — dodałoby obie ścieżki
-  i na Linuksie powstałyby duplikaty wpisów. Zmiana pola „Slug" w panelu
-  PRZEMIANOWUJE plik (Sveltia robi operację `move`), więc to jest droga
-  naprawy starych nazw; pliki w R2 zostają nietknięte.
+  i na Linuksie powstałyby duplikaty wpisów.
+  ⚠️ **SPROSTOWANIE (sesja linków, 2026-11-02): zmiana pola „Slug" w panelu
+  NIE przemianowuje pliku** (Sveltia 0.178.0 — zmierzone na produkcji:
+  klient zmienił 2026-09-17 slug `…-sobotka` → `…-proszowka`, commit
+  `aea9692`, a plik został `…-sobotka.json`). Dawny zapis „zmiana pola
+  przemianowuje plik (operacja `move`)" był NIEPRAWDZIWY.
+- **Nazwa pliku = STAŁY ADRES podstrony realizacji** `/realizacje/<nazwa>/`
+  (link, który klient rozsyła ludziom — `docs/analiza-linki-realizacji.md`).
+  Identyfikatorem realizacji w kodzie jest `entry.id` (nazwa pliku), NIE
+  wartość pola `slug` (`entryToProject()` w `work-data.ts`): pole może się
+  rozjechać z plikiem i może zawierać cokolwiek, co klient wpisał.
+  ⚠️ Loader `glob` domyślnie bierze `id` z POLA `slug`, jeśli istnieje —
+  dlatego `content.config.ts` ma JAWNY `generateId` z nazwy pliku. Nie
+  usuwaj go. **Przemianowanie pliku = zerwanie rozesłanych linków** — nie
+  rób tego bez decyzji Mateusza (jednorazowe przemianowania przed
+  pierwszym udostępnionym linkiem, 2026-11-02: `…-sobotka` →
+  `…-proszowka`, `instalacje-w-zabytkowej-oficynie-sroda-slaska` →
+  `przemurowanie-sklepienia-w-milecicach`, `nowa-wiezba-nad-stuletnim-
+zrebem-olesnica` → `nowa-wiezba-nad-stuletnim-balem-czernica` — klient
+  przerabiał testowe wpisy na prawdziwe realizacje). Usunięty wpis
+  daje 404 z wariantem „tej realizacji nie ma już w portfolio".
 - **Zero wpisów to stan dopuszczalny** (klient może usunąć wszystko w panelu):
   build przechodzi, Cloudflare deployuje, `/realizacje/` pokazuje pustą
   listę. Uwaga: usunięcie ostatniego wpisu kasuje CAŁY katalog

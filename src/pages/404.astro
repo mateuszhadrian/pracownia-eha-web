@@ -16,7 +16,16 @@
 // — linki ABSOLUTNE od „/" — ta sama treść odpowiada pod adresami
 //   dowolnej głębokości (/a/b/c/), więc ścieżki względne by się rozjechały
 //   (Astro i tak emituje assety absolutnie);
-// — zero JS widoku i zero nowych assetów (rycina z repo, z alfą).
+// — zero JS widoku i zero nowych assetów (rycina z repo, z alfą);
+//   wyjątek: jedna linijka inline w <head> wybiera wariant komunikatu
+//   (niżej).
+//
+// Dwa warianty komunikatu (sesja linków do realizacji): pod adresem
+// /realizacje/<coś>/ najczęstszą przyczyną jest USUNIĘTA realizacja, do
+// której ktoś dostał link od klienta — wtedy podpowiadamy listę realizacji
+// zamiast strony głównej. Status zostaje 404 (uczciwy dla Google).
+// Ścieżki nie zna build (404.html jest jeden dla wszystkich adresów), więc
+// wariant wybiera skrypt przed paintem; bez JS — wariant ogólny.
 //
 // Wygląd = język tras treściowych: papier (PaperBackdrop na bazie
 // --bg-cream), navbar domyślny bez [data-navref] (jak polityka — pasek
@@ -28,10 +37,14 @@ import Navbar from "@/components/navbar/Navbar.astro";
 import PaperBackdrop from "@/components/PaperBackdrop.astro";
 import { ui } from "@/i18n/ui";
 import BaseLayout from "@/layouts/BaseLayout.astro";
-import { HOME_PATH } from "@/lib/routes";
+import { HOME_PATH, WORK_INDEX_PATH } from "@/lib/routes";
 ---
 
 <BaseLayout title={ui.pl["notFoundPage.title"]} noindex>
+  <script is:inline slot="head" define:vars={{ workPath: WORK_INDEX_PATH }}>
+    if (location.pathname.startsWith(workPath))
+      document.documentElement.dataset.nf = "work";
+  </script>
   <Navbar />
 
   <main class="nf">
@@ -53,19 +66,38 @@ import { HOME_PATH } from "@/lib/routes";
         >
       </h1>
       <span class="nf-rule" aria-hidden="true"></span>
-      <p class="nf-txt">
-        Strona o podanym adresie nie istnieje. Sprawdź adres i spróbuj ponownie.
-      </p>
-      <a class="nf-btn" href={HOME_PATH}>
-        <svg width="16" height="12" viewBox="0 0 16 12" aria-hidden="true"
-          ><path
-            d="M15 6H2M6.5 1.5L2 6l4.5 4.5"
-            stroke="currentColor"
-            stroke-width="1.4"
-            fill="none"></path></svg
-        >
-        <span>Powrót na stronę główną</span>
-      </a>
+      <div class="nf-v nf-v--gen">
+        <p class="nf-txt">
+          Strona o podanym adresie nie istnieje. Sprawdź adres i spróbuj
+          ponownie.
+        </p>
+        <a class="nf-btn" href={HOME_PATH}>
+          <svg width="16" height="12" viewBox="0 0 16 12" aria-hidden="true"
+            ><path
+              d="M15 6H2M6.5 1.5L2 6l4.5 4.5"
+              stroke="currentColor"
+              stroke-width="1.4"
+              fill="none"></path></svg
+          >
+          <span>Powrót na stronę główną</span>
+        </a>
+      </div>
+      <div class="nf-v nf-v--work">
+        <p class="nf-txt">
+          Tej realizacji nie ma już w naszym portfolio albo adres jest niepełny.
+          Zobacz pozostałe realizacje.
+        </p>
+        <a class="nf-btn" href={WORK_INDEX_PATH}>
+          <svg width="16" height="12" viewBox="0 0 16 12" aria-hidden="true"
+            ><path
+              d="M15 6H2M6.5 1.5L2 6l4.5 4.5"
+              stroke="currentColor"
+              stroke-width="1.4"
+              fill="none"></path></svg
+          >
+          <span>Zobacz wszystkie realizacje</span>
+        </a>
+      </div>
     </div>
   </main>
 
@@ -124,6 +156,19 @@ import { HOME_PATH } from "@/lib/routes";
     height: 1px;
     margin: 22px 0 24px;
     background: rgba(87, 101, 74, 0.55);
+  }
+
+  /* warianty komunikatu — wybiera skrypt w <head> (data-nf na <html>);
+     contents = układ kolumny .nf-in bez zmian */
+  .nf-v {
+    display: contents;
+  }
+  .nf-v--work,
+  :global(html[data-nf="work"]) .nf-v--gen {
+    display: none;
+  }
+  :global(html[data-nf="work"]) .nf-v--work {
+    display: contents;
   }
 
   .nf-txt {

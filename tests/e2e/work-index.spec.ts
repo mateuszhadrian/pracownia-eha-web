@@ -16,7 +16,7 @@ import {
   WORK_MOBILE_STEP,
   WORK_PAGE_SIZE,
 } from "../../src/components/sections/work/work-config";
-import { CONTACT_PATH } from "../../src/lib/routes";
+import { CONTACT_PATH, workDetailPath } from "../../src/lib/routes";
 import { expectBreakpointFlip } from "../helpers/breakpoint";
 import {
   collectPageIssues,
@@ -329,11 +329,11 @@ test.describe("detal: blok PARAMETRY tylko przy niepustej liście", () => {
     await expect(detail.locator(".dt-specs")).toHaveCount(0);
     await expect(detail.getByText("PARAMETRY", { exact: true })).toHaveCount(0);
     await expect(detail.locator(".dt-about")).toHaveClass(/dt-about--last/);
-    // akapity i stopka CTA są (treść nie „znika” razem z blokiem)
+    // akapity i stopka (UDOSTĘPNIJ) są — treść nie „znika” razem z blokiem
     await expect(detail.locator(".dt-desc")).not.toHaveCount(0);
-    await expect(detail.locator(".dt-foot .dt-ask")).toHaveAttribute(
-      "href",
-      CONTACT_PATH,
+    await expect(detail.locator(".dt-foot [data-share]")).toHaveAttribute(
+      "data-share-path",
+      workDetailPath(entry.slug),
     );
   });
 });

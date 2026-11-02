@@ -19,7 +19,13 @@
 // `object-fit: contain` na czarnym pełnym ekranie (bez ramy 330/412
 // delung); licznik mobilny na stałym dolnym pasie. Klawiatura ←/→
 // w podglądzie i w galerii detalu — open-detail.ts.
-// Konsument: realizacje.astro (strona główna linkuje płasko — E5).
+// Konsumenci: WorkIndexView.astro (/realizacje/ i podstrony
+// /realizacje/<id>/) oraz index.astro (zajawka 02).
+//
+// `data-index-title` = tytuł listy — open-detail.ts przywraca go
+// w `document.title` po zamknięciu detalu otwartego z linku (podstrona ma
+// tytuł realizacji, a po zamknięciu adres przechodzi na /realizacje/).
+import { ui } from "@/i18n/ui";
 ---
 
 <div
@@ -27,6 +33,7 @@
   id="work-detail"
   data-overlay
   data-overlay-kind="sheet"
+  data-index-title={ui.pl["workPage.title"]}
   role="dialog"
   aria-modal="true"
   hidden
@@ -166,6 +173,13 @@
   }
   .dt-ov.is-open {
     opacity: 1;
+  }
+  /* Wejście z linku (podstrona realizacji): stan otwarty od pierwszej
+     klatki, bez wjazdu — open-detail.ts zdejmuje klasę po dwóch klatkach,
+     więc zamknięcie ma już zwykłą animację. */
+  .dt-ov.is-instant,
+  .dt-ov.is-instant .dt {
+    transition: none;
   }
 
   /* ── Panel: mobile = bottom sheet 90 % na papierze (design) ──

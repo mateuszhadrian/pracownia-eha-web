@@ -21,12 +21,21 @@
 //  • projnav nie robi crossfade'u — bieżący modal odjeżdża za krawędź
 //    ekranu, następny wjeżdża zza przeciwnej.
 //
+// Sesja linków do realizacji (docs/analiza-linki-realizacji.md) dołożyła
+// ADDYTYWNIE warstwę adresu: pasek adresu podąża za detalem
+// (`/realizacje/<id>/`), „wstecz" zamyka podgląd pełnoekranowy, potem
+// detal; wejście z linku otwiera detal bez animacji; stopka detalu
+// udostępnia link. Przepływ otwierania, klonowania i nawigacji nietknięty,
+// `overlay.ts` nietknięty — patrz sekcja „historia przeglądarki" niżej.
+//
 // `window.overlay` typowane w scripts/overlay.ts (declare global).
+import { WORK_INDEX_PATH, workDetailPath } from "@/lib/routes";
 import {
   VIDEO_LOADING_DELAY_MS,
   VIDEO_LOADING_MIN_MS,
   VIDEO_LOADING_TIMEOUT_MS,
   WORK_DESKTOP_MIN_PX,
+  WORK_SHARE_COPIED_MS,
 } from "./work-config";
 
 const OVERLAY_ID = "work-detail";
@@ -167,16 +176,237 @@ function cleanup() {
   current = "";
   exiting = false;
   swapSeq += 1; // unieważnij wiszące timeouty przejazdu projnav
+  // JEDNO miejsce wyjścia: każda droga zamknięcia (×, Esc, swipe, tło,
+  // zmiana progu, „wstecz") kończy się tutaj — i tu wraca adres.
+  syncHistoryOnClose();
+}
+
+interface OpenOpts {
+  /** Bez animacji wjazdu — wejście z linku (podstrona realizacji). */
+  instant?: boolean;
+  /** Co zrobić z historią przeglądarki:
+   *  „push" (domyślnie — klik kafla) dokłada wpis z adresem podstrony,
+   *  „entry" — jesteśmy JUŻ na podstronie (wejście z linku), wpis tylko
+   *  oznaczamy; „none" — wołający sam ustawił stan (popstate). */
+  history?: "push" | "entry" | "none";
 }
 
 /** Otwiera detal realizacji. Zwraca `false`, gdy się nie da (brak
  *  szkieletu overlaya albo <template> dla slugu) — konsument z sensownym
- *  `href` (zajawka strony głównej) ma po czym poznać, że NIE wolno robić
- *  preventDefault i trzeba puścić nawigację na /realizacje/. */
-export function openWorkDetail(slug: string, name: string): boolean {
+ *  `href` (kafle są linkami do podstron) ma po czym poznać, że NIE wolno
+ *  robić preventDefault i trzeba puścić nawigację. */
+export function openWorkDetail(
+  slug: string,
+  name: string,
+  opts: OpenOpts = {},
+): boolean {
   if (!window.overlay || !mount(slug)) return false;
+  const el = overlayEl();
+  const mode = opts.history ?? "push";
+  // pushState PRZED overlay.open: blokada scrolla (body{position:fixed})
+  // zeruje scrollY, a przeglądarka zapisuje pozycję wpisu w chwili
+  // przejścia — wpis listy musi dostać prawdziwą pozycję, żeby „wstecz"
+  // wróciło dokładnie tam, gdzie użytkownik był.
+  if (mode === "push") {
+    titleBefore = document.title;
+    history.pushState(
+      { wd: slug } satisfies DetailState,
+      "",
+      workDetailPath(slug),
+    );
+    histMode = "pushed";
+  } else if (mode === "entry") {
+    titleBefore = el?.dataset.indexTitle ?? document.title;
+    history.replaceState({ wd: slug } satisfies DetailState, "", location.href);
+    histMode = "entry";
+  }
+  if (histMode) {
+    // wpisy detalu bez automatycznego przywracania scrolla: przy
+    // otwartym detalu scrollY = 0 (blokada), a pozycję listy i tak
+    // przywraca overlay.ts po zamknięciu
+    history.scrollRestoration = "manual";
+    setDocTitle(slug);
+  }
+  if (opts.instant) el?.classList.add("is-instant");
   window.overlay.open(OVERLAY_ID, { label: name, onClose: cleanup });
+  if (opts.instant) {
+    // dwie klatki: stan otwarty musi zostać namalowany bez przejścia,
+    // zanim przejścia wrócą (zamknięcie ma już normalną animację)
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => el?.classList.remove("is-instant")),
+    );
+  }
   return true;
+}
+
+/* ── historia przeglądarki (sesja linków do realizacji) ──
+   Wpisy detalu niosą stan `{ wd: <id> }` (podgląd pełnoekranowy:
+   `{ wd, lb: true }`, ten sam adres). Tryby:
+   • „pushed" — detal otwarty kliknięciem: wpis listy/strony głównej jest
+     ZA nami, więc zamknięcie cofa historię (go(-1), z podglądem go(-2)),
+     a „wstecz" przeglądarki zamyka detal (popstate niżej);
+   • „entry"  — wejście z linku: za nami jest cudza strona (albo nic),
+     więc zamknięcie PODMIENIA adres na /realizacje/ zamiast cofać.
+   Projnav podmienia wpis (replaceState) — „wstecz" nie przechodzi po
+   wszystkich obejrzanych realizacjach. */
+interface DetailState {
+  wd: string;
+  lb?: true;
+}
+let histMode: "" | "pushed" | "entry" = "";
+let lbPushed = false; // bieżący wpis historii to wpis podglądu
+let closingFromPop = false; // zamknięcie wywołane „wstecz" — nie cofaj drugi raz
+let ignorePop = 0; // popstate wywołane przez nas (go/back) — do pominięcia
+let afterPop: (() => void) | null = null;
+let titleBefore = "";
+
+function setDocTitle(slug: string) {
+  const t = document.querySelector<HTMLTemplateElement>(
+    `template[data-work-detail="${slug}"]`,
+  )?.dataset.docTitle;
+  if (t) document.title = t;
+}
+
+function nameOf(slug: string): string {
+  return (
+    context.find((c) => c.slug === slug)?.name ??
+    document
+      .querySelector<HTMLTemplateElement>(
+        `template[data-work-detail="${slug}"]`,
+      )
+      ?.content.querySelector(".dt-title")
+      ?.textContent?.trim() ??
+    ""
+  );
+}
+
+function syncHistoryOnClose() {
+  const mode = histMode;
+  const lb = lbPushed;
+  const fromPop = closingFromPop;
+  histMode = "";
+  lbPushed = false;
+  closingFromPop = false;
+  if (!mode) return;
+  document.title = titleBefore;
+  if (fromPop) return; // przeglądarka już stoi na właściwym wpisie
+  if (mode === "pushed") {
+    ignorePop += 1;
+    history.go(lb ? -2 : -1);
+    return;
+  }
+  const toIndex = () => {
+    history.replaceState(null, "", WORK_INDEX_PATH);
+    history.scrollRestoration = "auto";
+  };
+  if (lb) {
+    ignorePop += 1;
+    afterPop = toIndex;
+    history.back();
+  } else {
+    toIndex();
+  }
+}
+
+window.addEventListener("popstate", (e) => {
+  if (ignorePop > 0) {
+    ignorePop -= 1;
+    const f = afterPop;
+    afterPop = null;
+    f?.();
+    return;
+  }
+  if (!overlayEl()) return;
+  const st = e.state as DetailState | null;
+  if (st?.wd) {
+    if (!current) {
+      // „dalej" na wpis detalu zamkniętego wcześniej — otwórz ponownie
+      if (!document.querySelector(`template[data-work-detail="${st.wd}"]`))
+        return;
+      titleBefore = document.title;
+      histMode = "pushed";
+      if (openWorkDetail(st.wd, nameOf(st.wd), { history: "none" }))
+        lbPushed = Boolean(st.lb);
+      else histMode = "";
+      return;
+    }
+    lbPushed = Boolean(st.lb);
+    if (lbOpen && !st.lb) closeLightbox();
+    if (st.wd !== current && mount(st.wd)) {
+      overlayEl()?.setAttribute("aria-label", nameOf(st.wd));
+      setDocTitle(st.wd);
+    }
+    return;
+  }
+  // wpis bez detalu („wstecz" przy otwartym detalu) — zamknij
+  if (current) {
+    closingFromPop = true;
+    lbPushed = false;
+    window.overlay?.close(OVERLAY_ID);
+  }
+});
+
+/* ── udostępnianie (stopka detalu) ──
+   Telefon (<1024): systemowe menu udostępniania (Web Share API —
+   WhatsApp, SMS, Messenger…); desktop albo brak API: kopiowanie adresu
+   do schowka + „Link skopiowany" na przycisku. Adres = podstrona
+   realizacji na BIEŻĄCEJ domenie (preview wskaże preview). */
+let copiedTimer = 0;
+
+async function copyText(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    // starsze przeglądarki / brak uprawnień — klasyczne execCommand
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    overlayEl()?.appendChild(ta);
+    ta.select();
+    let ok: boolean;
+    try {
+      ok = document.execCommand("copy");
+    } catch {
+      ok = false;
+    }
+    ta.remove();
+    return ok;
+  }
+}
+
+function markCopied(btn: HTMLElement) {
+  const status = btn.parentElement?.querySelector<HTMLElement>(
+    "[data-share-status]",
+  );
+  btn.classList.add("is-copied");
+  if (status)
+    status.textContent =
+      btn.querySelector(".dt-share-ok")?.textContent?.trim() ?? "";
+  window.clearTimeout(copiedTimer);
+  copiedTimer = window.setTimeout(() => {
+    btn.classList.remove("is-copied");
+    if (status) status.textContent = "";
+  }, WORK_SHARE_COPIED_MS);
+}
+
+async function shareDetail(btn: HTMLElement) {
+  const path = btn.dataset.sharePath;
+  if (!path) return;
+  const url = new URL(path, location.origin).href;
+  if (!desktopMQ.matches && typeof navigator.share === "function") {
+    try {
+      await navigator.share({ title: btn.dataset.shareTitle, url });
+      return;
+    } catch (err) {
+      // anulowanie menu przez użytkownika to nie błąd; inne odmowy
+      // (np. brak uprawnień) — spadamy do schowka
+      if ((err as DOMException)?.name === "AbortError") return;
+    }
+  }
+  if (await copyText(url)) markCopied(btn);
 }
 
 /* ── projnav: poprzednia/następna realizacja (desktop, pętla) ── */
@@ -194,7 +424,17 @@ function stepProject(dir: 1 | -1) {
   if (!el || !panel) return;
 
   const swap = () => {
-    if (mount(nextItem.slug)) el.setAttribute("aria-label", nextItem.name);
+    if (!mount(nextItem.slug)) return;
+    el.setAttribute("aria-label", nextItem.name);
+    // adres podąża za realizacją, ale bez dokładania wpisu historii
+    if (histMode) {
+      history.replaceState(
+        { wd: nextItem.slug } satisfies DetailState,
+        "",
+        workDetailPath(nextItem.slug),
+      );
+      setDocTitle(nextItem.slug);
+    }
   };
   if (reduceMQ.matches) {
     swap();
@@ -277,7 +517,7 @@ function onLbPointerEnd(e: PointerEvent) {
   if (lb) lb.style.transform = "";
   if (axis === "v" && dy > LB_CLOSE_PX && e.type !== "pointercancel") {
     lbSwallowClick = true;
-    closeLightbox();
+    closeLightboxByUser();
   }
 }
 
@@ -501,6 +741,30 @@ function openLightbox(startIdx: number, autoplay = false) {
   // fokus na kontener, nie na chevron/X — iOS rysuje pierścień na
   // programowo fokusowanych przyciskach (korekta Mateusza)
   lb.focus({ preventScroll: true });
+  // wpis historii podglądu (ten sam adres) — „wstecz" zamyka najpierw
+  // podgląd, dopiero potem detal
+  if (histMode && !lbPushed) {
+    history.pushState(
+      { wd: current, lb: true } satisfies DetailState,
+      "",
+      location.href,
+    );
+    history.scrollRestoration = "manual";
+    lbPushed = true;
+  }
+}
+
+/** Zamknięcie podglądu przez UŻYTKOWNIKA (×, chevron, swipe, Esc) —
+ *  zdejmuje też wpis historii podglądu. Zamknięcie z cleanup()/popstate
+ *  idzie gołym closeLightbox (historię załatwia wołający). */
+function closeLightboxByUser() {
+  if (!lbOpen) return;
+  closeLightbox();
+  if (lbPushed) {
+    lbPushed = false;
+    ignorePop += 1;
+    history.back();
+  }
 }
 
 function closeLightbox() {
@@ -539,6 +803,13 @@ document.addEventListener("click", (e) => {
   // tap zakończony gestem swipe-down podglądu — nie jest kliknięciem
   if (lbSwallowClick) {
     lbSwallowClick = false;
+    return;
+  }
+
+  // Stopka detalu: udostępnij link do tej realizacji.
+  const shareBtn = t.closest<HTMLElement>("[data-share]");
+  if (shareBtn) {
+    void shareDetail(shareBtn);
     return;
   }
 
@@ -625,7 +896,7 @@ function bindChrome() {
 
   // chrome podglądu pełnoekranowego (statyczny — listenery elementowe)
   el.querySelectorAll("[data-lb-close]").forEach((b) =>
-    b.addEventListener("click", () => closeLightbox()),
+    b.addEventListener("click", () => closeLightboxByUser()),
   );
   el.querySelector("[data-lb-prev]")?.addEventListener("click", () => {
     lbIndex -= 1;
@@ -713,7 +984,7 @@ document.addEventListener(
     if (e.key !== "Escape" || !lbOpen) return;
     e.preventDefault();
     e.stopPropagation();
-    closeLightbox();
+    closeLightboxByUser();
   },
   true,
 );

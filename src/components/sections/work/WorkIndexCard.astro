@@ -3,14 +3,18 @@
 // docs/design/export/realizacje.html (analiza-realizacje §1): kadr 4:3
 // z gradientem, lupa „w narożnikach kadru" (wzór z 4.2 — re-lens),
 // meta MIEJSCE · ROK + tytuł serif; desktop dokłada hover
-// (przyciemnienie + pill „ZOBACZ REALIZACJĘ"). Karta jest <button>,
-// bo klik otwiera detal w #work-detail (WorkDetailOverlay), nie
-// nawigację — bez JS lista jest kompletna, detal to enhancement.
+// (przyciemnienie + pill „ZOBACZ REALIZACJĘ"). Karta jest LINKIEM do
+// podstrony realizacji `/realizacje/<id>/` (docs/analiza-linki-realizacji.md;
+// do tamtej sesji była <button>): zwykły klik otwiera detal w miejscu
+// (#work-detail — skrypt WorkIndexView robi preventDefault po udanym
+// otwarciu, open-detail.ts przestawia adres), a „otwórz w nowej karcie"
+// i „kopiuj adres linku" działają natywnie. Wygląd bez zmian.
 // Kontrakty data-work-slug/-name — open-detail i testy. Zdjęcie kafla:
 // cover przez imgAt() (media w R2); mobile parallax ±35 px robi
 // work-motion.ts na [data-tilepar] (zapas 70 px w CSS — D-U1;
 // stan bez JS = statyczny offset −35 px).
 import { imgAt } from "@/lib/img";
+import { workDetailPath } from "@/lib/routes";
 import type { ViewProject } from "./work-data";
 
 interface Props {
@@ -20,8 +24,8 @@ const { project } = Astro.props;
 const p = project;
 ---
 
-<button
-  type="button"
+<a
+  href={workDetailPath(p.slug)}
   class="tile"
   data-work-slug={p.slug}
   data-work-name={p.title}
@@ -68,13 +72,15 @@ const p = project;
       <span class="tile-title">{p.title}</span>
     </span>
   </span>
-</button>
+</a>
 
 <style>
   /* ── Wspólne: kadr 4:3, gradient, meta na dole (eksport) ── */
   .tile {
-    /* reset przycisku */
+    /* reset (do sesji linków była to <button> — reguły zostają, link
+       dokłada zdjęcie podkreślenia) */
     appearance: none;
+    text-decoration: none;
     margin: 0;
     padding: 0;
     border: none;

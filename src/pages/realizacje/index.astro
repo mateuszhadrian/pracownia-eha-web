@@ -1,0 +1,28 @@
+---
+// Podstrona /realizacje/ (Etap 4.3) — cały widok listy żyje
+// w WorkIndexView.astro (wspólny z podstronami `/realizacje/<id>/`);
+// tu zostają tylko meta trasy, bramka ruchu przed paintem i pasek.
+import Navbar from "@/components/navbar/Navbar.astro";
+import WorkIndexView from "@/components/sections/work/WorkIndexView.astro";
+import { workProjects } from "@/components/sections/work/work-list";
+import { ui } from "@/i18n/ui";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+
+const projects = await workProjects();
+---
+
+<BaseLayout
+  title={ui.pl["workPage.title"]}
+  description={ui.pl["workPage.description"]}
+>
+  <script is:inline slot="head">
+    // PRZED paintem: motion OK → html.js-motion (uzbraja stany startowe
+    // revealów/rysowania — reszta w work-motion.ts, ładowanym w widoku).
+    if (window.matchMedia("(prefers-reduced-motion: no-preference)").matches) {
+      document.documentElement.classList.add("js-motion");
+    }
+  </script>
+
+  <Navbar />
+  <WorkIndexView projects={projects} />
+</BaseLayout>

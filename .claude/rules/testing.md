@@ -27,6 +27,15 @@ w tym samym PR (ostatni wpis = skasowanie pliku).
 - Testy wizualne WYŁĄCZNIE na preview (webServer configu, port 4399 — na
   4321 często wisi dev do telefonu). Helper `assertPreview` wykrywa
   `/@vite/client` i przerywa — nie obchodź go.
+  ⚠️ **Na maszynie Mateusza 4399 bywa zajęty przez `astro preview` INNEGO
+  projektu** (hadrianm-web; 4398 też bywa zajęty) — `reuseExistingServer`
+  podpina się wtedy po cichu pod CUDZĄ stronę, a objawem są masowe
+  „element(s) not found". Przed pierwszym przebiegiem sprawdź
+  `lsof -nP -iTCP:4399 -sTCP:LISTEN` + `ps -o command -p <pid>`; obejście
+  bez zabijania cudzego procesu: `pnpm preview --port 4397` i
+  `BASE_URL=http://localhost:4397`. Przy `BASE_URL` odpala się sonda
+  `POST /api/kontakt` ze `smoke.spec.ts` (endpoint istnieje tylko na
+  deployu) — jej czerwony lokalnie to artefakt, nie regresja.
 - Testy wizualne stoją na **ZAMROŻONEJ treści realizacji**
   (`tests/fixtures/realizacje` — świeży fixture eha powstaje w Etapie 3:
   ~5 wpisów, 1 pozycja z wideo), bo baseline to obraz: realizacja

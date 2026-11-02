@@ -14,15 +14,16 @@
 // i jak w delungu. Na listę przenoszą WYŁĄCZNIE dedykowane CTA
 // „Zobacz wszystkie realizacje" (zaj-out desktop / zaj-bar mobile) oraz
 // mobilny kafel-licznik „JESZCZE N".
-// Kafel zostaje <a href={WORK_INDEX_PATH}> (a nie <button> jak na
-// /realizacje/): tam bez JS pełna lista jest TUŻ OBOK, więc martwy klik
-// nic nie kosztuje — tu href to jedyne dojście do treści, więc zostaje
-// fallbackiem, a JS robi preventDefault (wzorzec delung D-Q6/D-P2:
-// „href zostaje fallbackiem bez JS").
+// Kafel jest <a href> na PODSTRONĘ tej realizacji (`/realizacje/<id>/`
+// — docs/analiza-linki-realizacji.md; wcześniej płasko na /realizacje/):
+// bez JS i przy „otwórz w nowej karcie" prowadzi wprost do niej, a zwykły
+// klik otwiera detal w miejscu — JS robi preventDefault po udanym
+// otwarciu (wzorzec delung D-Q6/D-P2), a adres w pasku przestawia
+// open-detail.ts.
 import domRemont from "@/assets/dom-remont-ryc1.webp";
 import house8 from "@/assets/dom-ryc-house8.webp";
 import { imgAt } from "@/lib/img";
-import { WORK_INDEX_PATH } from "@/lib/routes";
+import { WORK_INDEX_PATH, workDetailPath } from "@/lib/routes";
 import HomeSectionHead from "./HomeSectionHead.astro";
 import { homeRealizacje } from "./home-realizacje-data";
 
@@ -108,7 +109,7 @@ const DESKTOP_CARDS = [
         shown.map((p) => (
           <a
             class="re-card"
-            href={WORK_INDEX_PATH}
+            href={workDetailPath(p.slug)}
             data-work-slug={p.slug}
             data-work-name={p.title}
             aria-haspopup="dialog"
@@ -180,7 +181,7 @@ const DESKTOP_CARDS = [
     shown.map((p, i) => (
       <a
         class="dOnly re-pol"
-        href={WORK_INDEX_PATH}
+        href={workDetailPath(p.slug)}
         data-work-slug={p.slug}
         data-work-name={p.title}
         aria-haspopup="dialog"

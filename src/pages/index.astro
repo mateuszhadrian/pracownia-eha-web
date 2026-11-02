@@ -18,6 +18,7 @@ import { homeRealizacje } from "@/components/sections/home/home-realizacje-data"
 import HomeTradycja from "@/components/sections/home/HomeTradycja.astro";
 import WorkDetail from "@/components/sections/work/WorkDetail.astro";
 import WorkDetailOverlay from "@/components/sections/work/WorkDetailOverlay.astro";
+import { workDocTitle } from "@/components/sections/work/work-data";
 import { ui } from "@/i18n/ui";
 import JsonLd from "@/components/seo/JsonLd.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
@@ -72,7 +73,10 @@ const jsonLd = webSite(Astro.site ?? Astro.url);
   {/* Treść detalu per realizacja — klonowana do #work-detail po kliknięciu. */}
   {
     realizacje.map((project) => (
-      <template data-work-detail={project.slug}>
+      <template
+        data-work-detail={project.slug}
+        data-doc-title={workDocTitle(project)}
+      >
         <WorkDetail project={project} />
       </template>
     ))

@@ -2,7 +2,7 @@
 // Image Transformations). imgAt czyta import.meta.env.DEV w momencie
 // wywołania, więc stubujemy env per test (vi.stubEnv wspiera boolean dla DEV).
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { imgAt, videoFrameAt } from "../../src/lib/img";
+import { imgAt, ogImageAt, videoFrameAt } from "../../src/lib/img";
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -82,5 +82,40 @@ describe("videoFrameAt: dev (DEV=true)", () => {
         "0:24",
       ),
     ).toBeUndefined();
+  });
+});
+
+// Podgląd linku podstrony realizacji (sesja linków) — og:image musi być
+// ABSOLUTNY, w JPEG (crawlery komunikatorów), w kadrze 1200×630, a pole
+// „Kadr" przechodzi na gravity transformacji.
+describe("ogImageAt", () => {
+  const src = "https://media.pracownia-eha.pl/realizacje/okladka.jpg";
+  const site = "https://pracownia-eha.pl";
+
+  it("produkcja: absolutny /cdn-cgi/image 1200×630 cover JPEG", () => {
+    vi.stubEnv("DEV", false);
+    expect(ogImageAt(src, site)).toBe(
+      `${site}/cdn-cgi/image/width=1200,height=630,fit=cover,format=jpeg/${src}`,
+    );
+  });
+
+  it("„Kadr” w procentach → gravity XxY (ułamki 0–1)", () => {
+    vi.stubEnv("DEV", false);
+    expect(ogImageAt(src, site, "50% 42%")).toContain(
+      "format=jpeg,gravity=0.5x0.42/",
+    );
+    expect(ogImageAt(src, site, "0% 100%")).toContain("gravity=0x1/");
+  });
+
+  it("inny zapis „Kadru” = bez gravity (środek)", () => {
+    vi.stubEnv("DEV", false);
+    for (const pos of ["center", "50%", "top left", "", undefined]) {
+      expect(ogImageAt(src, site, pos)).not.toContain("gravity");
+    }
+  });
+
+  it("dev: oryginał (endpoint nie istnieje lokalnie)", () => {
+    vi.stubEnv("DEV", true);
+    expect(ogImageAt(src, site)).toBe(src);
   });
 });

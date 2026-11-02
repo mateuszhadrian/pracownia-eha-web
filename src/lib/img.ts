@@ -45,3 +45,31 @@ export function videoFrameAt(
   if (import.meta.env.DEV) return undefined;
   return `/cdn-cgi/media/mode=frame,time=${frameSecond(duration)}s,width=960/${src.replace(/^\//, "")}`;
 }
+
+// Obrazek podglądu linku (og:image) podstrony realizacji — okładka wpisu
+// w kadrze 1200×630 (1,91:1, ten sam co og-image.png serwisu: nie przycina
+// go Facebook/X/LinkedIn ani WhatsApp). Trzy różnice wobec imgAt():
+//  • adres ABSOLUTNY — crawlery komunikatorów nie rozwiązują ścieżek
+//    względnych (`site` = Astro.site, czyli domena produkcji także na
+//    preview: endpoint /cdn-cgi/image istnieje wyłącznie tam);
+//  • `format=jpeg`, a nie `auto` — negocjacja po nagłówku Accept dałaby
+//    crawlerowi AVIF/WebP, którego część komunikatorów nie pokaże;
+//  • pole „Kadr" (object-position kafla, np. „50% 42%") przechodzi na
+//    `gravity=0.5x0.42` — podgląd linku kadruje jak kafel na liście.
+//    Inny zapis niż dwie wartości procentowe = środek (domyślne cover).
+export function ogImageAt(
+  src: string,
+  site: URL | string,
+  position?: string,
+): string {
+  // Lokalnie (dev) endpoint nie istnieje — oryginał (pełny URL z R2).
+  if (import.meta.env.DEV) return new URL(src, site).href;
+  const m = /^\s*(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*$/.exec(position ?? "");
+  const frac = (v: string) =>
+    String(Math.min(100, Math.max(0, Number(v))) / 100);
+  const gravity = m ? `,gravity=${frac(m[1])}x${frac(m[2])}` : "";
+  return new URL(
+    `/cdn-cgi/image/width=1200,height=630,fit=cover,format=jpeg${gravity}/${src.replace(/^\//, "")}`,
+    site,
+  ).href;
+}

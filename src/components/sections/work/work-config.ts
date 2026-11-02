@@ -48,3 +48,8 @@ export const VIDEO_LOADING_MIN_MS = 600;
  *  odtwarzanie NIE ruszy i nie poleci `error` — sztandarowy przypadek
  *  to iOS Low Power Mode, który potrafi odrzucić `play()` po cichu. */
 export const VIDEO_LOADING_TIMEOUT_MS = 15_000;
+
+/** Jak długo przycisk „Udostępnij realizację" pokazuje „Link skopiowany"
+ *  po skopiowaniu adresu do schowka (desktop; na telefonie leci systemowe
+ *  menu udostępniania i stanu „skopiowano" nie ma). */
+export const WORK_SHARE_COPIED_MS = 2200;

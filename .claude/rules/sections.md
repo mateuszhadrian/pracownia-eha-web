@@ -52,10 +52,11 @@ która przeżyła kopię w całości (work) i mechaniki formularza (contact).
   pełna lista.
 - **Detal otwiera się TAKŻE z zajawki 02 strony głównej** (sesja poprawek
   przed Etapem 6 — unieważnia analiza-realizacje §2 pkt 4). Kafle zajawki
-  są `<a href="/realizacje/">` z `data-work-slug`/`-name`: JS robi
-  `preventDefault` DOPIERO gdy `openWorkDetail()` zwróci `true`, więc bez
-  JS `href` zostaje jedynym dojściem do treści (na `/realizacje/` kafel
-  jest `<button>`, bo tam pełna lista leży obok). Na listę przenoszą
+  ORAZ siatki `/realizacje/` są `<a href="/realizacje/<id>/">` z
+  `data-work-slug`/`-name` (sesja linków — wcześniej zajawka linkowała
+  płasko, a kafel listy był `<button>`): JS robi `preventDefault` DOPIERO
+  gdy `openWorkDetail()` zwróci `true`, modyfikatory (Cmd/Ctrl/Shift/Alt)
+  przepuszcza — „otwórz w nowej karcie" i „kopiuj adres linku" działają. Na listę przenoszą
   wyłącznie CTA „Zobacz wszystkie realizacje" i mobilny kafel-licznik.
   **Templaty i `<WorkDetailOverlay />` MUSZĄ stać POZA `main.home`**
   (renderuje je `index.astro` po `<Footer />`): `.home` ma
@@ -63,6 +64,25 @@ która przeżyła kopię w całości (work) i mechaniki formularza (contact).
   kontekstu układania i pasek `.hdr` (z-index 50) malowałby się NA
   modalu. Listę wpisów dla kafli i templatów daje JEDEN moduł
   `home-realizacje-data.ts` — nie licz jej lokalnie w dwóch miejscach.
+- **Stałe linki do realizacji** (`docs/analiza-linki-realizacji.md`):
+  podstrona `/realizacje/<id>/` (`src/pages/realizacje/[slug].astro`) =
+  ta sama lista (`WorkIndexView.astro`, wspólny z `/realizacje/`)
+  z detalem otwartym od wejścia, bez animacji (`.is-instant`), pod
+  zasłoną `html.wk-dl` do chwili otwarcia. **`<id>` = NAZWA PLIKU wpisu
+  (`entryToProject`), nie pole „Slug"** — Sveltia nie przemianowuje pliku
+  przy zmianie pola. Pasek adresu podąża za detalem w `open-detail.ts`:
+  klik = `pushState`, projnav = `replaceState`, podgląd pełnoekranowy =
+  własny wpis (`{wd, lb}`), „wstecz" zamyka podgląd, potem detal; wejście
+  z linku zamyka się `replaceState` na `/realizacje/`. Każda droga
+  zamknięcia kończy się w `cleanup()` → `syncHistoryOnClose()` — **nie
+  dokładaj zamykania obok `cleanup()`**, bo historia się rozjedzie.
+  `pushState` MUSI iść PRZED `overlay.open` (blokada scrolla zeruje
+  `scrollY`, a przeglądarka zapisuje pozycję wpisu przy przejściu).
+  Stopka detalu = przycisk „Udostępnij realizację" (`[data-share]`;
+  telefon: Web Share API, desktop: schowek) — CTA kontaktu i etykieta
+  „CHCESZ WIĘCEJ INFORMACJI?" usunięte (decyzja Mateusza). Tor galerii
+  `.dt-track` ma `tabindex="0"` (axe `scrollable-region-focusable`) —
+  nie zdejmuj.
 - Track karuzeli mobile wymaga `scroll-snap-stop: always` (bez tego szybki
   swipe przeskakuje kilka kafli naraz).
 - **Parallax musi mieć zapas ≥ ruch** (lekcja D-U1 szablonu): element

@@ -54,7 +54,9 @@ test.describe("bez JS strona jest kompletna", () => {
     await expect(h1).toHaveCount(1);
     // wizualnie samo „404", dla czytników pełna nazwa błędu
     await expect(h1).toHaveAccessibleName(/Błąd 404.*nie znaleziono strony/);
-    await expect(page.locator(".nf-txt")).toHaveText(TEXT);
+    // wariant ogólny (wariant „usunięta realizacja" jest w DOM, ale
+    // ukryty — wybiera go skrypt tylko pod /realizacje/…)
+    await expect(page.locator(".nf-txt:visible")).toHaveText(TEXT);
     const btn = page.getByRole("link", { name: "Powrót na stronę główną" });
     await expect(btn).toBeVisible();
     await expect(btn).toHaveAttribute("href", HOME_PATH);

@@ -1,0 +1,66 @@
+---
+// Podstrona realizacji `/realizacje/<id>/` — stały link, który klient
+// rozsyła ludziom (docs/analiza-linki-realizacji.md). Ta sama lista co
+// `/realizacje/` (WorkIndexView) z OTWARTYM detalem tej realizacji;
+// zamknięcie zostawia na liście i przestawia adres na `/realizacje/`
+// (open-detail.ts). Własne meta: tytuł, opis z pierwszego akapitu,
+// canonical na siebie i og:image = okładka (podgląd linku w komunikatorach
+// — crawlery nie uruchamiają JS, więc muszą to dostać w surowym HTML).
+// `<id>` = NAZWA PLIKU wpisu, nie pole „Slug" (uzasadnienie w work-data.ts).
+// Podstrony powstają same po zapisie wpisu w panelu (build Pages) i same
+// trafiają do sitemapy (@astrojs/sitemap bez filtra).
+import Navbar from "@/components/navbar/Navbar.astro";
+import WorkIndexView from "@/components/sections/work/WorkIndexView.astro";
+import {
+  workDescription,
+  workDocTitle,
+  type ViewProject,
+} from "@/components/sections/work/work-data";
+import { workProjects } from "@/components/sections/work/work-list";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { ogImageAt } from "@/lib/img";
+
+export async function getStaticPaths() {
+  const projects = await workProjects();
+  return projects.map((project) => ({
+    params: { slug: project.slug },
+    props: { project, projects },
+  }));
+}
+
+interface Props {
+  project: ViewProject;
+  projects: ViewProject[];
+}
+const { project, projects } = Astro.props;
+// Domena produkcji także na preview — og:image idzie przez /cdn-cgi/image,
+// które istnieje wyłącznie tam (ogImageAt w src/lib/img.ts).
+const site = Astro.site ?? Astro.url;
+---
+
+<BaseLayout
+  title={workDocTitle(project)}
+  description={workDescription(project)}
+  ogImage={ogImageAt(project.cover.image, site, project.cover.position)}
+  ogImageAlt={`${project.title} — ${project.place}`}
+  ogType="article"
+>
+  <script is:inline slot="head">
+    // PRZED paintem: motion OK → html.js-motion (jak na /realizacje/).
+    if (window.matchMedia("(prefers-reduced-motion: no-preference)").matches) {
+      document.documentElement.classList.add("js-motion");
+    }
+    // Zasłona wejścia z linku: lista pod detalem nie może mignąć przed
+    // otwarciem nakładki. Zdejmuje ją skrypt widoku po otwarciu detalu;
+    // bezpiecznik — strona nigdy nie zostaje zasłonięta, nawet gdy JS
+    // widoku się wywróci. Bez JS klasy nie ma (treść w <noscript>).
+    (() => {
+      const root = document.documentElement;
+      root.classList.add("wk-dl");
+      setTimeout(() => root.classList.remove("wk-dl"), 1500);
+    })();
+  </script>
+
+  <Navbar />
+  <WorkIndexView projects={projects} initial={project.slug} />
+</BaseLayout>
