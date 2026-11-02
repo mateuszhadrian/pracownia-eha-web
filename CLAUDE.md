@@ -2613,6 +2613,11 @@ max(--svh,550px)·0.5267 − 72px)` + tytuł `min(…, 7.8cqi)`
     Plik przemianowany na `…-proszowka.json` za zgodą Mateusza, przed
     pierwszym udostępnionym linkiem. Od teraz przemianowanie pliku = zerwane
     linki.
+  - **Po merge'u treści klienta**: domyślny `generateId` loadera `glob`
+    bierze `id` z POLA `slug` (nie z nazwy pliku) — naprawione jawnym
+    `generateId` w `content.config.ts`; dwa przerobione przez klienta
+    wpisy przemianowane za zgodą Mateusza (szczegóły: analiza §7,
+    `cms-realizacje.md`). e2e po merge'u 874 passed.
   - Przy okazji: realny błąd a11y zastany od 4.3 (tor galerii mobile
     nieosiągalny klawiaturą) — naprawiony; allowlista axe PUSTA.
   - Bramki 2026-11-02: format/lint/typecheck/unit(**102**)/build/e2e

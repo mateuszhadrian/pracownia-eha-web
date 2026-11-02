@@ -65,7 +65,9 @@ export function viewProject(p: WorkProject): ViewProject {
   };
 }
 
-// IDENTYFIKATOR realizacji = NAZWA PLIKU wpisu (`entry.id` loadera glob),
+// IDENTYFIKATOR realizacji = NAZWA PLIKU wpisu (`entry.id` — loader w
+// content.config.ts ma JAWNY `generateId` z nazwy pliku; domyślny brałby
+// pole `slug` z treści),
 // a NIE wartość pola „Slug" z panelu (docs/analiza-linki-realizacji.md §2.1).
 // Powód zmierzony na produkcji: klient zmienił w panelu pole „Slug"
 // (2026-09-17), a Sveltia 0.178.0 NIE przemianowała pliku — pole i nazwa

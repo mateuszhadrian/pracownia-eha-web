@@ -16,7 +16,19 @@ const REALIZACJE_DIR = process.env.REALIZACJE_DIR ?? "./src/content/realizacje";
 const realizacje = defineCollection({
   // Każda realizacja = jeden plik JSON w katalogu wyżej.
   // Schemat: src/content.schema.ts (czysty Zod — współdzielony z testami).
-  loader: glob({ pattern: "**/*.json", base: REALIZACJE_DIR }),
+  // `generateId` JAWNIE = nazwa pliku bez `.json`. Domyślny generateId
+  // loadera glob bierze pole `slug` z treści, jeśli istnieje — a to pole
+  // klient zmienia w panelu (Sveltia NIE przemianowuje wtedy pliku) i może
+  // wpisać w nim polskie znaki. Identyfikator jest adresem podstrony
+  // `/realizacje/<id>/`, który klient rozsyła ludziom, więc musi być
+  // stabilny i ASCII — czyli nazwą pliku (docs/analiza-linki-realizacji.md;
+  // złapane przy merge'u treści klienta 2026-11-02: dwa wpisy z polem
+  // innym niż nazwa pliku dały adresy w rodzaju „…-w-milęcicach").
+  loader: glob({
+    pattern: "**/*.json",
+    base: REALIZACJE_DIR,
+    generateId: ({ entry }) => entry.replace(/\.json$/, ""),
+  }),
   schema: realizacjaSchema,
 });
 

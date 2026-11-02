@@ -329,3 +329,32 @@ na telefonach.
   krawędzi w Safari iOS, „wstecz” Androida przy otwartej szufladzie,
   podgląd linku w WhatsAppie/Messengerze (okładka + tytuł), menu
   udostępniania z przycisku.
+
+### Domknięcie po merge'u treści klienta (2026-11-02)
+
+- W trakcie PR-a klient edytował panel (17 commitów na `main`: nowa
+  „konstrukcja-stalowa”, usunięty „mur-z-cegly…”, edycje, w tym pliku
+  Proszówki). GitHub zgłosił konflikt (zmiana nazwy pliku vs edycja);
+  lokalny `git merge` rozpoznał zmianę nazwy i scalił czysto — treść
+  wszystkich wpisów zweryfikowana `cmp` bajt w bajt z `origin/main`.
+- **BŁĄD ZAŁOŻENIA, naprawiony**: `entry.id` loadera `glob` NIE jest
+  nazwą pliku, gdy wpis ma pole `slug` — domyślny `generateId` bierze
+  WTEDY wartość pola. Dopóki pola zgadzały się z nazwami plików, nie było
+  tego widać; po edycjach klienta build dał adresy
+  `/realizacje/przemurowanie-sklepienia-w-milęcicach/` (polski znak,
+  adres zmieniający się z każdą edycją pola). Lekarstwo: jawny
+  `generateId: ({ entry }) => entry.replace(/\.json$/, "")`
+  w `content.config.ts`. Strażnikiem jest `seo.spec.ts` (sitemapa = trasy
+  z NAZW PLIKÓW).
+- Klient PRZERABIA testowe wpisy na prawdziwe realizacje, więc nazwy
+  plików przestały pasować do treści. Za zgodą Mateusza (przed pierwszym
+  udostępnionym linkiem) jednorazowo przemianowane:
+  `instalacje-w-zabytkowej-oficynie-sroda-slaska.json` →
+  `przemurowanie-sklepienia-w-milecicach.json`,
+  `nowa-wiezba-nad-stuletnim-zrebem-olesnica.json` →
+  `nowa-wiezba-nad-stuletnim-balem-czernica.json` (pole „Slug” klienta
+  bez polskich znaków; treść nietknięta).
+- Bramki po merge'u: unit 102, e2e **874 passed / 1 failed** (sonda
+  kontaktu przy `BASE_URL` — artefakt). Fixture wizualny nietknięty
+  (nazwy plików = pola `slug`), więc baseline'y bez zmian.
+

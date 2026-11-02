@@ -34,9 +34,15 @@ paths:
   Identyfikatorem realizacji w kodzie jest `entry.id` (nazwa pliku), NIE
   wartość pola `slug` (`entryToProject()` w `work-data.ts`): pole może się
   rozjechać z plikiem i może zawierać cokolwiek, co klient wpisał.
-  **Przemianowanie pliku = zerwanie rozesłanych linków** — nie rób tego
-  bez decyzji Mateusza (jedyny taki przypadek: `…-sobotka` →
-  `…-proszowka`, przed udostępnieniem pierwszego linku). Usunięty wpis
+  ⚠️ Loader `glob` domyślnie bierze `id` z POLA `slug`, jeśli istnieje —
+  dlatego `content.config.ts` ma JAWNY `generateId` z nazwy pliku. Nie
+  usuwaj go. **Przemianowanie pliku = zerwanie rozesłanych linków** — nie
+  rób tego bez decyzji Mateusza (jednorazowe przemianowania przed
+  pierwszym udostępnionym linkiem, 2026-11-02: `…-sobotka` →
+  `…-proszowka`, `instalacje-w-zabytkowej-oficynie-sroda-slaska` →
+  `przemurowanie-sklepienia-w-milecicach`, `nowa-wiezba-nad-stuletnim-
+zrebem-olesnica` → `nowa-wiezba-nad-stuletnim-balem-czernica` — klient
+  przerabiał testowe wpisy na prawdziwe realizacje). Usunięty wpis
   daje 404 z wariantem „tej realizacji nie ma już w portfolio".
 - **Zero wpisów to stan dopuszczalny** (klient może usunąć wszystko w panelu):
   build przechodzi, Cloudflare deployuje, `/realizacje/` pokazuje pustą
