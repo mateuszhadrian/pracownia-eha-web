@@ -64,3 +64,36 @@ export function viewProject(p: WorkProject): ViewProject {
     cover: { image: first.image, position: first.position },
   };
 }
+
+// IDENTYFIKATOR realizacji = NAZWA PLIKU wpisu (`entry.id` loadera glob),
+// a NIE wartość pola „Slug" z panelu (docs/analiza-linki-realizacji.md §2.1).
+// Powód zmierzony na produkcji: klient zmienił w panelu pole „Slug"
+// (2026-09-17), a Sveltia 0.178.0 NIE przemianowała pliku — pole i nazwa
+// pliku potrafią się rozjechać. Nazwa pliku jest stabilna (panel jej nie
+// zmienia) i zawsze ASCII (`slug: {encoding: ascii}` w config.yml), więc
+// tylko ona nadaje się na adres podstrony `/realizacje/<id>/`, który klient
+// rozsyła ludziom. Jeden identyfikator wszędzie: adres, template detalu
+// (`data-work-detail`), kafle (`data-work-slug`) i historia przeglądarki.
+export function entryToProject(entry: {
+  id: string;
+  data: unknown;
+}): WorkProject {
+  return { ...(entry.data as WorkProject), slug: entry.id };
+}
+
+/** `<title>` podstrony realizacji — także `document.title` przy otwartym
+ *  detalu (open-detail.ts czyta go z `data-doc-title` templatu). */
+export function workDocTitle(p: Pick<WorkProject, "title" | "place" | "year">) {
+  return `${p.title} (${p.place}, ${p.year}) — Pracownia EH/A`;
+}
+
+/** Meta description podstrony: pierwszy akapit przycięty na granicy słowa
+ *  do ~155 znaków (tyle Google pokazuje w wyniku bez ucinania). */
+export const WORK_DESCRIPTION_MAX = 155;
+export function workDescription(p: Pick<WorkProject, "paras">): string {
+  const text = (p.paras[0] ?? "").replace(/\s+/g, " ").trim();
+  if (text.length <= WORK_DESCRIPTION_MAX) return text;
+  const cut = text.slice(0, WORK_DESCRIPTION_MAX - 1);
+  const space = cut.lastIndexOf(" ");
+  return `${(space > 60 ? cut.slice(0, space) : cut).replace(/[\s,;:.—–-]+$/, "")}…`;
+}

@@ -1,181 +1,183 @@
 ---
-// Podstrona /realizacje/ (Etap 4.3) — port docs/design/export/
-// realizacje.html; decyzje: docs/analiza-realizacje.md. Płaska lista
-// BEZ kategorii i filtrów (E5): siatka kafli (1→2 kolumny przy 700 px)
-// + paginacja (desktop) / „pokaż więcej" (mobile) jako czysty
-// progressive enhancement — SSR renderuje WSZYSTKIE kafle i WSZYSTKIE
-// <template data-work-detail>, JS tylko ukrywa; kontrolki są w SSR
-// z atrybutem `hidden` i odsłania je dopiero skrypt. Detal = JEDEN
-// overlay #work-detail (mechanizm delung: open-detail.ts / overlay.ts
-// — bez zmian architektury, skin 4.3). Projnav i licznik detalu dostają
-// kontekst PEŁNEJ listy (analiza §2 pkt 3). Media kafli w R2 — rozmiary
-// wyłącznie przez imgAt() (w komponentach kafla/detalu).
-import { getCollection } from "astro:content";
+// Widok listy realizacji (Etap 4.3) — renderują go DWIE trasy:
+// `/realizacje/` (src/pages/realizacje.astro) i podstrony
+// `/realizacje/<id>/` (src/pages/realizacje/[slug].astro), które pokazują
+// tę samą listę z OTWARTYM detalem jednej realizacji (stały link do
+// udostępniania — docs/analiza-linki-realizacji.md). Strony dokładają
+// tylko BaseLayout, skrypty <head> i Navbar; reszta żyje tu, żeby obie
+// trasy nie mogły się rozjechać.
+//
+// Port docs/design/export/realizacje.html; decyzje:
+// docs/analiza-realizacje.md. Płaska lista BEZ kategorii i filtrów (E5):
+// siatka kafli (1→2 kolumny przy 700 px) + paginacja (desktop) / „pokaż
+// więcej" (mobile) jako czysty progressive enhancement — SSR renderuje
+// WSZYSTKIE kafle i WSZYSTKIE <template data-work-detail>, JS tylko
+// ukrywa; kontrolki są w SSR z atrybutem `hidden` i odsłania je dopiero
+// skrypt. Detal = JEDEN overlay #work-detail (mechanizm delung:
+// open-detail.ts / overlay.ts — bez zmian architektury, skin 4.3).
+// Projnav i licznik detalu dostają kontekst PEŁNEJ listy (analiza §2
+// pkt 3). Media kafli w R2 — rozmiary wyłącznie przez imgAt()
+// (w komponentach kafla/detalu).
 import house8 from "@/assets/dom-ryc-house8.webp";
 import placBudowy from "@/assets/plac-budowy-photo3.webp";
 import Footer from "@/components/Footer.astro";
-import Navbar from "@/components/navbar/Navbar.astro";
 import PaperBackdrop from "@/components/PaperBackdrop.astro";
-import WorkDetail from "@/components/sections/work/WorkDetail.astro";
-import WorkDetailOverlay from "@/components/sections/work/WorkDetailOverlay.astro";
-import WorkIndexCard from "@/components/sections/work/WorkIndexCard.astro";
-import {
-  WORK_MOBILE_STEP,
-  WORK_PAGE_SIZE,
-} from "@/components/sections/work/work-config";
-import {
-  viewProject,
-  type WorkProject,
-} from "@/components/sections/work/work-data";
-import { ui } from "@/i18n/ui";
-import BaseLayout from "@/layouts/BaseLayout.astro";
 import { CONTACT_PATH } from "@/lib/routes";
+import WorkDetail from "./WorkDetail.astro";
+import WorkDetailOverlay from "./WorkDetailOverlay.astro";
+import WorkIndexCard from "./WorkIndexCard.astro";
+import WorkStaticDetail from "./WorkStaticDetail.astro";
+import { WORK_MOBILE_STEP, WORK_PAGE_SIZE } from "./work-config";
+import { workDocTitle, type ViewProject } from "./work-data";
 
-// Pełna lista (strona główna kapuje do 3) — kolejność wg `order` z CMS.
-// Pusta kolekcja = stan dopuszczalny: pusta siatka, zero kontrolek.
-const projects = (await getCollection("realizacje"))
-  .map((e) => e.data as WorkProject)
-  .sort((a, b) => a.order - b.order)
-  .map(viewProject);
+interface Props {
+  /** Pełna lista w kolejności `order` (work-list.ts). Pusta = stan
+   *  dopuszczalny: pusta siatka, zero kontrolek. */
+  projects: ViewProject[];
+  /** Podstrona realizacji: identyfikator wpisu, którego detal otwiera się
+   *  od pierwszego wyświetlenia (skrypt niżej). */
+  initial?: string;
+}
+const { projects, initial } = Astro.props;
+const initialProject = initial
+  ? projects.find((p) => p.slug === initial)
+  : undefined;
 const pages = Math.ceil(projects.length / WORK_PAGE_SIZE);
 ---
 
-<BaseLayout
-  title={ui.pl["workPage.title"]}
-  description={ui.pl["workPage.description"]}
->
-  <script is:inline slot="head">
-    // PRZED paintem: motion OK → html.js-motion (uzbraja stany startowe
-    // revealów/rysowania — reszta w work-motion.ts, ładowanym niżej).
-    if (window.matchMedia("(prefers-reduced-motion: no-preference)").matches) {
-      document.documentElement.classList.add("js-motion");
-    }
-  </script>
-
-  <Navbar />
-
-  <main class="wk">
-    <PaperBackdrop />
-    <header class="wk-head">
-      <img
-        class="wk-ryc"
-        data-ryc="r"
-        data-plxr
-        src={house8.src}
-        width={house8.width}
-        height={house8.height}
-        alt=""
-        loading="lazy"
-        decoding="async"
-      />
-      <div class="wk-head-t">
-        <h1 data-rev>Nasze realizacje</h1>
-      </div>
-      <p class="wk-lead" data-rev>
-        Nie jesteśmy odtwórcami – jesteśmy technologami tradycji. Przejrzyj
-        nasze portfolio i zobacz na własne oczy, jak w praktyce wygląda
-        inżynieria, która współpracuje z prawami natury i upływającym czasem.
-      </p>
-    </header>
-
-    <div class="wk-grid" data-tiles>
-      {projects.map((project) => <WorkIndexCard project={project} />)}
+<main class="wk" data-initial={initialProject?.slug}>
+  <PaperBackdrop />
+  <header class="wk-head">
+    <img
+      class="wk-ryc"
+      data-ryc="r"
+      data-plxr
+      src={house8.src}
+      width={house8.width}
+      height={house8.height}
+      alt=""
+      loading="lazy"
+      decoding="async"
+    />
+    <div class="wk-head-t">
+      <h1 data-rev>Nasze realizacje</h1>
     </div>
+    <p class="wk-lead" data-rev>
+      Nie jesteśmy odtwórcami – jesteśmy technologami tradycji. Przejrzyj nasze
+      portfolio i zobacz na własne oczy, jak w praktyce wygląda inżynieria,
+      która współpracuje z prawami natury i upływającym czasem.
+    </p>
+  </header>
 
-    {
-      /* Kontrolki dawkowania siatki (E5) — SSR z `hidden`, odsłania JS
+  {
+    /* Bez JS podstrona realizacji pokazuje jej treść jako zwykły blok
+        nad siatką (z JS ten sam wpis otwiera się w detalu — skrypt niżej).
+        <noscript> = zero kosztu dla odwiedzających z JS. */
+    initialProject && (
+      <noscript>
+        <WorkStaticDetail project={initialProject} />
+      </noscript>
+    )
+  }
+
+  <div class="wk-grid" data-tiles>
+    {projects.map((project) => <WorkIndexCard project={project} />)}
+  </div>
+
+  {
+    /* Kontrolki dawkowania siatki (E5) — SSR z `hidden`, odsłania JS
         (bez JS lista jest pełna, kontrolka byłaby martwa). Warianty per
         próg wybiera CSS (dOnly/mOnly), stan maluje skrypt niżej. */
-    }
-    {
-      pages > 1 && (
-        <nav
-          class="wk-pag dOnly"
-          data-pag
-          aria-label="Stronicowanie realizacji"
-          hidden
-        >
-          <button
-            type="button"
-            class="wk-pag-arr"
-            data-pag-prev
-            aria-label="Poprzednia strona"
-            disabled
-          >
-            ←
-          </button>
-          {Array.from({ length: pages }, (_, i) => (
-            <button
-              type="button"
-              data-pag-page={i}
-              class={i === 0 ? "on" : undefined}
-              aria-current={i === 0 ? "page" : undefined}
-            >
-              {i + 1}
-            </button>
-          ))}
-          <button
-            type="button"
-            class="wk-pag-arr"
-            data-pag-next
-            aria-label="Następna strona"
-          >
-            →
-          </button>
-        </nav>
-      )
-    }
-    {
-      projects.length > WORK_MOBILE_STEP && (
-        <div class="wk-morewrap mOnly" hidden data-more-wrap>
-          <button type="button" class="wk-more" data-more>
-            Pokaż więcej realizacji
-            <svg viewBox="0 0 14 14" aria-hidden="true">
-              <path
-                d="M7 1.5v10M2.6 7.4L7 11.8l4.4-4.4"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-              />
-            </svg>
-          </button>
-        </div>
-      )
-    }
-
-    <section class="wk-cta">
-      <img
-        src={placBudowy.src}
-        width={placBudowy.width}
-        height={placBudowy.height}
-        alt=""
-        loading="lazy"
-        decoding="async"
-        data-tilepar
-      />
-      <span class="wk-cta-grad" aria-hidden="true"></span>
-      <div class="wk-cta-in">
-        <h2 data-rev>Twój dom może być naszą kolejną realizacją</h2>
-        <a href={CONTACT_PATH} data-rev data-rev-d="1"
-          >Skontaktuj się z nami →</a
-        >
-      </div>
-    </section>
-  </main>
-
-  <Footer />
-
-  {/* Treść detalu per realizacja — klonowana do #work-detail po kliknięciu. */}
-  {
-    projects.map((project) => (
-      <template data-work-detail={project.slug}>
-        <WorkDetail project={project} />
-      </template>
-    ))
   }
-  <WorkDetailOverlay />
-</BaseLayout>
+  {
+    pages > 1 && (
+      <nav
+        class="wk-pag dOnly"
+        data-pag
+        aria-label="Stronicowanie realizacji"
+        hidden
+      >
+        <button
+          type="button"
+          class="wk-pag-arr"
+          data-pag-prev
+          aria-label="Poprzednia strona"
+          disabled
+        >
+          ←
+        </button>
+        {Array.from({ length: pages }, (_, i) => (
+          <button
+            type="button"
+            data-pag-page={i}
+            class={i === 0 ? "on" : undefined}
+            aria-current={i === 0 ? "page" : undefined}
+          >
+            {i + 1}
+          </button>
+        ))}
+        <button
+          type="button"
+          class="wk-pag-arr"
+          data-pag-next
+          aria-label="Następna strona"
+        >
+          →
+        </button>
+      </nav>
+    )
+  }
+  {
+    projects.length > WORK_MOBILE_STEP && (
+      <div class="wk-morewrap mOnly" hidden data-more-wrap>
+        <button type="button" class="wk-more" data-more>
+          Pokaż więcej realizacji
+          <svg viewBox="0 0 14 14" aria-hidden="true">
+            <path
+              d="M7 1.5v10M2.6 7.4L7 11.8l4.4-4.4"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
+          </svg>
+        </button>
+      </div>
+    )
+  }
+
+  <section class="wk-cta">
+    <img
+      src={placBudowy.src}
+      width={placBudowy.width}
+      height={placBudowy.height}
+      alt=""
+      loading="lazy"
+      decoding="async"
+      data-tilepar
+    />
+    <span class="wk-cta-grad" aria-hidden="true"></span>
+    <div class="wk-cta-in">
+      <h2 data-rev>Twój dom może być naszą kolejną realizacją</h2>
+      <a href={CONTACT_PATH} data-rev data-rev-d="1">Skontaktuj się z nami →</a>
+    </div>
+  </section>
+</main>
+
+<Footer />
+
+{/* Treść detalu per realizacja — klonowana do #work-detail po kliknięciu. */}
+{
+  projects.map((project) => (
+    <template
+      data-work-detail={project.slug}
+      data-doc-title={workDocTitle(project)}
+    >
+      <WorkDetail project={project} />
+    </template>
+  ))
+}
+<WorkDetailOverlay />
 
 <style is:global>
   /* ── Tokeny widoku (odczyty z eksportu — analiza §1). Mobile w bazie,
@@ -194,6 +196,16 @@ const pages = Math.ceil(projects.length / WORK_PAGE_SIZE);
     position: relative;
     isolation: isolate;
     background: var(--bg-cream);
+  }
+
+  /* Zasłona wejścia z linku (podstrona realizacji): klasę stawia skrypt
+     w <head> PRZED pierwszym malowaniem, zdejmuje skrypt widoku zaraz po
+     otwarciu detalu — bez niej pierwsza klatka pokazywałaby listę, a po
+     chwili wskakiwał modal. Bezpiecznik czasowy w skrypcie <head>; bez JS
+     klasy nie ma w ogóle. */
+  html.wk-dl main.wk,
+  html.wk-dl .ft {
+    visibility: hidden;
   }
 
   /* warianty per breakpoint (wzorzec dOnly/mOnly z 4.1/4.2) */
@@ -614,15 +626,29 @@ const pages = Math.ceil(projects.length / WORK_PAGE_SIZE);
     })),
   );
 
-  // Klik/tap w kafel → detal.
+  // Klik/tap w kafel → detal. Kafel jest linkiem do podstrony realizacji
+  // (`/realizacje/<id>/`): modyfikatory i środkowy przycisk zostają
+  // przeglądarce („otwórz w nowej karcie", „kopiuj adres linku"), a zwykły
+  // klik otwiera detal w miejscu — preventDefault DOPIERO gdy detal
+  // naprawdę wstał (wzorzec zajawki na „/"). Adres w pasku przestawia
+  // open-detail.ts (pushState).
   document
     .querySelector<HTMLElement>("[data-tiles]")
     ?.addEventListener("click", (e) => {
+      if (
+        e.defaultPrevented ||
+        e.metaKey ||
+        e.ctrlKey ||
+        e.shiftKey ||
+        e.altKey
+      )
+        return;
       const card = (e.target as HTMLElement).closest<HTMLElement>(
         "[data-work-slug]",
       );
       if (!card?.dataset.workSlug) return;
-      openWorkDetail(card.dataset.workSlug, card.dataset.workName ?? "");
+      if (openWorkDetail(card.dataset.workSlug, card.dataset.workName ?? ""))
+        e.preventDefault();
     });
 
   // ── dawkowanie siatki: paginacja (desktop) / „pokaż więcej" (mobile) ──
@@ -718,6 +744,30 @@ const pages = Math.ceil(projects.length / WORK_PAGE_SIZE);
     apply();
   });
   apply();
+
+  // ── podstrona realizacji (`/realizacje/<id>/`): detal otwarty od
+  // pierwszego wyświetlenia, BEZ animacji wjazdu (wejście z linku ma
+  // wyglądać jak strona, nie jak klik). Siatka pod spodem odsłania porcję
+  // z tą realizacją — po zamknięciu użytkownik widzi ją na liście.
+  // Zasłonę `html.wk-dl` (skrypt w <head> podstrony) zdejmujemy po
+  // otwarciu; ma własny bezpiecznik czasowy, gdyby coś tu się wywróciło.
+  const initial = document.querySelector<HTMLElement>(".wk")?.dataset.initial;
+  if (initial) {
+    const idx = tiles.findIndex((tile) => tile.dataset.workSlug === initial);
+    if (idx >= 0) {
+      page = Math.floor(idx / WORK_PAGE_SIZE);
+      shown = Math.max(
+        WORK_MOBILE_STEP,
+        Math.ceil((idx + 1) / WORK_MOBILE_STEP) * WORK_MOBILE_STEP,
+      );
+      apply();
+      openWorkDetail(initial, tiles[idx].dataset.workName ?? "", {
+        instant: true,
+        history: "entry",
+      });
+    }
+  }
+  document.documentElement.classList.remove("wk-dl");
 
   // Ruch — dynamicznie, tylko przy motion OK (sections.md).
   if (motionOK.matches) {

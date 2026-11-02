@@ -75,10 +75,17 @@ collections:
     slug: "{{fields.slug}}" # nazwa pliku = wartość pola slug
     summary: "{{fields.title}} — {{fields.place}} ({{fields.year}})"
     fields:
+      # Z tego pola przy TWORZENIU wpisu powstaje nazwa pliku, a z nazwy
+      # pliku — stały link podstrony /realizacje/<nazwa>/ (sesja linków,
+      # docs/analiza-linki-realizacji.md). Sveltia 0.178.0 przy późniejszej
+      # zmianie pola NIE przemianowuje pliku (zmierzone 2026-09-17), więc
+      # link zostaje stary — i dobrze, bo rozesłane linki nie mogą się
+      # zrywać. Hint mówi to klientowi wprost.
       - {
-          label: "Slug (adres, np. kuchnia-kaszmirowa)",
+          label: "Adres linku (slug, np. dom-z-bala-czernica)",
           name: "slug",
           widget: "string",
+          hint: "Ustalany przy tworzeniu realizacji: z niego powstaje stały link pracownia-eha.pl/realizacje/…, który można wysyłać ludziom. Małe litery i myślniki, bez polskich znaków. Późniejsza zmiana tego pola NIE zmienia linku.",
         }
       - {
           label: "Kolejność (mniejsze = wyżej)",

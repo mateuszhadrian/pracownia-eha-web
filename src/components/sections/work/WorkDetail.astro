@@ -19,7 +19,7 @@
 // zmian; `duration` służy też za badge czasu (desktop).
 import rycHouse from "@/assets/dom-ryc-house1.webp";
 import { imgAt, videoFrameAt } from "@/lib/img";
-import { CONTACT_PATH } from "@/lib/routes";
+import { workDetailPath } from "@/lib/routes";
 import { WORK_GALLERY_DASHES_MAX } from "./work-config";
 import type { ViewProject } from "./work-data";
 
@@ -68,7 +68,26 @@ const hasSpecs = p.specs.length > 0;
 </div>
 
 <div class="dt-gal" data-gal>
-  <div class="dt-track" data-track>
+  {
+    /* tabindex + nazwa: na mobile tor jest PRZEWIJALNY w bok, więc musi
+      być osiągalny klawiaturą (axe `scrollable-region-focusable`, serious
+      — wyszło przy skanie podstrony realizacji, pierwszym skanie otwartego
+      detalu; sesja linków). Na desktopie tor nie scrolluje (translateX),
+      kadry przełącza klawiatura ←/→ — tab-stop jest tam nieszkodliwy. */
+  }
+  {
+    /* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex --
+      przewijalny region MUSI być osiągalny klawiaturą (WCAG 2.1.1, axe
+      scrollable-region-focusable) — wymóg wygrywa z heurystyką lintera */
+  }
+  <div
+    class="dt-track"
+    data-track
+    tabindex="0"
+    role="group"
+    aria-label={`Galeria realizacji: ${p.title}`}
+  >
+    {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
     {
       p.gallery.map((item, i) => {
         // Klatka-miniatura filmu — WYŁĄCZNIE jako <img class="dt-poster">
@@ -262,19 +281,42 @@ const hasSpecs = p.specs.length > 0;
   )
 }
 
+{
+  /* Stopka detalu = UDOSTĘPNIJ (decyzja Mateusza, sesja linków — zastąpiła
+    „CHCESZ WIĘCEJ INFORMACJI?" + „Skontaktuj się z nami"; ten sam styl
+    przycisku, ikona udostępniania zamiast strzałki). Telefon: systemowe
+    menu udostępniania (WhatsApp, SMS, Messenger…), desktop: kopiowanie
+    linku do schowka — logika w open-detail.ts. Link = stały adres
+    podstrony tej realizacji. Oba teksty stanu siedzą w SSR, JS zapala
+    tylko klasę `.is-copied` (wzorzec komunikatów formularza kontaktu). */
+}
 <div class="dt-foot">
-  <span class="dt-ask-k">CHCESZ WIĘCEJ INFORMACJI?</span>
-  <a class="dt-ask" href={CONTACT_PATH}>
-    Skontaktuj się z nami
-    <svg viewBox="0 0 16 10" aria-hidden="true">
+  <button
+    class="dt-ask"
+    type="button"
+    data-share
+    data-share-path={workDetailPath(p.slug)}
+    data-share-title={p.title}
+  >
+    <span class="dt-share-txt">
+      <span class="dt-share-l">Udostępnij realizację</span>
+      <span class="dt-share-ok" aria-hidden="true">Link skopiowany</span>
+    </span>
+    <svg viewBox="0 0 16 16" aria-hidden="true">
+      <circle cx="12.4" cy="3.4" r="2.1" fill="none" stroke="currentColor"
+      ></circle>
+      <circle cx="3.6" cy="8" r="2.1" fill="none" stroke="currentColor"
+      ></circle>
+      <circle cx="12.4" cy="12.6" r="2.1" fill="none" stroke="currentColor"
+      ></circle>
       <path
-        d="M0 5h14M10.4 1.2L14.2 5l-3.8 3.8"
+        d="M5.5 7l5-2.6M5.5 9l5 2.6"
         fill="none"
         stroke="currentColor"
-        stroke-width="1.5"
         stroke-linecap="round"></path>
     </svg>
-  </a>
+  </button>
+  <span class="sr-only" role="status" data-share-status></span>
 </div>
 
 <style>
@@ -587,15 +629,10 @@ const hasSpecs = p.specs.length > 0;
     flex-direction: column;
     gap: 7px;
   }
-  .dt-ask-k {
-    font-family: var(--font-mono), monospace;
-    font-weight: 500;
-    font-size: 9.5px;
-    line-height: 1;
-    letter-spacing: 0.18em;
-    color: rgba(33, 29, 24, 0.62);
-  }
   .dt-ask {
+    appearance: none;
+    border: none;
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -616,7 +653,27 @@ const hasSpecs = p.specs.length > 0;
   .dt-ask svg {
     flex: none;
     width: 15px;
-    height: 10px;
+    height: 15px;
+    stroke-width: 1.4;
+  }
+  /* stan „skopiowano" (desktop) — podmiana etykiety bez zmiany szerokości
+     wiersza: obie etykiety w jednej komórce gridu, widoczna jedna */
+  .dt-share-txt {
+    display: grid;
+    justify-items: center;
+  }
+  .dt-share-l,
+  .dt-share-ok {
+    grid-area: 1 / 1;
+  }
+  .dt-share-ok {
+    visibility: hidden;
+  }
+  .dt-ask.is-copied .dt-share-l {
+    visibility: hidden;
+  }
+  .dt-ask.is-copied .dt-share-ok {
+    visibility: visible;
   }
 
   /* ════ Desktop (≥1024, para: WORK_DESKTOP_MIN_PX): modal — galeria
@@ -897,10 +954,6 @@ const hasSpecs = p.specs.length > 0;
       height: 1px;
       background: rgba(33, 29, 24, 0.14);
       margin-bottom: clamp(8px, 0.8vw, 13px);
-    }
-    .dt-ask-k {
-      font-size: 9.5px;
-      letter-spacing: 0.18em;
     }
     .dt-ask {
       display: inline-flex;

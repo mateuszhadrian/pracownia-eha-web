@@ -9,12 +9,8 @@
 // `isolation: isolate` (PaperBackdrop), więc .dt-ov z z-index 100
 // lądowałby w JEGO kontekście układania i pasek nawigacji (.hdr,
 // z-index 50, rodzeństwo main) malowałby się NA modalu.
-import { getCollection } from "astro:content";
-import {
-  viewProject,
-  type ViewProject,
-  type WorkProject,
-} from "../work/work-data";
+import type { ViewProject } from "../work/work-data";
+import { workProjects } from "../work/work-list";
 import { HOME_REALIZACJE_MAX } from "./home-config";
 
 /** Zajawka strony głównej: kafle + ile wpisów zostało poza kapem. */
@@ -22,9 +18,9 @@ export async function homeRealizacje(): Promise<{
   shown: ViewProject[];
   more: number;
 }> {
-  const entries = (await getCollection("realizacje"))
-    .map((entry) => entry.data as WorkProject)
-    .sort((a, b) => a.order - b.order);
-  const shown = entries.slice(0, HOME_REALIZACJE_MAX).map(viewProject);
-  return { shown, more: entries.length - shown.length };
+  // pełna lista z work-list.ts (identyfikator = nazwa pliku — ten sam,
+  // którego używa adres podstrony realizacji i historia przeglądarki)
+  const all = await workProjects();
+  const shown = all.slice(0, HOME_REALIZACJE_MAX);
+  return { shown, more: all.length - shown.length };
 }

@@ -35,10 +35,19 @@ export function readRealizacja<T>(name: string): T {
   return JSON.parse(readFileSync(join(REALIZACJE_DIR, name), "utf8")) as T;
 }
 
-/** Wpisy posortowane jak na stronie (rosnąco po `order`). */
-export function readRealizacje<T extends { order: number }>(): T[] {
+/** Wpisy posortowane jak na stronie (rosnąco po `order`). `slug` =
+ *  NAZWA PLIKU (bez `.json`) — tak samo jak w buildzie (`entryToProject`
+ *  w work-data.ts): to ona jest identyfikatorem w DOM i adresem podstrony
+ *  `/realizacje/<slug>/`, a pole „Slug" z panelu potrafi się z nią
+ *  rozjechać (Sveltia nie przemianowuje pliku). */
+export function readRealizacje<T extends { order: number }>(): (T & {
+  slug: string;
+})[] {
   return realizacjeFiles()
-    .map((name) => readRealizacja<T>(name))
+    .map((name) => ({
+      ...readRealizacja<T>(name),
+      slug: name.replace(/\.json$/, ""),
+    }))
     .sort((a, b) => a.order - b.order);
 }
 

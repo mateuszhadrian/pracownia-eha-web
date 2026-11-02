@@ -21,6 +21,7 @@ import {
   OBSLUGA_PATH,
   TRADYCJA_PATH,
   WORK_INDEX_PATH,
+  workDetailPath,
 } from "../../src/lib/routes";
 import { expectBreakpointFlip } from "../helpers/breakpoint";
 import { usePreviewGuard } from "../helpers/guards";
@@ -181,9 +182,13 @@ test.describe("zajawka realizacji czyta kolekcję", () => {
       : page.locator(".re-pol");
     await expect(cards).toHaveCount(KART);
     for (const [i, card] of (await cards.all()).entries()) {
-      // href ZOSTAJE — bez JS (i gdyby detal nie wstał) kafel musi
-      // dowieźć użytkownika do treści; JS robi preventDefault
-      await expect(card).toHaveAttribute("href", WORK_INDEX_PATH);
+      // href = podstrona TEJ realizacji (sesja linków) — bez JS, w nowej
+      // karcie albo gdyby detal nie wstał kafel dowozi do jej treści;
+      // zwykły klik: JS robi preventDefault i otwiera detal w miejscu
+      await expect(card).toHaveAttribute(
+        "href",
+        workDetailPath(ENTRIES[i].slug),
+      );
       await expect(card).toHaveAttribute("data-work-slug", ENTRIES[i].slug);
       await expect(card).toHaveAttribute("aria-haspopup", "dialog");
     }
@@ -257,8 +262,10 @@ test.describe("kafel zajawki otwiera detal w miejscu", () => {
     const detail = page.locator("#work-detail");
     await expect(detail).toHaveClass(/is-open/);
     await settle(page, 600);
-    // NIE nawigujemy — preventDefault wchodzi dopiero po udanym otwarciu
-    expect(new URL(page.url()).pathname).toBe(PATH);
+    // NIE nawigujemy (preventDefault po udanym otwarciu) — adres w pasku
+    // przechodzi na podstronę realizacji przez pushState (sesja linków)
+    expect(new URL(page.url()).pathname).toBe(workDetailPath(ENTRIES[0].slug));
+    await expect(page.locator("main.home")).toBeAttached();
     await expect(detail.locator(".dt-title")).toHaveText(ENTRIES[0].title);
     // kontekst projnav = kafle zajawki (na /realizacje/ to PEŁNA lista)
     await expect(detail.locator("[data-projcount]")).toHaveText(
@@ -269,7 +276,8 @@ test.describe("kafel zajawki otwiera detal w miejscu", () => {
     await expect(detail).toBeHidden();
     // host czyszczony po zamknięciu (zwalnia obrazy/DOM)
     await expect(detail.locator(".dt-title")).toHaveCount(0);
-    expect(new URL(page.url()).pathname).toBe(PATH);
+    // zamknięcie cofa wpis historii — wracamy na stronę główną
+    await expect.poll(() => new URL(page.url()).pathname).toBe(PATH);
   });
 
   test("papierowe tło paska PRZEŻYWA otwarcie detalu", async ({

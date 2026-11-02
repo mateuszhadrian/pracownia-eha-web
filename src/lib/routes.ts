@@ -10,3 +10,8 @@ export const WORK_INDEX_PATH = "/realizacje/";
 export const OBSLUGA_PATH = "/obsluga-budowy/";
 export const CONTACT_PATH = "/kontakt/";
 export const POLICY_PATH = "/polityka-prywatnosci/";
+
+// Podstrona realizacji = stały, udostępnialny adres detalu
+// (docs/analiza-linki-realizacji.md). `slug` to NAZWA PLIKU wpisu
+// (entry.id), nie wartość pola „Slug" z panelu — patrz work-data.ts.
+export const workDetailPath = (slug: string) => `${WORK_INDEX_PATH}${slug}/`;

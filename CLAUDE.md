@@ -42,9 +42,11 @@ zostają, widoki budowane od nowa wg `docs/design/` — patrz
 
 - **8 tras** + strona 404 (`src/pages/404.astro`, noindex, poza sitemapą) (`src/lib/routes.ts`): `/`, `/ekipa-eha/`,
   `/kompetencje-i-technologie/`, `/tradycja-i-ekologia/`, `/realizacje/`,
-  `/obsluga-budowy/`, `/kontakt/`, `/polityka-prywatnosci/`. Mobile 1:1
-  desktop — ŻADNYCH redirectów. Breakpoint projektu: **1024 px**;
-  drugi próg **700 px** tylko w siatce realizacji (Etap 4.3).
+  `/obsluga-budowy/`, `/kontakt/`, `/polityka-prywatnosci/`
+  - **podstrona KAŻDEJ realizacji** `/realizacje/<nazwa-pliku>/` (stały
+    link do udostępniania, od 2026-11-02 — `docs/analiza-linki-realizacji.md`). Mobile 1:1
+    desktop — ŻADNYCH redirectów. Breakpoint projektu: **1024 px**;
+    drugi próg **700 px** tylko w siatce realizacji (Etap 4.3).
 - **BEZ kategorii realizacji** (E5) — płaska lista + paginacja z designu
   (desktop: paginacja, mobile: „pokaż więcej"); aparat kategorii wycięty
   w Etapie 0.
@@ -2590,6 +2592,42 @@ max(--svh,550px)·0.5267 − 72px)` + tytuł `min(…, 7.8cqi)`
     Polaroidy: profile desktop mają 1080/768 px wysokości, gdzie limit
     nie działa ⇒ `index-*` 0 px. **Do wygenerowania: `not-found-*`
     (12 plików na platformę)** — workflow linux → darwin na końcu.
+
+- **Stałe linki do realizacji — WYKONANE** (2026-11-02, kod+testy;
+  branch `feat/linki-realizacji`; analiza i przebieg:
+  `docs/analiza-linki-realizacji.md`). Prośba klienta: link do konkretnej
+  realizacji, który można wysłać ludziom, przy przeglądaniu 1:1 jak dotąd.
+  - Podstrona `/realizacje/<plik>/` per wpis (własny tytuł, opis, canonical,
+    `og:image` = okładka 1200×630 JPEG przez `/cdn-cgi/image` z gravity
+    z „Kadru") = lista z detalem otwartym od wejścia, bez animacji. Pasek
+    adresu podąża za detalem (push / replace przy projnav / wpis podglądu),
+    „wstecz" zamyka podgląd, potem detal. Kafle `/realizacje/` i `/` to
+    linki do podstron. Stopka detalu: **„Udostępnij realizację" zamiast
+    „Skontaktuj się z nami"**, bez „CHCESZ WIĘCEJ INFORMACJI?" (decyzja
+    Mateusza). 404 z wariantem dla usuniętej realizacji. `overlay.ts`
+    nietknięty; zmiany mechanizmu ADDYTYWNE w `open-detail.ts` (piąte
+    świadome odstępstwo od „work 1:1").
+  - **Identyfikator = NAZWA PLIKU, nie pole „Slug"** — Sveltia 0.178.0 NIE
+    przemianowuje pliku przy zmianie pola (zmierzone: `…-sobotka.json`
+    z polem `…-proszowka`; SPROSTOWANIE zapisu w `cms-realizacje.md`).
+    Plik przemianowany na `…-proszowka.json` za zgodą Mateusza, przed
+    pierwszym udostępnionym linkiem. Od teraz przemianowanie pliku = zerwane
+    linki.
+  - Przy okazji: realny błąd a11y zastany od 4.3 (tor galerii mobile
+    nieosiągalny klawiaturą) — naprawiony; allowlista axe PUSTA.
+  - Bramki 2026-11-02: format/lint/typecheck/unit(**102**)/build/e2e
+    **868 passed / 1 failed** (sonda `/api/kontakt` przy `BASE_URL` —
+    artefakt obejścia portu 4399 zajętego przez preview hadrianm-web,
+    lekcja w `testing.md`). Visual na progu zerowym: **3 zmienione**
+    (`work-detail-open` × 3 profile mobilne — zamierzona stopka), 54 × 0 px.
+    **Do wygenerowania przez Mateusza**: te 3 × 2 platformy (workflow linux
+    `mode=changed` dla `work-index.spec.ts` → darwin na końcu).
+  - Znany flake (nowy na liście): `not-found-full` webkit-iphone-14,
+    dwustanowy 8490 px — przebieg kontrolny na kodzie `main` dał to samo.
+  - Do zrobienia poza repo: test na telefonach (gest wstecz iOS, wstecz
+    Androida, menu udostępniania, podgląd linku w WhatsAppie) + punkt
+    w instrukcji klienta „Jak udostępnić realizację" / „nie zmieniaj pola
+    Adres linku".
 
 ## Dokumentacja
 
