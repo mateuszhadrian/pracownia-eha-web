@@ -57,6 +57,21 @@ describe("fixture wizualny: tests/fixtures/realizacje", () => {
     ]);
   });
 
+  // „Inne realizacje z inwestycji": zrzut `work-detail-related` fotografuje
+  // detal PIERWSZEGO wpisu przewinięty do końca — musi mieć powiązania,
+  // a wszystkie muszą trafiać (martwe odwołanie zniknęłoby po cichu ze
+  // zrzutu i dawało ostrzeżenie w każdym `build:visual`).
+  it("pierwszy wpis ma 3 powiązania, wszystkie wskazują wpisy fixture'u", () => {
+    const slugs = new Set(entries.map((e) => e.slug));
+    const first = [...entries].sort((a, b) => a.order - b.order)[0];
+    expect(first.related).toHaveLength(3);
+    for (const e of entries)
+      for (const id of e.related ?? []) {
+        expect(slugs.has(id), `${e.slug} → ${id}`).toBe(true);
+        expect(id).not.toBe(e.slug);
+      }
+  });
+
   // Media to te same pliki R2, co w treści testowej Etapu 2 — lokalnie
   // renderują się jako znane 404 (deterministyczne tło), a na produkcji
   // istnieją; CHECK_REMOTE_MEDIA=1 (media-r2.test.ts) sprawdza także je.

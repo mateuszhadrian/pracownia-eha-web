@@ -71,6 +71,24 @@ zrebem-olesnica` → `nowa-wiezba-nad-stuletnim-balem-czernica` — klient
   go warunkowo, `.dt-about--last` przejmuje odstęp do stopki). Hint
   w panelu: wzór 7 par z designu. **BEZ pola `category`** (E5 — eha nie ma kategorii ani
   filtrów) i bez `description` (zastąpione przez `paras`).
+- **`related[]` — „Inne realizacje z inwestycji"** (od 2026-11-03,
+  `docs/analiza-inne-realizacje.md`): lista identyfikatorów innych
+  realizacji = **NAZW PLIKÓW** (bez `.json`), w kolejności z panelu;
+  opcjonalna jak `specs` (`.default([])`, `required: false`). W panelu:
+  lista z relacją `value_field: "{{slug}}"` — w Sveltii `{{slug}}` wpisu
+  to NAZWA PLIKU, nie pole „Slug" (zweryfikowane na 0.178.0: wpis Milęcic
+  zapisał się jako `…-milecicach`, choć pole ma `…-milęcicach`).
+  `filters: [{field: slug, values: ["{{slug}}"], exclude: true}]` wyklucza
+  edytowany wpis z selecta; `dropdown_threshold: 0` = zawsze select
+  (domyślnie przy ≤ 5 opcjach panel rysuje przyciski radiowe). Panel NIE
+  pilnuje duplikatów ani realizacji usuniętych później (Sveltia nie czyści
+  odwołań w innych wpisach) — robi to `resolveRelated()` w `work-data.ts`
+  (pomija z `console.warn` w logu buildu, nigdy błąd). **Schemat CELOWO nie
+  sprawdza istnienia wskazanych realizacji** — usunięcie realizacji
+  w panelu nie może wywracać builda. Pole jest OSTATNIE w kolekcji
+  (kolejność w panelu = kolejność w detalu). Lokalna próba panelu bez
+  GitHuba: backend `test-repo` (OPFS przeglądarki) na kopii `config.yml`
+  poza repo — procedura w analizie §3.2.
 - **Pola `cover` NIE MA.** Kaflem realizacji na `/realizacje/` i w zajawce
   na stronie głównej jest **pierwsza pozycja galerii**; `viewProject()`
   (`work-data.ts`) wylicza z niej `cover` dla komponentów.

@@ -124,6 +124,34 @@ describe("kontrakt CMS: src/content/realizacje/*.json", () => {
       expect(res.success && res.data.specs).toEqual([]);
     });
 
+    // „Inne realizacje z inwestycji" — opcjonalne jak specs; lista
+    // identyfikatorów (nazw plików). Istnienia wskazanych realizacji schemat
+    // celowo NIE sprawdza (usunięcie realizacji nie może wywracać builda).
+    it.each([
+      ["pusta lista powiązań", { ...ok, related: [] }, []],
+      [
+        "brak klucza related (omit_empty_optional_fields)",
+        { ...ok, related: undefined },
+        [],
+      ],
+      [
+        "lista nazw plików (także nieistniejących)",
+        { ...ok, related: ["inna-realizacja", "usunieta-dawno"] },
+        ["inna-realizacja", "usunieta-dawno"],
+      ],
+    ])("%s: akceptowany", (_name, data, expected) => {
+      const res = realizacjaSchema.safeParse(data);
+      expect(res.success).toBe(true);
+      expect(res.success && res.data.related).toEqual(expected);
+    });
+
+    it.each([
+      ["obiekty zamiast napisów", { ...ok, related: [{ realizacja: "x" }] }],
+      ["napis zamiast listy", { ...ok, related: "x" }],
+    ])("related: %s — odrzucony", (_name, data) => {
+      expect(realizacjaSchema.safeParse(data).success).toBe(false);
+    });
+
     it.each([
       ["brak miejscowości", { ...ok, place: undefined }],
       ["pusta lista akapitów", { ...ok, paras: [] }],
@@ -135,6 +163,15 @@ describe("kontrakt CMS: src/content/realizacje/*.json", () => {
     ])("%s: odrzucony", (_name, data) => {
       expect(realizacjaSchema.safeParse(data).success).toBe(false);
     });
+  });
+
+  // Kształt powiązań w treści z panelu: lista napisów. Istnienie wskazanych
+  // realizacji NIE jest kontraktem (D6 — pomija je build z ostrzeżeniem).
+  it.each(files)("%s: powiązania to lista identyfikatorów", (name) => {
+    const { related } = readRealizacja<{ related?: unknown }>(name);
+    if (related === undefined) return;
+    expect(Array.isArray(related)).toBe(true);
+    for (const id of related as unknown[]) expect(typeof id).toBe("string");
   });
 
   it("slugi wpisów są unikalne", () => {
@@ -188,6 +225,41 @@ describe("kontrakt CMS: pola §6.1 w config.yml", () => {
     const own = fieldBlock("specs");
     expect(own).toMatch(/^\s*required: false/m);
     expect(own).not.toMatch(/^\s*min:/m);
+  });
+
+  // „Inne realizacje z inwestycji" (docs/analiza-inne-realizacje.md §3):
+  // każdy element konfiguracji jest zweryfikowanym zachowaniem panelu —
+  // `{{slug}}` zapisuje NAZWĘ PLIKU (= adres podstrony), filtr wyklucza
+  // edytowany wpis z selecta, `dropdown_threshold: 0` daje select zawsze
+  // (domyślnie przy ≤ 5 opcjach Sveltia rysuje przyciski radiowe).
+  describe("related: lista z relacją do realizacji", () => {
+    const own = fieldBlock("related");
+
+    it("opcjonalna lista: widget list, required: false, bez min", () => {
+      expect(own).toMatch(/^\s*widget: "list"/m);
+      expect(own).toMatch(/^\s*required: false/m);
+      expect(own).not.toMatch(/^\s*min:/m);
+    });
+
+    it("pozycja = relacja do kolekcji realizacje, zapisuje nazwę pliku", () => {
+      expect(own).toMatch(/^\s*widget: "relation"/m);
+      expect(own).toMatch(/^\s*collection: "realizacje"/m);
+      expect(own).toMatch(/^\s*value_field: "\{\{slug\}\}"/m);
+    });
+
+    it("select zawsze (dropdown_threshold: 0) i bez bieżącej realizacji", () => {
+      expect(own).toMatch(/^\s*dropdown_threshold: 0$/m);
+      expect(own).toMatch(
+        /field: "slug", values: \["\{\{slug\}\}"\], exclude: true/,
+      );
+    });
+
+    it("jest ostatnim polem wpisu (kolejność w panelu = kolejność na stronie)", () => {
+      const names = [...yml.matchAll(/^ {8}name: "([a-z]+)"$/gm)].map(
+        (m) => m[1],
+      );
+      expect(names.at(-1)).toBe("related");
+    });
   });
 
   // Placeholder `<ACCOUNT_ID>` = panel nie wgra ani jednego zdjęcia.

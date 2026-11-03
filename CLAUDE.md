@@ -2634,6 +2634,31 @@ max(--svh,550px)·0.5267 − 72px)` + tytuł `min(…, 7.8cqi)`
     w instrukcji klienta „Jak udostępnić realizację" / „nie zmieniaj pola
     Adres linku".
 
+- **„Inne realizacje z inwestycji" — WYKONANE w kodzie** (2026-11-03,
+  branch `feat/inne-realizacje`; analiza, makiety i przebieg:
+  `docs/analiza-inne-realizacje.md`). Prośba klienta: opcjonalna lista
+  linków do innych realizacji na samym dole detalu.
+  - Schemat w TRZECH miejscach: `related: string[]` (NAZWY PLIKÓW,
+    `.default([])`), pole panelu = lista z relacją (`{{slug}}` = nazwa
+    pliku, samowykluczenie filtrem, `dropdown_threshold: 0` = zawsze
+    select — wszystko zweryfikowane na Sveltii 0.178.0 backendem
+    `test-repo` poza repo), `.dt-rel` w `WorkDetail.astro` + lista
+    w `WorkStaticDetail` (bez JS). Martwe odwołania / duplikaty /
+    samowskazanie pomija `resolveRelated()` z ostrzeżeniem w logu buildu.
+  - Decyzje Mateusza: ręczna lista (nie grupowanie), bez symetrii, zwykła
+    nawigacja (mechanizm detalu nietknięty), wygląd wg makiety, bez
+    aktualizacji instrukcji klienta.
+  - Testy: unit **126** (resolver, schemat, config, fixture); e2e
+    `work-links.spec.ts` — wariant „z powiązaniami" robi skip, dopóki
+    klient ich nie doda (zweryfikowany na fixturze: 24 passed / 6 profili,
+    axe 0); visual: NOWY `work-detail-related` (4 profile), istniejące
+    zrzuty `work-index`/`index`/`chrome` — **0 px przy progu zerowym**.
+  - **Do wygenerowania przez Mateusza**: 4 × `work-detail-related`
+    × 2 platformy (workflow linux `mode=changed` dla
+    `tests/visual/work-index.spec.ts` → darwin na końcu).
+  - **Do zrobienia w czwartek z klientem** (panel na produkcji): lista
+    kontrolna w analizie §6 krok 9.
+
 ## Dokumentacja
 
 - Decyzje projektu (zapadłe — nie otwieraj na nowo):
