@@ -8,6 +8,7 @@
 // kontrolkami (bez JS nie ma podglądu pełnoekranowego). Nagłówek h2 — h1
 // strony to „Nasze realizacje".
 import { imgAt } from "@/lib/img";
+import { workDetailPath } from "@/lib/routes";
 import type { ViewProject } from "./work-data";
 
 interface Props {
@@ -30,6 +31,23 @@ const { project: p } = Astro.props;
           </div>
         ))}
       </dl>
+    )
+  }
+  {
+    /* „Inne realizacje z inwestycji" — pod parametrami, jak w detalu;
+      zwykłe linki działają bez JS (docs/analiza-inne-realizacje.md) */
+    p.related.length > 0 && (
+      <nav class="wks-rel" aria-label="Inne realizacje z inwestycji">
+        <p class="wks-rel-h">Inne realizacje z inwestycji</p>
+        <ul>
+          {p.related.map((r) => (
+            <li>
+              <a href={workDetailPath(r.slug)}>{r.title}</a> — {r.place},{" "}
+              {r.year}
+            </li>
+          ))}
+        </ul>
+      </nav>
     )
   }
   <div class="wks-gal">
@@ -103,6 +121,32 @@ const { project: p } = Astro.props;
   .wks-specs dd {
     margin: 0;
     text-align: right;
+  }
+  .wks-rel {
+    margin-top: 22px;
+    max-width: 70ch;
+    font-family: var(--font-body), sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  .wks-rel-h {
+    margin: 0 0 6px;
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+  .wks-rel ul {
+    margin: 0;
+    padding-left: 1.2em;
+    list-style: disc;
+  }
+  .wks-rel a {
+    color: var(--ink);
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
   .wks-gal {
     margin-top: 22px;

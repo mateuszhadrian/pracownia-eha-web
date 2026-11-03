@@ -83,6 +83,17 @@ która przeżyła kopię w całości (work) i mechaniki formularza (contact).
   „CHCESZ WIĘCEJ INFORMACJI?" usunięte (decyzja Mateusza). Tor galerii
   `.dt-track` ma `tabindex="0"` (axe `scrollable-region-focusable`) —
   nie zdejmuj.
+- **„Inne realizacje z inwestycji" (`.dt-rel`)** — opcjonalny OSTATNI blok
+  treści detalu (pod PARAMETRAMI, bez nich pod opisem), przed stopką
+  „Udostępnij". To ZWYKŁE linki `<a href="/realizacje/<id>/">` — klik
+  ładuje podstronę z detalem otwartym od wejścia; **bez `data-work-slug`**
+  (ten atrybut przechwytują kafle, „otwórz w miejscu"), `open-detail.ts`
+  i `overlay.ts` ich nie dotykają. Lista przychodzi ROZWIĄZANA z
+  `workProjects()` (względem PEŁNEJ listy — zajawka `/` linkuje też poza
+  swoją trójkę). Dolny odstęp przed stopką ma OSTATNI istniejący blok
+  (`dt-about--last` / `dt-specs--last` / `.dt-rel` z wbudowanym) — przy
+  dokładaniu kolejnego bloku przestaw `last` w `WorkDetail.astro`, a nie
+  dopisuj odstępów obok. Wersja bez JS: lista linków w `WorkStaticDetail`.
 - Track karuzeli mobile wymaga `scroll-snap-stop: always` (bez tego szybki
   swipe przeskakuje kilka kafli naraz).
 - **Parallax musi mieć zapas ≥ ruch** (lekcja D-U1 szablonu): element

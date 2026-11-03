@@ -34,6 +34,14 @@ const pad = (n: number) => String(n).padStart(2, "0");
 const showDashes = p.gallery.length <= WORK_GALLERY_DASHES_MAX;
 // Parametry są opcjonalne w CMS — bez nich blok PARAMETRY nie istnieje.
 const hasSpecs = p.specs.length > 0;
+// „Inne realizacje z inwestycji" (docs/analiza-inne-realizacje.md) —
+// opcjonalne jak parametry; lista ROZWIĄZANA w work-list.ts (martwe
+// odwołania, duplikaty i wskazanie samej siebie już odfiltrowane).
+const hasRelated = p.related.length > 0;
+// Dolny odstęp przed stopką ma OSTATNI blok treści (sekcja powiązań jest
+// zawsze ostatnia, więc swój odstęp ma wbudowany).
+const last = hasRelated ? "related" : hasSpecs ? "specs" : "about";
+const relHeadId = `dt-rel-h-${p.slug}`;
 ---
 
 <div class="dt-head">
@@ -253,17 +261,18 @@ const hasSpecs = p.specs.length > 0;
 </div>
 
 {
-  /* Parametry są opcjonalne (CMS): przy pustej liście blok PARAMETRY nie
-    istnieje w ogóle, a `.dt-about` jako ostatni blok treści przejmuje
-    jego dolny odstęp przed stopką (`dt-about--last`). */
+  /* Parametry i powiązania są opcjonalne (CMS): przy pustej liście blok
+    nie istnieje w ogóle, a dolny odstęp przed stopką przejmuje ostatni
+    blok, który jest (`--last`). Bez powiązań render jest identyczny jak
+    przed ich wprowadzeniem. */
 }
-<div class:list={["dt-about", { "dt-about--last": !hasSpecs }]}>
+<div class:list={["dt-about", { "dt-about--last": last === "about" }]}>
   {p.paras.map((t) => <p class="dt-desc">{t}</p>)}
 </div>
 
 {
   hasSpecs && (
-    <div class="dt-specs">
+    <div class:list={["dt-specs", { "dt-specs--last": last === "specs" }]}>
       <div class="dt-specs-h">
         <span>PARAMETRY</span>
         <i aria-hidden="true" />
@@ -278,6 +287,41 @@ const hasSpecs = p.specs.length > 0;
         ))}
       </div>
     </div>
+  )
+}
+
+{
+  /* „Inne realizacje z inwestycji" — na samym dole treści (pod
+    parametrami, bez nich pod opisem). ZWYKŁE linki pod stały adres
+    realizacji: przeglądarka ładuje podstronę z detalem otwartym od wejścia
+    („jakby wpisać adres"). Celowo BEZ `data-work-slug` — ten atrybut
+    przechwytują kafle (otwarcie detalu w miejscu). open-detail.ts
+    i overlay.ts tych kliknięć nie dotykają. Nagłówek = klasa nagłówka
+    PARAMETRY (ten sam wygląd bez kopii reguł). */
+}
+{
+  hasRelated && (
+    <nav class="dt-rel" aria-labelledby={relHeadId}>
+      <div class="dt-specs-h">
+        <span id={relHeadId}>INNE REALIZACJE Z INWESTYCJI</span>
+        <i aria-hidden="true" />
+      </div>
+      <ul class="dt-rel-list">
+        {p.related.map((r) => (
+          <li>
+            <a class="dt-rel-a" href={workDetailPath(r.slug)}>
+              <span class="dt-rel-meta">
+                {r.place} · {r.year}
+              </span>
+              <span class="dt-rel-t">{r.title}</span>
+              <span class="dt-rel-arr" aria-hidden="true">
+                →
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
   )
 }
 
@@ -332,6 +376,7 @@ const hasSpecs = p.specs.length > 0;
   .dt-gal,
   .dt-about,
   .dt-specs,
+  .dt-rel,
   .dt-foot {
     flex: none;
   }
@@ -544,7 +589,7 @@ const hasSpecs = p.specs.length > 0;
   .dt-about {
     padding: 22px 24px 0;
   }
-  /* Bez parametrów: ten sam odstęp do stopki, który dawał .dt-specs */
+  /* Ostatni blok treści: ten sam odstęp do stopki, który dawał .dt-specs */
   .dt-about--last {
     padding-bottom: 34px;
   }
@@ -563,7 +608,10 @@ const hasSpecs = p.specs.length > 0;
   /* ── PARAMETRY: wiersze z kropkowanym wypełniaczem (design) ── */
   .dt-specs {
     margin-top: 26px;
-    padding: 0 24px 34px;
+    padding: 0 24px;
+  }
+  .dt-specs--last {
+    padding-bottom: 34px;
   }
   .dt-specs-h {
     display: flex;
@@ -609,6 +657,69 @@ const hasSpecs = p.specs.length > 0;
     font-size: 12.5px;
     text-align: right;
     color: var(--ink);
+  }
+
+  /* ── INNE REALIZACJE Z INWESTYCJI: lista linków (makieta zaakceptowana
+     2026-11-03). Cała pozycja = jeden link (duże pole dotyku); siatka
+     „meta / tytuł | strzałka" — strzałka wyśrodkowana pionowo także przy
+     zawiniętym tytule. Linie = linia nagłówka PARAMETRY. Sekcja jest
+     zawsze ostatnia, więc dolny odstęp do stopki ma wbudowany. ── */
+  .dt-rel {
+    margin-top: 26px;
+    padding: 0 24px 34px;
+  }
+  .dt-rel-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid rgba(33, 29, 24, 0.14);
+  }
+  .dt-rel-list li {
+    border-bottom: 1px solid rgba(33, 29, 24, 0.14);
+  }
+  .dt-rel-a {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "meta arr"
+      "t arr";
+    column-gap: 16px;
+    row-gap: 5px;
+    align-items: center;
+    padding: 13px 2px 14px 0;
+    color: var(--ink);
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .dt-rel-a:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+  .dt-rel-meta {
+    grid-area: meta;
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: 9.5px;
+    line-height: 1;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(87, 101, 74, 0.95);
+  }
+  .dt-rel-t {
+    grid-area: t;
+    font-family: var(--font-serif), serif;
+    font-weight: 500;
+    font-size: 18px;
+    line-height: 1.22;
+    text-wrap: pretty;
+  }
+  .dt-rel-arr {
+    grid-area: arr;
+    font-family: var(--font-mono), monospace;
+    font-size: 15px;
+    line-height: 1;
+    color: rgba(87, 101, 74, 0.95);
+    transition: transform 0.25s ease;
   }
 
   /* ── Stopka CTA: mobile przyklejona do dołu strumienia sheeta.
@@ -935,6 +1046,37 @@ const hasSpecs = p.specs.length > 0;
       font-size: clamp(10.5px, 0.86vw, 13.6px);
     }
 
+    /* Powiązania: rytm i skala jak PARAMETRY; dolną krawędź zamyka linia
+       stopki CTA (.dt-foot::before), więc ostatnia pozycja nie ma własnej —
+       inaczej dwie kreski kilkadziesiąt px od siebie */
+    .dt-rel {
+      margin-top: clamp(20px, 1.81vw, 29px);
+      padding: 0 clamp(34px, 3.33vw, 53px) 0;
+    }
+    .dt-rel-list li:last-child {
+      border-bottom: none;
+    }
+    .dt-rel-a {
+      padding: clamp(11px, 0.9vw, 14px) 2px clamp(12px, 0.97vw, 15px) 0;
+    }
+    .dt-rel-meta {
+      font-size: clamp(9.5px, 0.72vw, 11px);
+    }
+    .dt-rel-t {
+      font-size: clamp(16px, 1.25vw, 20px);
+    }
+    .dt-rel-arr {
+      font-size: clamp(14px, 1.1vw, 17px);
+    }
+    .dt-rel-a:hover .dt-rel-t {
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+    .dt-rel-a:hover .dt-rel-arr {
+      transform: translateX(4px);
+    }
+
     /* CTA jako blok w strumieniu treści (design: za linią, na końcu) */
     .dt-foot {
       position: static;
@@ -966,6 +1108,7 @@ const hasSpecs = p.specs.length > 0;
   @media (prefers-reduced-motion: reduce) {
     .dt-track,
     .dt-ask,
+    .dt-rel-arr,
     .dt-shotnav button,
     .dt-dashes button {
       transition: none;

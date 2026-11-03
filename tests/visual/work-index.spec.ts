@@ -82,6 +82,30 @@ test("realizacje: detal otwarty (sheet mobile / modal 1920)", async ({
   });
 });
 
+// „Inne realizacje z inwestycji" (docs/analiza-inne-realizacje.md): sekcja
+// stoi na samym dole treści, więc `work-detail-open` (góra detalu) jej nie
+// widzi — osobny zrzut detalu przewiniętego do końca. Pierwszy wpis
+// fixture'u ma 3 powiązania i parametry (kontrakt visual-fixture.test.ts).
+test("realizacje: detal przewinięty do końca — inne realizacje (sheet mobile / modal 1920)", async ({
+  page,
+}, testInfo) => {
+  const isMobileProfile = Boolean(testInfo.project.use.isMobile);
+  test.skip(
+    !isMobileProfile && testInfo.project.name !== "chromium-1920",
+    "sheet na profilach mobile, modal tylko na chromium-1920",
+  );
+  await prepareSweep(page, PATH);
+  const detail = await openFirstDetail(page);
+  await expect(detail.locator(".dt-rel")).toHaveCount(1);
+  await detail.locator(".dt-body").evaluate((el) => {
+    el.scrollTop = el.scrollHeight;
+  });
+  await settle(page, 600);
+  await expect(detail).toHaveScreenshot("work-detail-related.png", {
+    mask: [detail.locator("video"), detail.locator(".dt-poster")],
+  });
+});
+
 test("realizacje: podgląd pełnoekranowy (sheet mobile / 1920)", async ({
   page,
 }, testInfo) => {

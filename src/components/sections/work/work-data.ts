@@ -38,17 +38,34 @@ export interface WorkProject {
   paras: string[]; // opis detalu jako akapity (min 1; design: 3)
   gallery: WorkGalleryItem[];
   specs: WorkSpec[]; // opcjonalne w CMS — schemat daje [] (blok PARAMETRY ukryty)
+  // „Inne realizacje z inwestycji": identyfikatory (NAZWY PLIKÓW) w kolejności
+  // z panelu; opcjonalne — schemat daje []. Surowe, mogą wskazywać realizacje
+  // usunięte — dla widoku rozwiązuje je resolveRelated().
+  related: string[];
 }
 
-// Postać widokowa: wpis + WYLICZONY kafel.
-export type ViewProject = Omit<WorkProject, "order"> & {
+// Pozycja sekcji „Inne realizacje z inwestycji" — rozwiązane odwołanie,
+// wszystko, czego potrzebuje link w detalu (adres liczy workDetailPath).
+export interface RelatedLink {
+  slug: string;
+  title: string;
+  place: string;
+  year: string;
+}
+
+// Postać widokowa: wpis + WYLICZONY kafel + ROZWIĄZANE powiązania.
+export type ViewProject = Omit<WorkProject, "order" | "related"> & {
   cover: { image: string; position?: string };
+  related: RelatedLink[];
 };
 
 // Normalizacja wpisu do postaci konsumowanej przez komponenty.
 // `cover` NIE jest polem wpisu — liczymy go z pierwszej pozycji galerii,
 // żeby kafel siatki (WorkIndexCard) i zajawki dostały gotowy kształt danych.
-export function viewProject(p: WorkProject): ViewProject {
+export function viewProject(
+  p: WorkProject,
+  related: RelatedLink[] = [],
+): ViewProject {
   const first = p.gallery[0];
   // Schemat gwarantuje zdjęcie na pierwszej pozycji (.superRefine), więc ta
   // gałąź jest nieosiągalna dla treści, która przeszła walidację. Rzucamy
@@ -59,10 +76,57 @@ export function viewProject(p: WorkProject): ViewProject {
       `Realizacja "${p.slug}": pierwsza pozycja galerii musi być zdjęciem (jest kaflem na liście).`,
     );
   }
+  // surowe identyfikatory (`p.related`) zastępuje lista rozwiązana
   return {
     ...p,
     cover: { image: first.image, position: first.position },
+    related,
   };
+}
+
+// Rozwiązanie odwołań „Inne realizacje z inwestycji" względem PEŁNEJ listy
+// (docs/analiza-inne-realizacje.md §4.3). Panel wyklucza bieżący wpis
+// z selecta, ale NIE pilnuje duplikatów ani realizacji usuniętych później
+// (Sveltia nie czyści odwołań w innych wpisach) — robi to ta funkcja:
+//  • id istnieje → pozycja w kolejności z panelu,
+//  • id nieznane / pusty napis → pominięte + ostrzeżenie (log buildu),
+//  • id = bieżący wpis → pominięte (JSON da się popsuć poza panelem),
+//  • duplikat → zostaje pierwsze wystąpienie.
+// Ostrzeżenie zamiast błędu: treść z panelu nie może wywracać builda
+// (reguła cms-realizacje / testing.md). Zero ważnych pozycji = pusta lista,
+// a detal nie renderuje wtedy sekcji w ogóle.
+export function resolveRelated(
+  projects: Pick<
+    WorkProject,
+    "slug" | "title" | "place" | "year" | "related"
+  >[],
+  warn: (msg: string) => void = () => {},
+): Map<string, RelatedLink[]> {
+  const bySlug = new Map(projects.map((p) => [p.slug, p]));
+  const out = new Map<string, RelatedLink[]>();
+  for (const p of projects) {
+    const seen = new Set<string>();
+    const links: RelatedLink[] = [];
+    for (const id of p.related ?? []) {
+      if (id === p.slug || seen.has(id)) continue;
+      const target = bySlug.get(id);
+      if (!target) {
+        warn(
+          `Realizacja "${p.slug}": pomijam powiązanie "${id}" — nie ma takiej realizacji (usunięta?).`,
+        );
+        continue;
+      }
+      seen.add(id);
+      links.push({
+        slug: target.slug,
+        title: target.title,
+        place: target.place,
+        year: target.year,
+      });
+    }
+    out.set(p.slug, links);
+  }
+  return out;
 }
 
 // IDENTYFIKATOR realizacji = NAZWA PLIKU wpisu (`entry.id` — loader w

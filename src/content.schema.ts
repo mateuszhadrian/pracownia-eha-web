@@ -74,4 +74,13 @@ export const realizacjaSchema = z.object({
   specs: z
     .array(z.object({ label: z.string(), value: z.string() }))
     .default([]),
+  // „Inne realizacje z inwestycji" (docs/analiza-inne-realizacje.md):
+  // identyfikatory innych realizacji = NAZWY PLIKÓW bez `.json` (relacja
+  // Sveltii zapisuje `{{slug}}` wpisu, czyli nazwę pliku — zweryfikowane
+  // 2026-11-03), w kolejności z panelu. Opcjonalne jak `specs`: brak klucza
+  // i pusta lista dają `[]` (sekcja znika z detalu). Istnienia wskazanych
+  // realizacji schemat CELOWO nie sprawdza — usunięcie realizacji w panelu
+  // nie może wywracać builda; martwe odwołania pomija `resolveRelated()`
+  // (work-data.ts) z ostrzeżeniem w logu.
+  related: z.array(z.string()).default([]),
 });

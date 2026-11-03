@@ -15,7 +15,10 @@ import {
   WORK_PAGE_SIZE,
   WORK_SHARE_COPIED_MS,
 } from "../../src/components/sections/work/work-config";
-import { workDocTitle } from "../../src/components/sections/work/work-data";
+import {
+  resolveRelated,
+  workDocTitle,
+} from "../../src/components/sections/work/work-data";
 import { ui } from "../../src/i18n/ui";
 import {
   HOME_PATH,
@@ -35,8 +38,20 @@ interface Entry {
   year: string;
   paras: string[];
   gallery: ({ type: "photo"; image: string } | { type: "video" })[];
+  related?: string[];
 }
 const ENTRIES = readRealizacje<Entry>();
+// „Inne realizacje z inwestycji": oczekiwana lista per wpis liczona tą samą
+// funkcją co build (jej reguły — martwe id, duplikaty, samowskazanie —
+// pilnuje work-data.test.ts); tu sprawdzamy RENDER i NAWIGACJĘ.
+const RELATED = resolveRelated(
+  ENTRIES.map((e) => ({ ...e, related: e.related ?? [] })),
+);
+const relatedOf = (slug: string) => RELATED.get(slug) ?? [];
+const WITH_RELATED = ENTRIES.find((e) => relatedOf(e.slug).length > 0);
+const WITHOUT_RELATED = ENTRIES.find((e) => relatedOf(e.slug).length === 0);
+const NO_RELATED_REASON =
+  "żaden wpis w kolekcji nie ma powiązań „Inne realizacje z inwestycji” — wariant zacznie biegać, gdy klient doda pierwsze w panelu";
 const LIST_TITLE = ui.pl["workPage.title"];
 const LAST = ENTRIES[ENTRIES.length - 1];
 
@@ -429,5 +444,118 @@ test.describe("usunięta realizacja", () => {
     await expect(
       page.getByRole("link", { name: "Powrót na stronę główną" }),
     ).toBeHidden();
+  });
+});
+
+// ── „Inne realizacje z inwestycji" (docs/analiza-inne-realizacje.md):
+// opcjonalna sekcja na samym dole treści detalu; ZWYKŁE linki pod stały
+// adres realizacji — klik ładuje podstronę z detalem otwartym od wejścia,
+// „wstecz" wraca do poprzedniej realizacji. Treść z kolekcji: wariant
+// „z powiązaniami" biega dopiero, gdy klient doda je w panelu. ──
+test.describe("inne realizacje z inwestycji", () => {
+  test("wpis z powiązaniami: sekcja ostatnia przed stopką, linki pod adresy realizacji", async ({
+    page,
+  }) => {
+    test.skip(!WITH_RELATED, NO_RELATED_REASON);
+    const entry = WITH_RELATED!;
+    const expected = relatedOf(entry.slug);
+    await gotoReady(page, workDetailPath(entry.slug));
+    const detail = page.locator("#work-detail");
+    const rel = detail.locator(".dt-rel");
+    await expect(rel).toHaveCount(1);
+    await expect(rel.locator(".dt-specs-h span")).toHaveText(
+      "INNE REALIZACJE Z INWESTYCJI",
+    );
+    // nawigacja z dostępną nazwą (nagłówek sekcji)
+    await expect(
+      page.getByRole("navigation", { name: "INNE REALIZACJE Z INWESTYCJI" }),
+    ).toHaveCount(1);
+
+    const links = rel.locator("a.dt-rel-a");
+    await expect(links).toHaveCount(expected.length);
+    for (const [i, r] of expected.entries()) {
+      const a = links.nth(i);
+      await expect(a).toHaveAttribute("href", workDetailPath(r.slug));
+      await expect(a.locator(".dt-rel-t")).toHaveText(r.title);
+      await expect(a.locator(".dt-rel-meta")).toHaveText(
+        `${r.place} · ${r.year}`.toUpperCase(),
+        { useInnerText: true },
+      );
+      // bez data-work-slug: tego atrybutu szukają kafle („otwórz w miejscu")
+      await expect(a).not.toHaveAttribute("data-work-slug");
+    }
+
+    // na samym dole: ostatni blok treści przed stopką, z odstępem końcowym
+    expect(
+      await rel.evaluate((el) => {
+        let next = el.nextElementSibling;
+        while (next && next.matches("template, script"))
+          next = next.nextElementSibling;
+        return next?.classList.contains("dt-foot") ?? false;
+      }),
+    ).toBe(true);
+    await expect(detail.locator(".dt-about")).not.toHaveClass(/dt-about--last/);
+    await expect(detail.locator(".dt-specs")).not.toHaveClass(/dt-specs--last/);
+  });
+
+  test("klik w powiązanie: podstrona wskazanej realizacji z otwartym detalem; wstecz wraca", async ({
+    page,
+  }) => {
+    test.skip(!WITH_RELATED, NO_RELATED_REASON);
+    const entry = WITH_RELATED!;
+    const target = relatedOf(entry.slug)[0];
+    const targetEntry = ENTRIES.find((e) => e.slug === target.slug)!;
+    await gotoReady(page, workDetailPath(entry.slug));
+    const link = page.locator("#work-detail .dt-rel a.dt-rel-a").first();
+    await link.scrollIntoViewIfNeeded();
+    await settle(page, 300);
+    await Promise.all([
+      page.waitForURL((u) => u.pathname === workDetailPath(target.slug)),
+      link.click(),
+    ]);
+    const detail = page.locator("#work-detail");
+    await expect(detail).toHaveClass(/is-open/);
+    await expect(detail.locator(".dt-title")).toHaveText(target.title);
+    await expect(page).toHaveTitle(workDocTitle(targetEntry));
+
+    await page.goBack();
+    await expect.poll(() => pathOf(page)).toBe(workDetailPath(entry.slug));
+    await expect(page.locator("#work-detail")).toHaveClass(/is-open/);
+    await expect(page.locator("#work-detail .dt-title")).toHaveText(
+      entry.title,
+    );
+  });
+
+  test("wpis bez powiązań: sekcji nie ma", async ({ page }) => {
+    test.skip(
+      !WITHOUT_RELATED,
+      "każdy wpis w kolekcji ma powiązania — wariant bez sekcji nie ma treści do sprawdzenia",
+    );
+    await gotoReady(page, workDetailPath(WITHOUT_RELATED!.slug));
+    const detail = page.locator("#work-detail");
+    await expect(detail.locator(".dt-title")).toHaveText(
+      WITHOUT_RELATED!.title,
+    );
+    await expect(detail.locator(".dt-rel")).toHaveCount(0);
+    await expect(
+      detail.getByText("INNE REALIZACJE Z INWESTYCJI", { exact: true }),
+    ).toHaveCount(0);
+  });
+
+  test("bez JS: powiązania w bloku statycznym jako zwykłe linki", async ({
+    browser,
+  }) => {
+    test.skip(!WITH_RELATED, NO_RELATED_REASON);
+    const entry = WITH_RELATED!;
+    const ctx = await browser.newContext({ javaScriptEnabled: false });
+    const page = await ctx.newPage();
+    await page.goto(workDetailPath(entry.slug));
+    const links = page.locator(".wks .wks-rel a");
+    await expect(links).toHaveCount(relatedOf(entry.slug).length);
+    await expect(links.first()).toHaveAttribute(
+      "href",
+      workDetailPath(relatedOf(entry.slug)[0].slug),
+    );
+    await ctx.close();
   });
 });
