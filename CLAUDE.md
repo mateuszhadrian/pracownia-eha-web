@@ -2671,6 +2671,28 @@ max(--svh,550px)·0.5267 − 72px)` + tytuł `min(…, 7.8cqi)`
     w tym zrzucie maska tylko na mobile; ten sam dług `work-detail-open`
     1920 → `docs/optional-todos.md` pkt 7.
 
+- **Menu bez „Obsługi budowy", Kompetencje w rzędzie głównym — WYKONANE**
+  (2026-11-04, branch `fix/menu-kompetencje`; prośba klienta).
+  ŚWIADOME ODSTĘPSTWO od designów (eksporty mają Kompetencje w „O nas"):
+  menu na obu progach = `O nas ▾` (Ekipa EH/A, Tradycja i ekologia) ·
+  Realizacje · Kompetencje i technologie · Kontakt. „Obsługa budowy"
+  NIE MA pozycji ani w menu, ani w stopce (decyzja Mateusza: stopka idzie
+  za menu — Kompetencje w kolumnie OFERTA/STRONY). Podstrona
+  `/obsluga-budowy/` ŻYJE: sitemapa, linki z zajawki 04 na `/`, bezpośredni
+  adres; na niej żadna pozycja menu nie jest bieżąca. Zmiana = dwie listy
+  w `src/i18n/nav.ts` (Navbar i Footer je konsumują), mechanika paska/
+  dropdownu/akordeonu nietknięta. Zmierzone: pasek desktop rośnie o
+  92–113 px, przy 1024 px zostaje ~300 px luzu do logo; etykieta w sheecie
+  mieści się w jednej linii na 320 px. Testy `navigation.spec.ts`:
+  dropdown 2 podstrony, rząd główny + brak linku do obsługi (desktop,
+  sheet, stopka), wskaźnik bieżącej strony w tonie ciemnym przeniesiony
+  z `/obsluga-budowy/` na `/kompetencje-i-technologie/`. Bramki: format/
+  lint/typecheck/unit(126)/build/e2e 901 passed / 1 failed (znana sonda
+  `/api/kontakt` przy `BASE_URL` — 4399 zajęty przez hadrianm-web).
+  Zasięg baseline'ów: 78 czerwonych + 24 „zielone, ale nieaktualne"
+  (desktopowe `*-full` i `kontakt-top` 1920/firefox — pasek i stopka pod
+  progiem) na platformę.
+
 ## Dokumentacja
 
 - Decyzje projektu (zapadłe — nie otwieraj na nowo):
