@@ -3,7 +3,7 @@
 // pierwsze N). Kolejność wg `order` z CMS; identyfikatorem jest nazwa
 // pliku wpisu (entryToProject — uzasadnienie w work-data.ts).
 // Pusta kolekcja = stan dopuszczalny (pusta lista).
-// Powiązania „Inne realizacje z inwestycji" rozwiązujemy TUTAJ, względem
+// Powiązania „Inne realizacje w ramach inwestycji" rozwiązujemy TUTAJ, względem
 // PEŁNEJ listy — zajawka na `/` bierze z niej pierwsze N, a jej detale
 // mogą linkować do realizacji spoza tej trójki.
 import { getCollection } from "astro:content";

@@ -57,7 +57,7 @@ describe("fixture wizualny: tests/fixtures/realizacje", () => {
     ]);
   });
 
-  // „Inne realizacje z inwestycji": zrzut `work-detail-related` fotografuje
+  // „Inne realizacje w ramach inwestycji": zrzut `work-detail-related` fotografuje
   // detal PIERWSZEGO wpisu przewinięty do końca — musi mieć powiązania,
   // a wszystkie muszą trafiać (martwe odwołanie zniknęłoby po cichu ze
   // zrzutu i dawało ostrzeżenie w każdym `build:visual`).

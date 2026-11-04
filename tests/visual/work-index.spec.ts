@@ -82,7 +82,7 @@ test("realizacje: detal otwarty (sheet mobile / modal 1920)", async ({
   });
 });
 
-// „Inne realizacje z inwestycji" (docs/analiza-inne-realizacje.md): sekcja
+// „Inne realizacje w ramach inwestycji" (docs/analiza-inne-realizacje.md): sekcja
 // stoi na samym dole treści, więc `work-detail-open` (góra detalu) jej nie
 // widzi — osobny zrzut detalu przewiniętego do końca. Pierwszy wpis
 // fixture'u ma 3 powiązania i parametry (kontrakt visual-fixture.test.ts).
@@ -102,7 +102,16 @@ test("realizacje: detal przewinięty do końca — inne realizacje (sheet mobile
   });
   await settle(page, 600);
   await expect(detail).toHaveScreenshot("work-detail-related.png", {
-    mask: [detail.locator("video"), detail.locator(".dt-poster")],
+    // Maska wideo TYLKO na mobile. Na desktopie kadr galerii pokazuje
+    // slajd 1 (z reguły schematu zawsze zdjęcie), a slajd z filmem leży
+    // poza kadrem, przycięty przez `.dt-gal` — nie jest malowany. Maska
+    // Playwrighta bierze jednak cały prostokąt elementu, ignorując
+    // przycięcie, a ten prostokąt wypada na KOLUMNIE TEKSTU: zrzut
+    // pokazywał różową płytę zamiast sekcji (zmierzone 2026-11-04; ten
+    // sam dług ma `work-detail-open` na 1920 — docs/optional-todos.md).
+    mask: isMobileProfile
+      ? [detail.locator("video"), detail.locator(".dt-poster")]
+      : [],
   });
 });
 

@@ -193,7 +193,7 @@ collections:
             }
           - { label: "Wartość", name: "value", widget: "string" }
 
-      # ── Inne realizacje z inwestycji (docs/analiza-inne-realizacje.md) ──
+      # ── Inne realizacje w ramach inwestycji (docs/analiza-inne-realizacje.md) ──
       # Lista identyfikatorów innych realizacji = NAZW PLIKÓW: relacja
       # zapisuje `{{slug}}` wpisu, a to w Sveltii nazwa pliku, NIE pole
       # „Slug" (zweryfikowane 2026-11-03 na 0.178.0 — wpis Milęcic: plik
@@ -205,14 +205,15 @@ collections:
       # Duplikatów i realizacji usuniętych później panel NIE pilnuje —
       # pomija je build (resolveRelated w work-data.ts). Pole jest OSTATNIE,
       # bo na stronie sekcja stoi na samym dole (pod parametrami).
-      - label: "Inne realizacje z inwestycji"
+      - label: "Inne realizacje w ramach inwestycji"
         name: "related"
         widget: "list"
         label_singular: "Realizacja"
         required: false # pusta lista = brak sekcji w detalu
         hint: >-
-          Opcjonalne. Dodaj realizacje z tej samej inwestycji — na stronie
-          pojawią się na dole opisu jako lista linków. Kolejność jak tutaj.
+          Opcjonalne. Dodaj inne realizacje w ramach tej samej inwestycji —
+          na stronie pojawią się na dole opisu jako lista tytułów z linkami.
+          Kolejność jak tutaj.
           Bez pozycji sekcja w ogóle się nie wyświetla.
         field:
           label: "Realizacja"

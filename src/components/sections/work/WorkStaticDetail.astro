@@ -34,16 +34,15 @@ const { project: p } = Astro.props;
     )
   }
   {
-    /* „Inne realizacje z inwestycji" — pod parametrami, jak w detalu;
+    /* „Inne realizacje w ramach inwestycji" — pod parametrami, jak w detalu;
       zwykłe linki działają bez JS (docs/analiza-inne-realizacje.md) */
     p.related.length > 0 && (
-      <nav class="wks-rel" aria-label="Inne realizacje z inwestycji">
-        <p class="wks-rel-h">Inne realizacje z inwestycji</p>
+      <nav class="wks-rel" aria-label="Inne realizacje w ramach inwestycji">
+        <p class="wks-rel-h">Inne realizacje w ramach inwestycji</p>
         <ul>
           {p.related.map((r) => (
             <li>
-              <a href={workDetailPath(r.slug)}>{r.title}</a> — {r.place},{" "}
-              {r.year}
+              <a href={workDetailPath(r.slug)}>{r.title}</a>
             </li>
           ))}
         </ul>

@@ -83,7 +83,7 @@ która przeżyła kopię w całości (work) i mechaniki formularza (contact).
   „CHCESZ WIĘCEJ INFORMACJI?" usunięte (decyzja Mateusza). Tor galerii
   `.dt-track` ma `tabindex="0"` (axe `scrollable-region-focusable`) —
   nie zdejmuj.
-- **„Inne realizacje z inwestycji" (`.dt-rel`)** — opcjonalny OSTATNI blok
+- **„Inne realizacje w ramach inwestycji" (`.dt-rel`)** — opcjonalny OSTATNI blok
   treści detalu (pod PARAMETRAMI, bez nich pod opisem), przed stopką
   „Udostępnij". To ZWYKŁE linki `<a href="/realizacje/<id>/">` — klik
   ładuje podstronę z detalem otwartym od wejścia; **bez `data-work-slug`**
@@ -94,6 +94,10 @@ która przeżyła kopię w całości (work) i mechaniki formularza (contact).
   (`dt-about--last` / `dt-specs--last` / `.dt-rel` z wbudowanym) — przy
   dokładaniu kolejnego bloku przestaw `last` w `WorkDetail.astro`, a nie
   dopisuj odstępów obok. Wersja bez JS: lista linków w `WorkStaticDetail`.
+  Pozycja = SAM TYTUŁ + strzałka (bez miejscowości i roku), bez linii pod
+  nagłówkiem — linia OBOK napisu zostaje (poprawki klienta 2026-11-04).
+  Nagłówek tej sekcji zawija się na 320 px: jego linia ma `flex: 1 0 32px`
+  i stoi przy ostatnim wierszu — nie przywracaj `flex: 1` z PARAMETRY.
 - Track karuzeli mobile wymaga `scroll-snap-stop: always` (bez tego szybki
   swipe przeskakuje kilka kafli naraz).
 - **Parallax musi mieć zapas ≥ ruch** (lekcja D-U1 szablonu): element

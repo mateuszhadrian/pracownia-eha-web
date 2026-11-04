@@ -124,7 +124,7 @@ describe("kontrakt CMS: src/content/realizacje/*.json", () => {
       expect(res.success && res.data.specs).toEqual([]);
     });
 
-    // „Inne realizacje z inwestycji" — opcjonalne jak specs; lista
+    // „Inne realizacje w ramach inwestycji" — opcjonalne jak specs; lista
     // identyfikatorów (nazw plików). Istnienia wskazanych realizacji schemat
     // celowo NIE sprawdza (usunięcie realizacji nie może wywracać builda).
     it.each([
@@ -227,7 +227,7 @@ describe("kontrakt CMS: pola §6.1 w config.yml", () => {
     expect(own).not.toMatch(/^\s*min:/m);
   });
 
-  // „Inne realizacje z inwestycji" (docs/analiza-inne-realizacje.md §3):
+  // „Inne realizacje w ramach inwestycji" (docs/analiza-inne-realizacje.md §3):
   // każdy element konfiguracji jest zweryfikowanym zachowaniem panelu —
   // `{{slug}}` zapisuje NAZWĘ PLIKU (= adres podstrony), filtr wyklucza
   // edytowany wpis z selecta, `dropdown_threshold: 0` daje select zawsze
