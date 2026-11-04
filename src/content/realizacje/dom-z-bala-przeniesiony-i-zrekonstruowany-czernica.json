@@ -1,7 +1,7 @@
 {
-  "slug": "dom-z-bala-przeniesiony-i-zrekonstruowany-czernica",
+  "slug": "relokacja-domu-z-bala",
   "order": 10,
-  "title": "Dom z bala przeniesiony i zrekonstruowany",
+  "title": "Relokacja domu z bala",
   "place": "Czernica",
   "year": "2023",
   "paras": [
@@ -48,5 +48,8 @@
       "label": "Rok zakończenia",
       "value": "2023"
     }
+  ],
+  "related": [
+    "nowa-wiezba-nad-stuletnim-balem-czernica"
   ]
 }
