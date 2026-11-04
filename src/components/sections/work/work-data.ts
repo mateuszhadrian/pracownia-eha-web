@@ -38,13 +38,13 @@ export interface WorkProject {
   paras: string[]; // opis detalu jako akapity (min 1; design: 3)
   gallery: WorkGalleryItem[];
   specs: WorkSpec[]; // opcjonalne w CMS — schemat daje [] (blok PARAMETRY ukryty)
-  // „Inne realizacje z inwestycji": identyfikatory (NAZWY PLIKÓW) w kolejności
+  // „Inne realizacje w ramach inwestycji": identyfikatory (NAZWY PLIKÓW) w kolejności
   // z panelu; opcjonalne — schemat daje []. Surowe, mogą wskazywać realizacje
   // usunięte — dla widoku rozwiązuje je resolveRelated().
   related: string[];
 }
 
-// Pozycja sekcji „Inne realizacje z inwestycji" — rozwiązane odwołanie,
+// Pozycja sekcji „Inne realizacje w ramach inwestycji" — rozwiązane odwołanie,
 // wszystko, czego potrzebuje link w detalu (adres liczy workDetailPath).
 export interface RelatedLink {
   slug: string;
@@ -84,7 +84,7 @@ export function viewProject(
   };
 }
 
-// Rozwiązanie odwołań „Inne realizacje z inwestycji" względem PEŁNEJ listy
+// Rozwiązanie odwołań „Inne realizacje w ramach inwestycji" względem PEŁNEJ listy
 // (docs/analiza-inne-realizacje.md §4.3). Panel wyklucza bieżący wpis
 // z selecta, ale NIE pilnuje duplikatów ani realizacji usuniętych później
 // (Sveltia nie czyści odwołań w innych wpisach) — robi to ta funkcja:

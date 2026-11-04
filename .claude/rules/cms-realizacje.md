@@ -71,7 +71,7 @@ zrebem-olesnica` → `nowa-wiezba-nad-stuletnim-balem-czernica` — klient
   go warunkowo, `.dt-about--last` przejmuje odstęp do stopki). Hint
   w panelu: wzór 7 par z designu. **BEZ pola `category`** (E5 — eha nie ma kategorii ani
   filtrów) i bez `description` (zastąpione przez `paras`).
-- **`related[]` — „Inne realizacje z inwestycji"** (od 2026-11-03,
+- **`related[]` — „Inne realizacje w ramach inwestycji"** (od 2026-11-03,
   `docs/analiza-inne-realizacje.md`): lista identyfikatorów innych
   realizacji = **NAZW PLIKÓW** (bez `.json`), w kolejności z panelu;
   opcjonalna jak `specs` (`.default([])`, `required: false`). W panelu:

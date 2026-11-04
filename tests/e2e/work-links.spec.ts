@@ -41,7 +41,7 @@ interface Entry {
   related?: string[];
 }
 const ENTRIES = readRealizacje<Entry>();
-// „Inne realizacje z inwestycji": oczekiwana lista per wpis liczona tą samą
+// „Inne realizacje w ramach inwestycji": oczekiwana lista per wpis liczona tą samą
 // funkcją co build (jej reguły — martwe id, duplikaty, samowskazanie —
 // pilnuje work-data.test.ts); tu sprawdzamy RENDER i NAWIGACJĘ.
 const RELATED = resolveRelated(
@@ -51,7 +51,7 @@ const relatedOf = (slug: string) => RELATED.get(slug) ?? [];
 const WITH_RELATED = ENTRIES.find((e) => relatedOf(e.slug).length > 0);
 const WITHOUT_RELATED = ENTRIES.find((e) => relatedOf(e.slug).length === 0);
 const NO_RELATED_REASON =
-  "żaden wpis w kolekcji nie ma powiązań „Inne realizacje z inwestycji” — wariant zacznie biegać, gdy klient doda pierwsze w panelu";
+  "żaden wpis w kolekcji nie ma powiązań „Inne realizacje w ramach inwestycji” — wariant zacznie biegać, gdy klient doda pierwsze w panelu";
 const LIST_TITLE = ui.pl["workPage.title"];
 const LAST = ENTRIES[ENTRIES.length - 1];
 
@@ -447,12 +447,12 @@ test.describe("usunięta realizacja", () => {
   });
 });
 
-// ── „Inne realizacje z inwestycji" (docs/analiza-inne-realizacje.md):
+// ── „Inne realizacje w ramach inwestycji" (docs/analiza-inne-realizacje.md):
 // opcjonalna sekcja na samym dole treści detalu; ZWYKŁE linki pod stały
 // adres realizacji — klik ładuje podstronę z detalem otwartym od wejścia,
 // „wstecz" wraca do poprzedniej realizacji. Treść z kolekcji: wariant
 // „z powiązaniami" biega dopiero, gdy klient doda je w panelu. ──
-test.describe("inne realizacje z inwestycji", () => {
+test.describe("inne realizacje w ramach inwestycji", () => {
   test("wpis z powiązaniami: sekcja ostatnia przed stopką, linki pod adresy realizacji", async ({
     page,
   }) => {
@@ -464,11 +464,13 @@ test.describe("inne realizacje z inwestycji", () => {
     const rel = detail.locator(".dt-rel");
     await expect(rel).toHaveCount(1);
     await expect(rel.locator(".dt-specs-h span")).toHaveText(
-      "INNE REALIZACJE Z INWESTYCJI",
+      "INNE REALIZACJE W RAMACH INWESTYCJI",
     );
     // nawigacja z dostępną nazwą (nagłówek sekcji)
     await expect(
-      page.getByRole("navigation", { name: "INNE REALIZACJE Z INWESTYCJI" }),
+      page.getByRole("navigation", {
+        name: "INNE REALIZACJE W RAMACH INWESTYCJI",
+      }),
     ).toHaveCount(1);
 
     const links = rel.locator("a.dt-rel-a");
@@ -477,13 +479,29 @@ test.describe("inne realizacje z inwestycji", () => {
       const a = links.nth(i);
       await expect(a).toHaveAttribute("href", workDetailPath(r.slug));
       await expect(a.locator(".dt-rel-t")).toHaveText(r.title);
-      await expect(a.locator(".dt-rel-meta")).toHaveText(
-        `${r.place} · ${r.year}`.toUpperCase(),
-        { useInnerText: true },
-      );
+      // sam tytuł — bez miejscowości i roku (poprawka klienta 2026-11-04)
+      expect(
+        await a.evaluate((el) =>
+          (el.textContent ?? "").replace("→", "").replace(/\s+/g, " ").trim(),
+        ),
+      ).toBe(r.title);
+      await expect(a.locator(".dt-rel-meta")).toHaveCount(0);
       // bez data-work-slug: tego atrybutu szukają kafle („otwórz w miejscu")
       await expect(a).not.toHaveAttribute("data-work-slug");
     }
+
+    // bez linii pod nagłówkiem (poprawka klienta), linia OBOK napisu zostaje
+    // i nie spada do zera nawet przy zawiniętym nagłówku (320 px)
+    expect(
+      await rel
+        .locator(".dt-rel-list")
+        // szerokość, nie styl: preflight Tailwinda daje wszystkim
+        // `border-style: solid` przy szerokości 0
+        .evaluate((el) => getComputedStyle(el).borderTopWidth),
+    ).toBe("0px");
+    expect(
+      (await rel.locator(".dt-specs-h i").boundingBox())?.width ?? 0,
+    ).toBeGreaterThanOrEqual(32);
 
     // na samym dole: ostatni blok treści przed stopką, z odstępem końcowym
     expect(
@@ -538,7 +556,7 @@ test.describe("inne realizacje z inwestycji", () => {
     );
     await expect(detail.locator(".dt-rel")).toHaveCount(0);
     await expect(
-      detail.getByText("INNE REALIZACJE Z INWESTYCJI", { exact: true }),
+      detail.getByText("INNE REALIZACJE W RAMACH INWESTYCJI", { exact: true }),
     ).toHaveCount(0);
   });
 

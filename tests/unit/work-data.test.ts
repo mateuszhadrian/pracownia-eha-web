@@ -50,7 +50,7 @@ describe("workDescription", () => {
   });
 });
 
-// „Inne realizacje z inwestycji" (docs/analiza-inne-realizacje.md §4.3).
+// „Inne realizacje w ramach inwestycji" (docs/analiza-inne-realizacje.md §4.3).
 // Dane SYNTETYCZNE — kontrakt nie może zależeć od tego, co klient wpisał
 // w panelu (dziś żaden wpis produkcyjny nie ma powiązań).
 describe("resolveRelated", () => {

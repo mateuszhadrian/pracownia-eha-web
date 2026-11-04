@@ -1,4 +1,7 @@
-# Analiza: sekcja „Inne realizacje z inwestycji" w detalu realizacji
+# Analiza: sekcja „Inne realizacje w ramach inwestycji" w detalu realizacji
+
+> Nazwa sekcji do 2026-11-04 brzmiała „Inne realizacje z inwestycji";
+> §1–§9 opisują stan pierwszego wdrożenia, poprawki klienta są w §10.
 
 Stan: **ZAAKCEPTOWANA i WDROŻONA w kodzie** (2026-11-03, branch
 `feat/inne-realizacje`). Test w panelu na produkcji: czwartek, z klientem
@@ -413,3 +416,57 @@ nie zmieniło ani piksela. Jedyne braki: 4 × NOWY `work-detail-related`
 (chromium-1920, webkit-iphone-se, webkit-iphone-14, chromium-pixel-5) —
 do wygenerowania workflow linux (`spec: tests/visual/work-index.spec.ts`,
 `mode=changed`) → darwin lokalnie na końcu.
+
+---
+
+## 10. Poprawki klienta po teście w panelu (2026-11-04)
+
+Klient przetestował sekcję na produkcji (powiązał „Relokacja domu z bala"
+↔ „Budowa nowej więźby dachowej" — mechanizm panelu i linki działają)
+i poprosił o cztery zmiany wyglądu (branch `fix/inne-realizacje-poprawki`):
+
+1. **Sam tytuł** — bez mono „MIEJSCE · ROK" nad tytułem; siatka pozycji
+   `"t arr"`. Dane `RelatedLink` dalej niosą `place`/`year` (koszt zerowy,
+   kontrakt resolvera bez zmian).
+2. **Większy odstęp nad sekcją**: mobile 26 → **44 px**, desktop
+   `clamp(20px,1.81vw,29px)` → **`clamp(36px,3vw,48px)`**.
+3. **Bez linii pod nagłówkiem** (`border-top` listy) — linia OBOK napisu
+   zostaje; linie między pozycjami bez zmian.
+4. **Nazwa: „Inne realizacje w ramach inwestycji"** — nagłówek (wersaliki),
+   etykieta pola i podpowiedź w panelu, wersja bez JS (tam też sam tytuł),
+   komentarze i testy.
+
+Skutek uboczny pkt 4: nagłówek jest dłuższy i na 320 px (iPhone SE)
+zawija się do dwóch wierszy, a linia obok (`flex: 1`) spadała do 0 px.
+Lekarstwo punktowe dla `.dt-rel .dt-specs-h` (PARAMETRY nietknięte):
+linia `flex: 1 0 32px` + `align-self: flex-end` przy ostatnim wierszu,
+interlinia nagłówka 1.5 (zawinięte wiersze się stykały), margines linii
+`calc(0.75em - 0.5px)` = przy jednym wierszu dokładnie w osi napisu.
+Zaakceptowane przez Mateusza na zrzutach i lokalnym podglądzie.
+
+Testy: e2e `work-links.spec.ts` — brak `.dt-rel-meta`, tekst linku = sam
+tytuł, `border-top-width` listy = 0 (NIE `border-top-style`: preflight
+Tailwinda daje wszystkim `solid` przy szerokości 0), linia obok nagłówka
+≥ 32 px. Od tej zmiany wariant „z powiązaniami" biega na TREŚCI
+PRODUKCYJNEJ (klient dodał pierwsze powiązania).
+
+**Zasięg baseline'ów — zmierzony progiem zerowym** (`work-index`, `index`,
+`chrome`; progi przywrócone, `git diff` czysty): **46 zrzutów bez zmian**,
+zmieniają się WYŁĄCZNIE 4 × `work-detail-related` (mobile 11–19 tys. px,
+1920: 616 tys. px — patrz niżej). Wszystkie cztery są czerwone przy
+zwykłych progach, więc wystarczy workflow `mode=changed`.
+
+**Złapany przy okazji błąd zrzutu 1920**: baseline `work-detail-related`
+na `chromium-1920` (z PR #33) pokazywał zamiast kolumny tekstu RÓŻOWĄ
+PŁYTĘ. Maska wideo bierze prostokąt slajdu z filmem, który leży poza
+kadrem galerii (przycięty, niemalowany) — i ten prostokąt wypada na
+kolumnie tekstu. Naprawione w teście: maska tylko na profilach mobilnych
+(na desktopie kadr pokazuje slajd 1, z reguły schematu zdjęcie). Ten sam
+dług od 4.3 ma `work-detail-open` na 1920 — NIE ruszany w tym PR-ze
+(zmiana baseline'u poza zakresem), zapisany w `docs/optional-todos.md`
+pkt 7.
+
+E2E na treści produkcyjnej: **891 passed / 2 failed** — sonda
+`/api/kontakt` (znany artefakt `BASE_URL`) oraz paginacja na
+firefox-desktop, która w izolacji przechodzi 5/5 zarówno na tej gałęzi,
+jak i na kodzie `main` (flake obciążeniowy, bez związku ze zmianą).

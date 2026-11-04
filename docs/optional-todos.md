@@ -42,3 +42,11 @@
 6. **Przecinek przed „oraz"** w zdaniu CTA na `/obsluga-budowy/` —
    interpunkcyjny błąd w tekście od klienta, zostawiony dosłownie.
    Do poprawy wyłącznie za jego zgodą.
+7. **Zrzut `work-detail-open` na `chromium-1920` nie pokazuje kolumny
+   tekstu** — maska wideo (`video` + `.dt-poster`) bierze prostokąt
+   slajdu z filmem, który leży POZA kadrem galerii (przycięty, niemalowany),
+   a ten prostokąt wypada na kolumnie tekstu: baseline od 4.3 ma tam
+   różową płytę, więc regres treści detalu na desktopie przechodzi
+   niezauważony. Złapane 2026-11-04 przy zrzucie `work-detail-related`
+   (tam naprawione: maska tylko na mobile). Lekarstwo: to samo w
+   `work-detail-open` + nowy baseline 1920 (×2 platformy).

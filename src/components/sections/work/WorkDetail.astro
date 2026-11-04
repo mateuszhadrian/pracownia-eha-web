@@ -34,7 +34,7 @@ const pad = (n: number) => String(n).padStart(2, "0");
 const showDashes = p.gallery.length <= WORK_GALLERY_DASHES_MAX;
 // Parametry są opcjonalne w CMS — bez nich blok PARAMETRY nie istnieje.
 const hasSpecs = p.specs.length > 0;
-// „Inne realizacje z inwestycji" (docs/analiza-inne-realizacje.md) —
+// „Inne realizacje w ramach inwestycji" (docs/analiza-inne-realizacje.md) —
 // opcjonalne jak parametry; lista ROZWIĄZANA w work-list.ts (martwe
 // odwołania, duplikaty i wskazanie samej siebie już odfiltrowane).
 const hasRelated = p.related.length > 0;
@@ -291,7 +291,7 @@ const relHeadId = `dt-rel-h-${p.slug}`;
 }
 
 {
-  /* „Inne realizacje z inwestycji" — na samym dole treści (pod
+  /* „Inne realizacje w ramach inwestycji" — na samym dole treści (pod
     parametrami, bez nich pod opisem). ZWYKŁE linki pod stały adres
     realizacji: przeglądarka ładuje podstronę z detalem otwartym od wejścia
     („jakby wpisać adres"). Celowo BEZ `data-work-slug` — ten atrybut
@@ -303,16 +303,13 @@ const relHeadId = `dt-rel-h-${p.slug}`;
   hasRelated && (
     <nav class="dt-rel" aria-labelledby={relHeadId}>
       <div class="dt-specs-h">
-        <span id={relHeadId}>INNE REALIZACJE Z INWESTYCJI</span>
+        <span id={relHeadId}>INNE REALIZACJE W RAMACH INWESTYCJI</span>
         <i aria-hidden="true" />
       </div>
       <ul class="dt-rel-list">
         {p.related.map((r) => (
           <li>
             <a class="dt-rel-a" href={workDetailPath(r.slug)}>
-              <span class="dt-rel-meta">
-                {r.place} · {r.year}
-              </span>
               <span class="dt-rel-t">{r.title}</span>
               <span class="dt-rel-arr" aria-hidden="true">
                 →
@@ -659,20 +656,37 @@ const relHeadId = `dt-rel-h-${p.slug}`;
     color: var(--ink);
   }
 
-  /* ── INNE REALIZACJE Z INWESTYCJI: lista linków (makieta zaakceptowana
-     2026-11-03). Cała pozycja = jeden link (duże pole dotyku); siatka
-     „meta / tytuł | strzałka" — strzałka wyśrodkowana pionowo także przy
-     zawiniętym tytule. Linie = linia nagłówka PARAMETRY. Sekcja jest
-     zawsze ostatnia, więc dolny odstęp do stopki ma wbudowany. ── */
+  /* ── INNE REALIZACJE W RAMACH INWESTYCJI: lista linków (makieta
+     zaakceptowana 2026-11-03, poprawki klienta 2026-11-04: sam tytuł bez
+     miejscowości i roku, większy odstęp nad sekcją, bez linii między
+     nagłówkiem a pierwszą pozycją — linia OBOK napisu zostaje). Cała
+     pozycja = jeden link (duże pole dotyku); siatka „tytuł | strzałka" —
+     strzałka wyśrodkowana pionowo także przy zawiniętym tytule. Linie
+     między pozycjami = linia nagłówka PARAMETRY. Sekcja jest zawsze
+     ostatnia, więc dolny odstęp do stopki ma wbudowany. ── */
   .dt-rel {
-    margin-top: 26px;
+    margin-top: 44px;
     padding: 0 24px 34px;
+  }
+  /* Nagłówek „INNE REALIZACJE W RAMACH INWESTYCJI" jest dłuższy niż
+     „PARAMETRY": na najwęższych telefonach (320 px) zawija się do dwóch
+     wierszy, a linia obok (flex: 1) spadała do 0 px. Linia ma więc
+     minimalną szerokość i stoi przy OSTATNIM wierszu napisu; interlinia
+     1.5 rozsuwa zawinięte wiersze, a margines linii = połowa wiersza
+     minus pół piksela, czyli przy jednym wierszu linia stoi dokładnie
+     w osi napisu (jak przy PARAMETRY). */
+  .dt-rel .dt-specs-h {
+    line-height: 1.5;
+  }
+  .dt-rel .dt-specs-h i {
+    flex: 1 0 32px;
+    align-self: flex-end;
+    margin-bottom: calc(0.75em - 0.5px);
   }
   .dt-rel-list {
     list-style: none;
     margin: 0;
     padding: 0;
-    border-top: 1px solid rgba(33, 29, 24, 0.14);
   }
   .dt-rel-list li {
     border-bottom: 1px solid rgba(33, 29, 24, 0.14);
@@ -680,11 +694,8 @@ const relHeadId = `dt-rel-h-${p.slug}`;
   .dt-rel-a {
     display: grid;
     grid-template-columns: 1fr auto;
-    grid-template-areas:
-      "meta arr"
-      "t arr";
+    grid-template-areas: "t arr";
     column-gap: 16px;
-    row-gap: 5px;
     align-items: center;
     padding: 13px 2px 14px 0;
     color: var(--ink);
@@ -694,16 +705,6 @@ const relHeadId = `dt-rel-h-${p.slug}`;
   .dt-rel-a:focus-visible {
     outline: 2px solid var(--ink);
     outline-offset: 2px;
-  }
-  .dt-rel-meta {
-    grid-area: meta;
-    font-family: var(--font-mono), monospace;
-    font-weight: 500;
-    font-size: 9.5px;
-    line-height: 1;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: rgba(87, 101, 74, 0.95);
   }
   .dt-rel-t {
     grid-area: t;
@@ -1050,7 +1051,7 @@ const relHeadId = `dt-rel-h-${p.slug}`;
        stopki CTA (.dt-foot::before), więc ostatnia pozycja nie ma własnej —
        inaczej dwie kreski kilkadziesiąt px od siebie */
     .dt-rel {
-      margin-top: clamp(20px, 1.81vw, 29px);
+      margin-top: clamp(36px, 3vw, 48px);
       padding: 0 clamp(34px, 3.33vw, 53px) 0;
     }
     .dt-rel-list li:last-child {
@@ -1058,9 +1059,6 @@ const relHeadId = `dt-rel-h-${p.slug}`;
     }
     .dt-rel-a {
       padding: clamp(11px, 0.9vw, 14px) 2px clamp(12px, 0.97vw, 15px) 0;
-    }
-    .dt-rel-meta {
-      font-size: clamp(9.5px, 0.72vw, 11px);
     }
     .dt-rel-t {
       font-size: clamp(16px, 1.25vw, 20px);

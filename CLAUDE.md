@@ -2634,7 +2634,8 @@ max(--svh,550px)·0.5267 − 72px)` + tytuł `min(…, 7.8cqi)`
     w instrukcji klienta „Jak udostępnić realizację" / „nie zmieniaj pola
     Adres linku".
 
-- **„Inne realizacje z inwestycji" — WYKONANE w kodzie** (2026-11-03,
+- **„Inne realizacje w ramach inwestycji" (do 2026-11-04 „…z inwestycji")
+  — WYKONANE** (2026-11-03, PR #33,
   branch `feat/inne-realizacje`; analiza, makiety i przebieg:
   `docs/analiza-inne-realizacje.md`). Prośba klienta: opcjonalna lista
   linków do innych realizacji na samym dole detalu.
@@ -2656,8 +2657,19 @@ max(--svh,550px)·0.5267 − 72px)` + tytuł `min(…, 7.8cqi)`
   - **Do wygenerowania przez Mateusza**: 4 × `work-detail-related`
     × 2 platformy (workflow linux `mode=changed` dla
     `tests/visual/work-index.spec.ts` → darwin na końcu).
-  - **Do zrobienia w czwartek z klientem** (panel na produkcji): lista
-    kontrolna w analizie §6 krok 9.
+  - **Test klienta na produkcji — ZALICZONY** (2026-11-04): powiązanie
+    „Relokacja domu z bala" ↔ „Budowa nowej więźby dachowej" działa.
+  - **Poprawki klienta** (2026-11-04, branch `fix/inne-realizacje-poprawki`,
+    analiza §10): pozycja = sam tytuł (bez miejscowości/roku), odstęp nad
+    sekcją 44 px mobile / `clamp(36px,3vw,48px)` desktop, bez linii pod
+    nagłówkiem (linia obok zostaje), nowa nazwa w nagłówku, panelu i wersji
+    bez JS. Nagłówek zawija się na 320 px — linia obok ma minimum 32 px
+    i stoi przy ostatnim wierszu. Baseline'y: tylko `work-detail-related`
+    (4 profile × 2 platformy; reszta 0 px przy progu zerowym). Przy
+    okazji: baseline 1920 z PR #33 miał kolumnę tekstu pod RÓŻOWĄ maską
+    wideo (maska bierze prostokąt slajdu z filmem leżącego poza kadrem) —
+    w tym zrzucie maska tylko na mobile; ten sam dług `work-detail-open`
+    1920 → `docs/optional-todos.md` pkt 7.
 
 ## Dokumentacja
 
