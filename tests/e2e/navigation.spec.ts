@@ -71,20 +71,42 @@ test.describe("nawigacja desktop", () => {
     await expect(panel).toBeHidden();
   });
 
-  test("dropdown O nas nawiguje na 3 podstrony", async ({ page }) => {
-    for (const path of [EKIPA_PATH, "/kompetencje-i-technologie/"] as const) {
-      await gotoReady(page);
-      await page.locator("[data-dropdown-toggle]").click();
-      await page.locator(`.drop-link[href="${path}"]`).click();
-      await expect(page).toHaveURL(
-        new RegExp(`${path.replaceAll("/", "\\/")}?$`),
-      );
-      await expect(page.locator("main h1")).toBeVisible();
-    }
+  test("dropdown O nas nawiguje na 2 podstrony", async ({ page }) => {
+    // prośba klienta (2026-11-04): w „O nas" zostały Ekipa i Tradycja —
+    // Kompetencje przeszły do rzędu głównego (patrz src/i18n/nav.ts)
+    await gotoReady(page);
+    await page.locator("[data-dropdown-toggle]").click();
+    await expect(page.locator(".drop-link")).toHaveCount(2);
+    await page.locator(`.drop-link[href="${EKIPA_PATH}"]`).click();
+    await expect(page).toHaveURL(/\/ekipa-eha\/?$/);
+    await expect(page.locator("main h1")).toBeVisible();
+
     await gotoReady(page);
     await page.locator("[data-dropdown-toggle]").click();
     await page.locator(`.drop-link[href="${TRADYCJA_PATH}"]`).click();
     await expect(page).toHaveURL(/\/tradycja-i-ekologia\/?$/);
+  });
+
+  test("Kompetencje w rzędzie głównym, Obsługi budowy brak w menu", async ({
+    page,
+  }) => {
+    await gotoReady(page);
+    const glowne = page.locator(".hdr-nav > a.nav-link");
+    await expect(glowne).toHaveText([
+      "Realizacje",
+      "Kompetencje i technologie",
+      "Kontakt",
+    ]);
+    await expect(
+      page.locator(`.hdr-nav a[href="${OBSLUGA_PATH}"]`),
+    ).toHaveCount(0);
+    await glowne.nth(1).click();
+    await expect(page).toHaveURL(/\/kompetencje-i-technologie\/?$/);
+    await expect(page.locator("main h1")).toBeVisible();
+    // na kompetencjach bieżąca jest pozycja z rzędu głównego
+    await expect(
+      page.locator('.hdr-nav .nav-link[aria-current="page"]'),
+    ).toHaveAttribute("href", KOMPETENCJE_PATH);
   });
 
   // ── wskaźnik bieżącej strony + czytelność submenu (sesja poprawek
@@ -113,10 +135,11 @@ test.describe("nawigacja desktop", () => {
         await expect(link).toHaveCSS("border-bottom-color", "rgba(0, 0, 0, 0)");
       }
 
-      // /obsluga-budowy/ — pasek kremowy nad ciemnym hero (design:
-      // obsluga-budowy.html → 1px solid currentColor). Zieleń akcentu
-      // ginęła tu na zdjęciu; kreska musi mieć kolor TEKSTU paska.
-      await gotoReady(page, OBSLUGA_PATH);
+      // /kompetencje-i-technologie/ — pasek kremowy nad ciemnym hero
+      // (design: obsluga-budowy.html → 1px solid currentColor; od zmiany
+      // menu 2026-11-04 obsługi nie ma w menu, więc ten sam ton sprawdzamy
+      // na kompetencjach). Kreska musi mieć kolor TEKSTU paska.
+      await gotoReady(page, KOMPETENCJE_PATH);
       const aktD = page.locator('.hdr-nav .nav-link[aria-current="page"]');
       const kolory = await aktD.evaluate((el) => {
         const cs = getComputedStyle(el);
@@ -131,7 +154,7 @@ test.describe("nawigacja desktop", () => {
     }) => {
       // wariant kremowy ma w selektorze `:not([data-solid])`, więc
       // wygasa razem z tonem — bez osobnej reguły
-      await gotoReady(page, OBSLUGA_PATH);
+      await gotoReady(page, KOMPETENCJE_PATH);
       await ensureScrollRoom(page);
       await scrollPageTo(page, 1200);
       await expect(page.locator("[data-nav]")).toHaveAttribute(
@@ -442,14 +465,22 @@ test.describe("nawigacja mobile (bottom sheet)", () => {
     await expect(page.locator("main h1")).toBeVisible();
   });
 
-  test("pozycja Obsługa budowy w sheecie nawiguje na podstronę", async ({
+  test("pozycja Kompetencje w sheecie nawiguje na podstronę, Obsługi budowy brak", async ({
     page,
   }) => {
     await gotoReady(page);
     await page.locator("[data-burger]").click();
-    // Asercja treści ogólna (main h1), odporna na wymianę szkieletu.
-    await page.locator(`.m-link[href="${OBSLUGA_PATH}"]`).click();
-    await expect(page).toHaveURL(/\/obsluga-budowy\/?$/);
+    // prośba klienta (2026-11-04): akordeon „O nas" ma 2 podlinki,
+    // Kompetencje są pozycją główną, Obsługi budowy nie ma wcale
+    await expect(page.locator("#nav-sheet .m-sub-link")).toHaveCount(2);
+    await expect(
+      page.locator(`#nav-sheet .m-sub-link[href="${KOMPETENCJE_PATH}"]`),
+    ).toHaveCount(0);
+    await expect(
+      page.locator(`#nav-sheet a[href="${OBSLUGA_PATH}"]`),
+    ).toHaveCount(0);
+    await page.locator(`.m-link[href="${KOMPETENCJE_PATH}"]`).click();
+    await expect(page).toHaveURL(/\/kompetencje-i-technologie\/?$/);
     await expect(page.locator("main h1")).toBeVisible();
   });
 
@@ -482,6 +513,26 @@ test("logo w pasku prowadzi na stronę główną z podstrony", async ({ page }) 
   await page.locator(".hdr-logo").click();
   await expect(page).toHaveURL(/\/$/);
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
+});
+
+test("stopka: kolumny stron = lista menu, bez Obsługi budowy", async ({
+  page,
+}) => {
+  // prośba klienta (2026-11-04): stopka idzie za menu — Kompetencje
+  // w kolumnie OFERTA/STRONY, Obsługi budowy brak (podstrona dalej żyje)
+  await gotoReady(page);
+  const kol = page.locator("footer .ft-cols .ft-gc");
+  await expect(kol.nth(0).locator("a")).toHaveText([
+    "Ekipa EH/A",
+    "Tradycja i ekologia",
+    "Polityka prywatności",
+  ]);
+  await expect(kol.nth(1).locator("a")).toHaveText([
+    "Realizacje",
+    "Kompetencje i technologie",
+    "Kontakt",
+  ]);
+  await expect(page.locator(`footer a[href="${OBSLUGA_PATH}"]`)).toHaveCount(0);
 });
 
 test("stopka: telefony i mail złożone w JS w slotach antyscrapingowych", async ({
