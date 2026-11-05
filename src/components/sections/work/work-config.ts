@@ -13,12 +13,13 @@ export const WORK_DESKTOP_MIN_PX = 1024;
  *  (odczyt eksportu: `gridCols: w >= 700`). */
 export const WORK_GRID_TWO_COL_MIN_PX = 700;
 
-/** Rozmiar strony paginacji desktop (E5). Design pokazywał 6 kafli —
- *  4 to świadome ODSTĘPSTWO (decyzja Mateusza z korekt 4.3).
+/** Rozmiar strony paginacji desktop (E5). 6 jak w designie — prośba
+ *  klienta z 2026-11-05 (unieważnia korektę 4.3, która dawała 4).
  *  SSR renderuje wszystkie kafle, JS ukrywa. */
-export const WORK_PAGE_SIZE = 4;
+export const WORK_PAGE_SIZE = 6;
 
-/** Krok przycisku „Pokaż więcej realizacji" mobile (E5) — 4 jak wyżej
+/** Krok przycisku „Pokaż więcej realizacji" mobile (E5) — 4 to świadome
+ *  ODSTĘPSTWO od designu (korekta 4.3), NIEZALEŻNE od desktopu
  *  (start = pierwszy krok, każde kliknięcie dokłada kolejny). */
 export const WORK_MOBILE_STEP = 4;
 

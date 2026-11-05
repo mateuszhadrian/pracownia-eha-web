@@ -132,6 +132,8 @@ WorkDetailOverlay / WorkDetail) — PORT SKINU, architektura bez zmian.
    i atrapę „1 2 3 →"; decyzja Mateusza z korekt 4.3). Stałe
    `WORK_PAGE_SIZE` / `WORK_MOBILE_STEP` w `work-config.ts` (importują
    je widok i testy — zmiana liczby to jedna stała).
+   **AKTUALIZACJA 2026-11-05 (prośba klienta): desktop = 6**, zgodnie
+   z eksportem; mobile zostaje przy 4.
 2. **Paginacja = czysty progressive enhancement (E5):** SSR renderuje
    WSZYSTKIE kafle i WSZYSTKIE `<template data-work-detail>`; kontrolki
    (paginacja / „pokaż więcej") są w SSR z atrybutem `hidden` —
@@ -237,7 +239,7 @@ WorkDetailOverlay / WorkDetail) — PORT SKINU, architektura bez zmian.
 ### 2a. Korekty Mateusza po testach lokalnych (2026-08-24)
 
 - **Strona paginacji / krok „pokaż więcej" = 4** (pkt 1 — odstępstwo
-  od eksportowych 6).
+  od eksportowych 6; od 2026-11-05 dotyczy już tylko kroku mobile).
 - **Tło widoku i panelu detalu** = wzorzec strony głównej (pkt 12:
   PaperBackdrop + `background-attachment: local` w scrollerze detalu).
 - **Kamera na kadrze wideo desktop 160 px** (4× mobilnych 40 px;

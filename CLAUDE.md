@@ -2693,6 +2693,23 @@ max(--svh,550px)·0.5267 − 72px)` + tytuł `min(…, 7.8cqi)`
   (desktopowe `*-full` i `kontakt-top` 1920/firefox — pasek i stopka pod
   progiem) na platformę.
 
+- **6 realizacji na stronę na desktopie — WYKONANE** (2026-11-05, branch
+  `feat/realizacje-6-na-strone`; prośba klienta). `WORK_PAGE_SIZE` 4 → 6
+  (wartość z eksportu; unieważnia korektę 4.3 dla desktopu),
+  `WORK_MOBILE_STEP` zostaje 4 — mobile bez zmian. Przy obecnych 6 wpisach
+  paginacja desktop NIE RENDERUJE SIĘ (`pages > 1`), wróci sama przy 7.
+  ⚠️ Pozytywne testy paginacji (`work-index.spec.ts`) robią wtedy skip, więc
+  CI jej nie pokrywa; biega wariant „brak kontrolek, siatka pełna". Zweryfikowane
+  jednorazowo buildem z 13 wpisami poza repo (`REALIZACJE_DIR`): strony
+  6/6/1, ostatnia strona blokuje „następną", wejście z linku trafia na
+  właściwą stronę, mobile 4 → 8. Bramki: e2e work-index/work-links/
+  navigation/a11y 340 passed, 0 failed; unit 126. Zasięg baseline'ów
+  (próg zerowy, specy work-index + chrome): **3 z 37 zrzutów** —
+  `work-index-full` × 3 profile desktop (fixture 5 wpisów: strona rośnie
+  o ~395 px i traci kontrolki). **Do wygenerowania przez Mateusza**:
+  3 × 2 platformy (workflow linux `mode=changed` dla
+  `tests/visual/work-index.spec.ts` → darwin na końcu).
+
 ## Dokumentacja
 
 - Decyzje projektu (zapadłe — nie otwieraj na nowo):
