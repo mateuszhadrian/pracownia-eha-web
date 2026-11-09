@@ -170,6 +170,13 @@ w tym samym PR (ostatni wpis = skasowanie pliku).
   `lb-slide` → `is-loading` → `lb-slide`, a powrót do podpowiedzi
   zachodzi tylko na `pause`/`error`/`abort`, czyli pobieranie zostało
   PRZERWANE, nie spowolnione.
+- **Runnery CI przypięte do `ubuntu-24.04`, NIE `ubuntu-latest`**
+  (2026-11-09): GitHub przestawił `ubuntu-latest` na 26.04, na którym
+  WebKit z Playwrighta 1.61.1 nie startuje (`browserType.launch: …
+browser has been closed` na każdym profilu iPhone — padło i `e2e`,
+  i workflow baseline'ów). Wszystkie baseline'y linux powstały na 24.04.
+  Przejście na nowszy obraz = bump Playwrighta + przeliczenie
+  WSZYSTKICH baseline'ów linux, osobnym PR-em.
 - Wersje `playwright` i `@playwright/test` podnoś PARĄ (jeden zestaw
   binariów); bump = też tag obrazu Dockera w procedurze baseline'ów.
 - Profile Playwright: 6 (chromium-1920/1366, firefox, webkit-SE/14,
