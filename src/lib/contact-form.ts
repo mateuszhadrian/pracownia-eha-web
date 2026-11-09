@@ -18,7 +18,7 @@ export const CONTACT_TO = "eha@pracownia-eha.pl";
 export const CONTACT_FROM_NOTIFY =
   "Formularz pracownia-eha.pl <no-reply@send.pracownia-eha.pl>";
 export const CONTACT_FROM_CONFIRM =
-  "Pracownia EH/A <no-reply@send.pracownia-eha.pl>";
+  "Pracownia EHa <no-reply@send.pracownia-eha.pl>";
 
 export const MIN_FILL_MS = 4000;
 export const NAME_MAX = 100;
@@ -234,7 +234,7 @@ export function buildNotifyEmail(
 export function buildConfirmEmail(data: ContactData): EmailContent {
   const name = stripNewlines(data.name);
 
-  const subject = "Dziękujemy za wiadomość — Pracownia EH/A";
+  const subject = "Dziękujemy za wiadomość — Pracownia EHa";
   const text = [
     `Cześć ${name},`,
     "",
@@ -246,7 +246,7 @@ export function buildConfirmEmail(data: ContactData): EmailContent {
     quoteText(data.message),
     "",
     "Pozdrawiamy",
-    "Pracownia EH/A",
+    "Pracownia EHa",
     "https://pracownia-eha.pl",
     "",
     "—",
@@ -259,7 +259,7 @@ export function buildConfirmEmail(data: ContactData): EmailContent {
     "<p>dziękujemy za wiadomość wysłaną przez formularz na pracownia-eha.pl — właśnie do nas dotarła. Odezwiemy się najszybciej, jak to możliwe (jesteśmy na budowie pn.–pt. 8–16, więc zwykle w 1–2 dni robocze).</p>",
     "<p>Kopia Twojej wiadomości:</p>",
     `<blockquote style="white-space:pre-wrap;border-left:3px solid #ccc;margin:0;padding-left:12px">${escapeHtml(data.message)}</blockquote>`,
-    '<p>Pozdrawiamy<br>Pracownia EH/A<br><a href="https://pracownia-eha.pl">pracownia-eha.pl</a></p>',
+    '<p>Pozdrawiamy<br>Pracownia EHa<br><a href="https://pracownia-eha.pl">pracownia-eha.pl</a></p>',
     '<p style="color:#777;font-size:12px">Ta wiadomość została wysłana automatycznie. Jeśli to nie Ty wypełniłeś(-aś) formularz na pracownia-eha.pl, zignoruj ją — Twój adres nie zostanie zapisany ani dodany do żadnej listy.</p>',
   ].join("\n");
   return { subject, html, text };

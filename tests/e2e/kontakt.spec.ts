@@ -101,15 +101,17 @@ test.describe("bez JS strona jest kompletna treściowo", () => {
   test("h1, sekcje i pełny formularz (4 pola) w SSR", async ({ page }) => {
     await page.goto(PATH, { waitUntil: "domcontentloaded" });
     await expect(page.locator("main h1")).toHaveText("Skontaktuj się z nami");
-    for (const h2 of [
-      "Wolisz formę pisemną?",
-      "Albo wypełnij formularz",
-      "Śledź nasze realizacje",
-    ]) {
+    for (const h2 of ["Wypełnij formularz", "Obserwuj nas"]) {
       await expect(
         page.locator("main h2").filter({ hasText: h2 }),
       ).toBeVisible();
     }
+    // Poprawki klienta 2026-11-09: pudło godzin, sekcja „Wolisz formę
+    // pisemną?", podpis pod mailem i akapit „Pracujemy na Dolnym
+    // Śląsku…" USUNIĘTE — nie mogą wrócić z kopii eksportu
+    await expect(
+      page.locator(".kt-hours, .kt-write, .kt-firm, .kt-tag"),
+    ).toHaveCount(0);
     // E9: DOKŁADNIE 4 pola na obu progach (5. pole desktopu eksportu
     // to pomyłka designu — analiza §1d)
     await expect(page.locator(".kt-f")).toHaveCount(4);
@@ -426,49 +428,58 @@ test("navbar: kremowy nad hero, atramentowy po zjechaniu za próg", async ({
 test.describe("układ desktop", () => {
   test.skip(({ isMobile }) => !!isMobile, "tylko układ desktop");
 
-  // Ryciny desktopowe nie mogą być ucinane od DOŁU (sesja poprawek;
-  // zgłoszenie Mateusza). `.kt-write`/`.kt-social` mają na mobile
-  // `overflow: hidden` (ryciny celowo wychodzą za krawędź EKRANU),
-  // ale na desktopie ucinało to rysunek w pół kreski, bo obie ryciny
-  // są WYŻSZE od swoich sekcji. Sonda układu, nie pixel-diff.
-  test("ryciny wychodzą poza sekcję zamiast być ucięte na jej krawędzi", async ({
+  // Rycina gołębia nie może być ucinana od DOŁU (sesja poprawek;
+  // zgłoszenie Mateusza). `.kt-social` ma na mobile `overflow: hidden`
+  // (rycina celowo wychodzi za krawędź EKRANU), ale na desktopie
+  // ucinało to rysunek w pół kreski, bo rycina jest WYŻSZA od sekcji.
+  // Sonda układu, nie pixel-diff. (Kałamarz odszedł razem z sekcją
+  // „Wolisz formę pisemną?" — poprawki klienta 2026-11-09.)
+  test("rycina gołębia wychodzi poza sekcję zamiast być ucięta na jej krawędzi", async ({
     page,
   }) => {
     await gotoReady(page, PATH);
     const geo = await page.evaluate(() => {
       const box = (sel: string) =>
         document.querySelector<HTMLElement>(sel)!.getBoundingClientRect();
-      const write = box(".kt-write");
-      const kalamarz = box(".kt-write-ryc.dOnly");
-      const formsec = box(".kt-formsec");
       const social = box(".kt-social");
       const golab = box(".kt-social-ryc.dOnly");
       const footer = box("footer");
       return {
-        // kałamarz sięga NIŻEJ niż jego sekcja (czyli nie jest przycięty)
-        kalamarzPozaSekcja: kalamarz.bottom - write.bottom,
-        // …i wchodzi w obszar pudła formularza, za którym ma się chować
-        kalamarzWFormularzu: kalamarz.bottom - formsec.top,
-        formsecPozycjonowany: getComputedStyle(
-          document.querySelector<HTMLElement>(".kt-formsec")!,
-        ).position,
         golabPozaSekcja: golab.bottom - social.bottom,
         // …ale nie dojeżdża do stopki (nie ma się tam za co schować)
         golabDoStopki: footer.top - golab.bottom,
         // oś pozioma zostaje przycięta — strona nie może dostać scrolla
         poziomyScroll: document.documentElement.scrollWidth > window.innerWidth,
-        kalamarzWBoku: kalamarz.right - write.right,
         golabWBoku: golab.right - social.right,
       };
     });
-    expect(geo.kalamarzPozaSekcja).toBeGreaterThan(0);
-    expect(geo.kalamarzWFormularzu).toBeGreaterThan(0);
-    expect(geo.formsecPozycjonowany).toBe("relative");
     expect(geo.golabPozaSekcja).toBeGreaterThan(0);
     expect(geo.golabDoStopki).toBeGreaterThan(0);
     expect(geo.poziomyScroll).toBe(false);
-    expect(geo.kalamarzWBoku).toBeLessThanOrEqual(0);
     expect(geo.golabWBoku).toBeLessThanOrEqual(0);
+  });
+
+  // Poprawki klienta 2026-11-09: pod kaflem Łukasza stoi OD RAZU blok
+  // e-mail (pudło godzin usunięte), a granica między nimi zostaje taka,
+  // jaka była pod telefonami — bez dodatkowej linii.
+  test("w karcie e-mail stoi bezpośrednio pod telefonami", async ({ page }) => {
+    await gotoReady(page, PATH);
+    const geo = await page.evaluate(() => {
+      const call = document.querySelector<HTMLElement>(".kt-call")!;
+      const mail = document.querySelector<HTMLElement>(".kt-mail")!;
+      return {
+        sasiad: call.nextElementSibling === mail,
+        szczelina:
+          mail.getBoundingClientRect().top -
+          call.getBoundingClientRect().bottom,
+        // grubość, nie styl: preflight Tailwinda daje KAŻDEMU elementowi
+        // `border-style: solid` przy szerokości 0
+        ramkaNadMailem: getComputedStyle(mail).borderTopWidth,
+      };
+    });
+    expect(geo.sasiad).toBe(true);
+    expect(Math.abs(geo.szczelina)).toBeLessThan(0.5);
+    expect(geo.ramkaNadMailem).toBe("0px");
   });
 
   test("kolumna kontaktowa jest sticky i zatrzymuje się POD paskiem", async ({
@@ -535,56 +546,6 @@ test.describe("układ desktop", () => {
 });
 
 // ── reveal nagłówka po dojechaniu (bramka js-motion, mobile) ──
-// ── tag godzin łamany jawnie (sesja poprawek; zgłoszenie Mateusza).
-// Jeden ciąg „KONTAKT 7 DNI W TYGODNIU · BUDOWA PN–PT 8–16" ma 326 px,
-// a kolumna mobile 260–326 px, więc od 375 px w dół zawijał się sam
-// i zrzucał do drugiego wiersza sierotę „8–16", a przy 375 px SAMO
-// „16". Przy 390 px stał dokładnie na styk. Teraz to dwa człony:
-// mobile jeden pod drugim, desktop sklejone kropką. ──
-test("tag godzin: mobile dwa wiersze, desktop jeden z kropką", async ({
-  page,
-  isMobile,
-}) => {
-  await gotoReady(page, PATH);
-  const tag = page.locator(".kt-tag-hours");
-  const geo = await tag.evaluate((el: HTMLElement) => {
-    const czlony = [
-      ...el.querySelectorAll<HTMLElement>(":scope > span"),
-    ].filter((s) => !s.classList.contains("kt-tag-sep"));
-    const sep = el.querySelector<HTMLElement>(".kt-tag-sep")!;
-    const cs = getComputedStyle(el);
-    const lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.2;
-    return {
-      wierszy: Math.round(
-        (el.getBoundingClientRect().height - parseFloat(cs.paddingBottom)) / lh,
-      ),
-      czlonow: czlony.length,
-      // żaden człon nie może się łamać w środku — inaczej wraca sierota
-      nowrap: czlony.map((s) => getComputedStyle(s).whiteSpace),
-      wysokosciCzlonow: czlony.map((s) =>
-        Math.round(s.getBoundingClientRect().height),
-      ),
-      sep: getComputedStyle(sep).display,
-      tekst: el.innerText.replace(/\s+/g, " ").trim(),
-    };
-  });
-  expect(geo.czlonow).toBe(2);
-  expect(geo.nowrap).toEqual(["nowrap", "nowrap"]);
-  // każdy człon mieści się w JEDNYM wierszu (sierota „16" niemożliwa)
-  const lh = geo.wysokosciCzlonow[0];
-  expect(geo.wysokosciCzlonow[1]).toBe(lh);
-  if (isMobile) {
-    expect(geo.wierszy).toBe(2);
-    expect(geo.sep).toBe("none");
-    expect(geo.tekst).toContain("KONTAKT 7 DNI W TYGODNIU");
-    expect(geo.tekst).toContain("BUDOWA PN–PT 8–16");
-  } else {
-    expect(geo.wierszy).toBe(1);
-    expect(geo.sep).toBe("inline");
-    expect(geo.tekst).toBe("KONTAKT 7 DNI W TYGODNIU · BUDOWA PN–PT 8–16");
-  }
-});
-
 // ── rycina gołębia w sekcji social (sesja poprawek; zgłoszenie
 // Mateusza z telefonu). Element wystaje 44 px poza prawą krawędź przy
 // szerokości 168 px, a `.kt-social` ma `overflow: hidden` — ekran ucinał

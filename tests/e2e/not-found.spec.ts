@@ -31,7 +31,7 @@ test("meta: tytuł, noindex, BEZ canonicala, og:url i JSON-LD", async ({
 }) => {
   await gotoReady(page, MISSING[1]);
   const head = page.locator("head");
-  await expect(page).toHaveTitle("Nie znaleziono strony — Pracownia EH/A");
+  await expect(page).toHaveTitle("Nie znaleziono strony — Pracownia EHa");
   await expect(head.locator('meta[name="robots"]')).toHaveAttribute(
     "content",
     "noindex",

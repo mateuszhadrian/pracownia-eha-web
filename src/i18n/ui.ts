@@ -8,30 +8,30 @@ export const defaultLang = "pl";
 export const ui = {
   pl: {
     "meta.title": "Pracownia EH/A — remonty domów z historią",
-    "ekipaPage.title": "Ekipa EH/A — Pracownia EH/A",
+    "ekipaPage.title": "Ekipa EHa — Pracownia EHa",
     "ekipaPage.description":
-      "Poznaj ekipę Pracowni EH/A — Łukasza i Maćka. Remonty domów z historią: ciesielstwo, murarstwo i fizyka budowli.",
-    "kompetencjePage.title": "Kompetencje i technologie — Pracownia EH/A",
+      "Poznaj ekipę Pracowni EHa — Łukasza i Maćka. Remonty domów z historią: ciesielstwo, murarstwo i fizyka budowli.",
+    "kompetencjePage.title": "Kompetencje i technologie — Pracownia EHa",
     "kompetencjePage.description":
-      "Ciesielstwo, murarstwo, sklepienia, fizyka budowli i instalacje — kompetencje i technologie Pracowni EH/A.",
-    "tradycjaPage.title": "Tradycja i ekologia — Pracownia EH/A",
+      "Ciesielstwo, murarstwo, sklepienia, fizyka budowli i instalacje — kompetencje i technologie Pracowni EHa.",
+    "tradycjaPage.title": "Tradycja i ekologia — Pracownia EHa",
     "tradycjaPage.description":
-      "Tradycyjne techniki budowlane i ekologia w remontach domów z historią — podejście Pracowni EH/A.",
-    "obslugaPage.title": "Obsługa budowy — Pracownia EH/A",
+      "Tradycyjne techniki budowlane i ekologia w remontach domów z historią — podejście Pracowni EHa.",
+    "obslugaPage.title": "Obsługa budowy — Pracownia EHa",
     "obslugaPage.description":
-      "Obsługa budowy z jednym punktem kontaktu — logistyka, dostawy i harmonogram po naszej stronie. Pełna kontrola remontu z dystansu. Pracownia EH/A.",
-    "workPage.title": "Realizacje — Pracownia EH/A",
+      "Obsługa budowy z jednym punktem kontaktu — logistyka, dostawy i harmonogram po naszej stronie. Pełna kontrola remontu z dystansu. Pracownia EHa.",
+    "workPage.title": "Realizacje — Pracownia EHa",
     "workPage.description":
-      "Realizacje Pracowni EH/A — remonty domów z historią: ciesielstwo, murarstwo, sklepienia, fizyka budowli i instalacje.",
+      "Realizacje Pracowni EHa — remonty domów z historią: ciesielstwo, murarstwo, sklepienia, fizyka budowli i instalacje.",
     // Tytuł polityki jest KONTRAKTEM testu (tests/e2e/policy.spec.ts,
     // Etap 3) — zmiana wymaga poprawki w spechu.
-    "policyPage.title": "Polityka prywatności — Pracownia EH/A",
+    "policyPage.title": "Polityka prywatności — Pracownia EHa",
     "policyPage.description":
       "Polityka prywatności serwisu pracownia-eha.pl — kto jest administratorem danych, jakie dane przetwarzamy, na jakiej podstawie, jak długo i jakie masz prawa.",
     // Strona 404 (src/pages/404.astro) — bez description: noindex.
-    "notFoundPage.title": "Nie znaleziono strony — Pracownia EH/A",
-    "contactPage.title": "Kontakt — Pracownia EH/A",
+    "notFoundPage.title": "Nie znaleziono strony — Pracownia EHa",
+    "contactPage.title": "Kontakt — Pracownia EHa",
     "contactPage.description":
-      "Skontaktuj się z Pracownią EH/A — formularz kontaktowy, telefon i e-mail. Opisz dom i zakres prac, odezwiemy się, aby porozmawiać o remoncie.",
+      "Skontaktuj się z Pracownią EHa — formularz kontaktowy, telefon i e-mail. Opisz dom i zakres prac, odezwiemy się, aby porozmawiać o remoncie.",
   },
 } as const;

@@ -18,7 +18,6 @@ import ceglaRozb from "@/assets/cegla-rozbiorkowa.webp";
 import house2 from "@/assets/dom-ryc-house2.webp";
 import house3 from "@/assets/dom-ryc-house3.webp";
 import house5 from "@/assets/dom-ryc-house5.webp";
-import bala3 from "@/assets/dom-z-bala3.webp";
 import bala4 from "@/assets/dom-z-bala4.webp";
 import kolekM from "@/assets/eha-kolek-ryc-m.webp";
 import ekologia from "@/assets/ekologia-techno.webp";
@@ -35,57 +34,49 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import { CONTACT_PATH } from "@/lib/routes";
 
 // Treści powtarzane dOnly/mOnly — jedno źródło, żeby kopie nie mogły
-// się rozjechać (akapity z <em> siedzą inline w markupie — mikroklimat
-// ma jeden markup, więc nie duplikuje).
-const MAN_P = [
-  "W dzisiejszym budownictwie słowo „ekologia” zostało sprowadzone do pustego sloganu, który najczęściej oznacza zamykanie domów w szczelnych termosach ze styropianu, plastiku i folii. W Pracowni EH/A rozumiemy ekologię zupełnie inaczej. Dla nas to powrót do praw fizyki, poszanowanie geologicznej natury materiałów oraz inżynieria, która współpracuje z prawami natury, zamiast z nimi walczyć.",
-  "Tradycja, z której czerpiemy, nie jest dla nas sentymentalnym powrotem do przeszłości – jest zbiorem wybitnych technologii budowlanych, które przetrwały próbę czasu.",
-];
+// się rozjechać (mikroklimat/efektywność ma jeden markup, więc akapity
+// siedzą inline).
+const MAN_P =
+  "W remontach domów historycznych łączymy ochronę istniejącej zabudowy z racjonalnym wykorzystaniem materiałów. Dobieramy rozwiązania do konstrukcji i stanu technicznego budynku, ograniczamy wymianę elementów oraz dbamy o jakość wykonania. Takie podejście pozwala zmniejszyć zużycie surowców, ilość odpadów budowlanych i zakres przyszłych napraw.";
 const FIZ_P = [
-  "Zrozumienie materii zaczyna się u podstaw. Wykorzystując nasze zaplecze w dziedzinach takich jak geologia i systemowe zarządzanie technologią, traktujemy budynek jako żywy, fizyczny organizm. Zamiast izolować go syntetyczną chemią, pozwalamy mu swobodnie regulować parametry.",
-  "Stosujemy ocieplenia i termomodernizacje oparte wyłącznie na materiałach otwartych dyfuzyjnie. Wykorzystujemy do tego najwyższej jakości wełnę drzewną oraz tradycyjne tynki wapienne. Taki układ warstw sprawia, że ściana w naturalny sposób przyjmuje, a następnie oddaje nadmiar wilgoci z wnętrza. Historyczna konstrukcja zyskuje odpowiednie środowisko do długowiecznego funkcjonowania, chroniąc więźby i mury przed ukrytą degradacją i gniciem, które często towarzyszą nowoczesnym, „szczelnym” technologiom.",
+  "Pracujemy przede wszystkim z naturalnymi materiałami takimi jak drewno, glina, wapno, kamień czy włókna roślinne. Od zawsze wykorzystywane w budownictwie, sprawdzają się ze względu na swoje właściwości dyfuzyjne, bezpieczeństwo dla ludzi oraz niewielki wpływ na środowisko naturalne. O ich zastosowaniu decydują właściwości techniczne oraz zgodność z istniejącą konstrukcją. Przykładowo, zaprawę do naprawy muru dobieramy do wytrzymałości i nasiąkliwości cegły lub kamienia. Przy docieplaniu ścian drewnianych uwzględniamy opór dyfuzyjny poszczególnych warstw oraz możliwość odprowadzania wilgoci.",
+  "W historycznej architekturze, szczególnie o konstrukcji drewnianej, zastosowanie naturalnych materiałów ma ogromne znaczenie dla trwałości budynku. Nieodpowiednio dobrane, szczelne powłoki mogą zatrzymywać wilgoć i przyczyniać się do degradacji ścian, stropów i więźby dachowej. Dlatego do odtworzenia elementów konstrukcyjnych, ale także wykończenia i docieplenia budynku, stosujemy naturalne materiały. Pozwalają one na swobodny przepływ wilgoci i chronią budynek.",
 ];
-const UP_P = [
-  "Najbardziej ekologicznym materiałem jest ten, który już istnieje. W naszej pracy doprowadziliśmy recykling architektoniczny do poziomu sztuki. Zamiast generować nowy ślad węglowy, ratujemy przed zniszczeniem potężne ilości historycznej substancji.",
-  "Z ogromną satysfakcją wznosimy konstrukcje i trudne sklepienia ze starej cegły rozbiórkowej, łącząc ją z nowym surowcem.",
-  "Podejmujemy się również zadań bezkompromisowych, takich jak relokacja budynków – na naszym koncie znajduje się między innymi budowa rozebranego domu z bala, który przywieźliśmy z innej lokalizacji i zrekonstruowaliśmy w miejscowości Czernica. To nie tylko hołd dla rzemiosła, ale przede wszystkim najwyższa możliwa forma szacunku dla środowiska.",
-];
+const UP_P =
+  "Najbardziej ekologicznym materiałem jest ten, który już istnieje. Przed wymianą oryginalnych elementów oceniamy możliwość ich dalszego wykorzystania. Do zachowania mogą nadawać się między innymi cegły czy elementy kamienne. Jeśli ich stan techniczny na to pozwala, możemy odzyskać nawet całą konstrukcję — jak w przypadku relokowanego domu w Czernicy.";
 const TRW_P = [
-  "Wierzymy, że najbardziej ekologiczny dom to ten, którego nie trzeba wyburzać i budować od nowa po kilkudziesięciu latach. Trwałość jest fundamentem naszej filozofii. Odnawiając ściany szachulcowe czy wznosząc konstrukcje przysłupowe, korzystamy ze sprawdzonych, ciesielskich rozwiązań.",
-  "Elementy nośne łączymy za pomocą drewnianych kołków i tradycyjnych złączy ciesielskich. Nie używamy metalowych śrub, które z czasem korodują i niszczą strukturę surowca.",
-  "Odpowiednio dobrane, starannie wyselekcjonowane drewno w połączeniu z tradycyjną techniką wiązania tworzy strukturę elastyczną, zdolną oprzeć się potężnym siłom naprężeń przez setki lat.",
+  "Trwałość zależy od jakości materiałów, sposobu ich przygotowania, wykonania i konserwacji. Część materiałów przygotowujemy sami, a pozostałe zamawiamy u lokalnych dostawców.",
+  "Samodzielnie sporządzamy mieszanki tynkarskie i selekcjonujemy drewno. Dbamy o przygotowanie podłoża, prawidłowe połączenia elementów oraz warunki nakładania i wysychania tynków. Staranność na każdym etapie ogranicza ryzyko przedwczesnych uszkodzeń i konieczność ponownego wykonywania tych samych prac.",
 ];
 const MIKRO_CARDS = [
   {
-    k: "BEZ PLEŚNI",
-    t: "Ściana otwarta dyfuzyjnie nie zatrzymuje wilgoci — grzyb nie ma się gdzie zadomowić.",
+    k: "KOMFORT CIEPLNY",
+    t: "Stabilna temperatura we wnętrzach i mniejsze straty ciepła",
   },
   {
     k: "BEZ TOKSYCZNYCH OPARÓW",
-    t: "Wełna drzewna i wapno zamiast klejów, pianek i syntetycznych folii.",
+    t: "Wełna drzewna, glina i wapno – materiały przyjazne dla zdrowia",
   },
   {
-    k: "STABILNA WILGOTNOŚĆ",
-    t: "Mury same regulują poziom pary wodnej — powietrze pozostaje rześkie przez cały rok.",
+    k: "BEZ WILGOCI",
+    t: "Swobodne odprowadzanie pary wodnej to brak wilgoci i trwałość budynku",
   },
 ];
 // diagram warstw otwartych dyfuzyjnie (dwie kopie: mOnly animowana
 // [data-diag] + dOnly statyczna — analiza §2.5/§2.8)
 const DIAG_LAYERS = [
-  { label: "WNĘTRZE", cls: "dg-edge" },
+  { label: "STRONA WEWNĘTRZNA", cls: "dg-edge" },
   { label: "TYNK WAPIENNY", cls: "dg-tynk" },
   { label: "WEŁNA DRZEWNA", cls: "dg-welna" },
-  { label: "MUR HISTORYCZNY", cls: "dg-mur" },
-  { label: "ZEWNĘTRZE", cls: "dg-edge" },
+  { label: "ŚCIANA", cls: "dg-mur" },
+  { label: "STRONA ZEWNĘTRZNA", cls: "dg-edge" },
 ];
 const DIAG_KICK = "UKŁAD WARSTW OTWARTYCH DYFUZYJNIE";
-const DIAG_CAP = "PARA WODNA — ŚCIANA PRZYJMUJE I ODDAJE WILGOĆ";
+const DIAG_CAP = "ŚCIANA PRZYJMUJE I ODDAJE WILGOĆ";
 const FIZ_BADGE = "WAPIEŃ · WEŁNA DRZEWNA · STARE DREWNO";
 const UP_BADGE = "BEZKOMPROMISOWO · RELOKACJA BUDYNKÓW";
 const UP_CAP1 = "CZERNICA — REKONSTRUKCJA PRZEWIEZIONEGO ZRĘBU";
-const UP_CAP2 = "NOWA WIĘŹBA NAD STULETNIM ZRĘBEM";
 const BALA4_ALT = "Zrąb domu z bala zrekonstruowany w Czernicy";
-const BALA3_ALT = "Nowa więźba dachowa nad stuletnim zrębem";
 ---
 
 <BaseLayout
@@ -124,9 +115,9 @@ const BALA3_ALT = "Nowa więźba dachowa nad stuletnim zrębem";
         <span class="trd-hero-bot dOnly" aria-hidden="true"></span>
       </div>
       <div class="trd-hero-tt">
-        <h1>Tradycja i ekologia.</h1>
+        <h1>Tradycja i ekologia</h1>
         <span class="trd-hero-tag dOnly"
-          >PRACOWNIA EH/A<br />REMONTY DOMÓW Z HISTORIĄ</span
+          >PRACOWNIA EHa<br />REMONTY DOMÓW Z HISTORIĄ</span
         >
       </div>
     </header>
@@ -157,8 +148,8 @@ const BALA3_ALT = "Nowa więźba dachowa nad stuletnim zrębem";
           />
         </div>
         <p class="trd-lead mOnly">Manifest pragmatyczny.</p>
-        <p class="man-p mOnly">{MAN_P.join(" ")}</p>
-        {MAN_P.map((t) => <p class="man-p man-col dOnly">{t}</p>)}
+        <p class="man-p mOnly">{MAN_P}</p>
+        <p class="man-p man-col dOnly">{MAN_P}</p>
       </div>
     </section>
 
@@ -182,7 +173,7 @@ const BALA3_ALT = "Nowa więźba dachowa nad stuletnim zrębem";
       <div class="fiz-g1">
         <div class="fiz-txt">
           <div class="fiz-head">
-            <h2 data-rev>Fizyka budowli. Dom, który naprawdę oddycha</h2>
+            <h2 data-rev>Naturalne materiały dopasowane do budynku</h2>
           </div>
           <p class="trd-p dOnly">{FIZ_P[0]}</p>
         </div>
@@ -265,12 +256,10 @@ const BALA3_ALT = "Nowa więźba dachowa nad stuletnim zrębem";
               <span class="trd-fog"></span>
             </div>
             <div class="trd-sec-head-in">
-              <h2 data-rev>
-                Upcycling na wielką skalę. Drugie życie architektury
-              </h2>
+              <h2 data-rev>Ponowne użycie materiałów</h2>
             </div>
           </div>
-          <p class="trd-p dOnly">{UP_P[0]}</p>
+          <p class="trd-p dOnly">{UP_P}</p>
         </div>
         <div class="up-photo dOnly">
           <img
@@ -301,7 +290,7 @@ const BALA3_ALT = "Nowa więźba dachowa nad stuletnim zrębem";
             decoding="async"
           />
         </div>
-        <p>{UP_P[0]}</p>
+        <p>{UP_P}</p>
         <figure class="up-kadr">
           <div class="trd-bandclp up-band1">
             <img
@@ -316,43 +305,7 @@ const BALA3_ALT = "Nowa więźba dachowa nad stuletnim zrębem";
           </div>
           <figcaption>{UP_CAP1}</figcaption>
         </figure>
-        <p>{UP_P[1]}</p>
-        <div class="up-sub">
-          <p class="trd-kick up-sub-k">{UP_BADGE}</p>
-          <p>{UP_P[2]}</p>
-        </div>
-        <figure class="up-kadr">
-          <div class="trd-bandclp up-band2">
-            <img
-              data-plx
-              src={bala3.src}
-              width={bala3.width}
-              height={bala3.height}
-              alt={BALA3_ALT}
-              loading="lazy"
-              decoding="async"
-            />
-          </div>
-          <figcaption>{UP_CAP2}</figcaption>
-        </figure>
       </CollapsibleText>
-      <div class="up-g2 dOnly">
-        <div class="up-photo up-photo2">
-          <img
-            src={bala3.src}
-            width={bala3.width}
-            height={bala3.height}
-            alt={BALA3_ALT}
-            loading="lazy"
-            decoding="async"
-          />
-          <p class="trd-badge up-badge-bot">{UP_CAP2}</p>
-        </div>
-        <div class="up-ps">
-          <p class="trd-p">{UP_P[1]}</p>
-          <p class="trd-p">{UP_P[2]}</p>
-        </div>
-      </div>
     </section>
 
     {/* ── TRWAŁOŚĆ (kolek w zwijanym pudle) ── */}
@@ -411,7 +364,7 @@ const BALA3_ALT = "Nowa więźba dachowa nad stuletnim zrębem";
           <span class="trd-fog"></span>
         </div>
         <div class="trd-sec-head-in mik-head">
-          <h2 data-rev>Zdrowy mikroklimat i bezpieczna przystań</h2>
+          <h2 data-rev>Efektywność energetyczna w starym domu</h2>
         </div>
       </div>
       <div class="mik-body">
@@ -439,17 +392,18 @@ const BALA3_ALT = "Nowa więźba dachowa nad stuletnim zrębem";
         />
         <div class="mik-ps">
           <p class="mik-p1">
-            Ekologia w naszym wydaniu to również troska o to, co dom daje
-            fizycznie swoim mieszkańcom. Uciekając przed miejskim zgiełkiem,
-            inwestorzy szukają nie tylko ciszy, ale i zdrowia.
+            Historyczny dom może być efektywny energetycznie! Już na etapie
+            wstępnych rozmów zawsze zwracamy uwagę na możliwości ograniczenia
+            zużycia energii. Przygotowujemy obliczenia cieplne i na ich
+            podstawie proponujemy konkretne rozwiązania, takie jak docieplenie
+            stropu, dachu czy ścian.
           </p>
           <p class="mik-p2">
-            Zastosowanie wełny drzewnej i tynków wapiennych eliminuje problem
-            pleśni i toksycznych oparów wydzielanych przez współczesne kleje czy
-            pianki. Tworzymy wnętrza o unikalnym, <em
-              >antyalergicznym mikroklimacie</em
-            >, w którym powietrze jest zawsze rześkie, a wilgotność utrzymuje
-            się na optymalnym dla człowieka poziomie.
+            Materiały izolacyjne i układ warstw dobieramy do istniejącej
+            konstrukcji oraz warunków wilgotnościowych. Stosujemy materiały
+            otwarte dyfuzyjnie takie jak wełna drzewna. Wszystko to pozwala
+            dostosować budynek do współczesnych standardów energetycznych z
+            uwzględnieniem jego specyfiki i wymagań technicznych.
           </p>
         </div>
         <div class="mik-cards">
@@ -483,7 +437,7 @@ const BALA3_ALT = "Nowa więźba dachowa nad stuletnim zrębem";
       </div>
       <span class="cta-shade" aria-hidden="true"></span>
       <div class="cta-in">
-        <a class="cta-btn" href={CONTACT_PATH}>Porozmawiajmy o Twoim domu →</a>
+        <a class="cta-btn" href={CONTACT_PATH}>Skontaktuj się z nami →</a>
       </div>
     </section>
   </main>
@@ -827,17 +781,6 @@ const BALA3_ALT = "Nowa więźba dachowa nad stuletnim zrębem";
     letter-spacing: 0.16em;
     color: rgba(33, 29, 24, 0.65);
   }
-  .up-sub {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-top: 2px;
-  }
-  .up-sub-k {
-    font-weight: 600;
-    letter-spacing: 0.16em;
-    color: var(--accent);
-  }
 
   /* ── diagram warstw (dwie kopie — analiza §2.5/§2.8) ── */
   .trd-diag {
@@ -1069,13 +1012,6 @@ const BALA3_ALT = "Nowa więźba dachowa nad stuletnim zrębem";
     line-height: 1.7;
     color: var(--muted);
   }
-  .mik-ps em {
-    font-family: var(--font-serif), serif;
-    font-style: italic;
-    font-weight: 600;
-    font-size: 15.5px;
-    color: var(--sepia);
-  }
   .mik-cards {
     margin-top: 6px;
     display: grid;
@@ -1284,19 +1220,42 @@ const BALA3_ALT = "Nowa więźba dachowa nad stuletnim zrębem";
       hyphens: auto;
     }
 
-    /* manifest: rycina liścia + 2 akapity nad kreskowanymi liniami */
+    /* manifest: rycina liścia + JEDEN akapit (poprawki klienta) płynący
+       w dwóch wyrównanych kolumnach nad dwiema kreskowanymi liniami */
     .man-grid {
+      --man-gap: clamp(30px, 3.4vw, 54px);
       max-width: var(--wmax);
       padding: max(26px, 4.2vh) var(--g);
       display: grid;
       grid-template-columns: 0.62fr 1fr 1fr;
-      gap: clamp(30px, 3.4vw, 54px);
+      gap: var(--man-gap);
       align-items: start;
+    }
+    .man-rycw {
+      border-top: 1px dashed rgba(33, 29, 24, 0.28);
     }
     .man-rycw,
     .man-col {
-      border-top: 1px dashed rgba(33, 29, 24, 0.28);
       padding-top: clamp(14px, 1.4vw, 22px);
+    }
+    .man-col {
+      grid-column: 2 / -1;
+      column-count: 2;
+      column-gap: var(--man-gap);
+    }
+    .man-col::before,
+    .man-col::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      width: calc((100% - var(--man-gap)) / 2);
+      border-top: 1px dashed rgba(33, 29, 24, 0.28);
+    }
+    .man-col::before {
+      left: 0;
+    }
+    .man-col::after {
+      right: 0;
     }
     .man-rycw {
       display: flex;
@@ -1443,9 +1402,8 @@ const BALA3_ALT = "Nowa więźba dachowa nad stuletnim zrębem";
       letter-spacing: 0.16em;
     }
 
-    /* upcycling: dwa gridy z kadrami i badge'ami */
-    .up-g1,
-    .up-g2 {
+    /* upcycling: grid tekst | kadr z badge'ami */
+    .up-g1 {
       max-width: var(--wmax);
       margin-inline: auto;
       box-sizing: border-box;
@@ -1457,10 +1415,7 @@ const BALA3_ALT = "Nowa więźba dachowa nad stuletnim zrębem";
       align-items: center;
     }
     .up-g1 {
-      padding: var(--pad) var(--g) var(--pad-s);
-    }
-    .up-g2 {
-      padding: var(--pad-s) var(--g) var(--pad);
+      padding: var(--pad) var(--g);
     }
     .up-txt {
       display: flex;
@@ -1494,9 +1449,6 @@ const BALA3_ALT = "Nowa więźba dachowa nad stuletnim zrębem";
       object-position: 50% 58%;
       filter: sepia(0.18) saturate(0.92);
     }
-    .up-photo2 > img {
-      object-position: 50% 40%;
-    }
     .up-badge-top {
       left: 14px;
       top: 14px;
@@ -1507,13 +1459,8 @@ const BALA3_ALT = "Nowa więźba dachowa nad stuletnim zrębem";
       bottom: 14px;
       font-size: var(--monos);
     }
-    .up-ps {
-      display: flex;
-      flex-direction: column;
-      gap: clamp(11px, 1.05vw, 17px);
-    }
 
-    /* trwałość: pas + 3 kolumny */
+    /* trwałość: pas + 2 kolumny */
     .trd-tw {
       margin-top: 0;
     }
@@ -1538,10 +1485,17 @@ const BALA3_ALT = "Nowa więźba dachowa nad stuletnim zrębem";
       width: 100%;
       border-top: 1px dashed rgba(33, 29, 24, 0.28);
       padding: max(20px, 3.4vh) var(--g) var(--pad);
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: clamp(36px, 4.2vw, 67px);
-      align-items: start;
+      /* dwa akapity (poprawki klienta) płyną w dwóch kolumnach, które
+         przeglądarka wyrównuje sama — bez luki pod krótszym akapitem */
+      column-count: 2;
+      column-gap: clamp(36px, 4.2vw, 67px);
+    }
+    /* domyślne orphans/widows = 2 nie pozwalały przenieść pojedynczego
+       wiersza między kolumnami, więc przy krótkich akapitach zostawała
+       nierówność (3 vs 5 wierszy przy 1440 px) */
+    .tw-grid > .trd-p {
+      orphans: 1;
+      widows: 1;
     }
 
     /* mikroklimat: pas + grid akapitów + 3 karty */
@@ -1588,13 +1542,6 @@ const BALA3_ALT = "Nowa więźba dachowa nad stuletnim zrębem";
       line-height: var(--lhb);
       text-align: justify;
       hyphens: auto;
-    }
-    .mik-ps .mik-p1 {
-      font-size: clamp(17px, 1.46vw, 23px);
-      line-height: 1.35;
-    }
-    .mik-ps em {
-      font-size: calc(var(--body) * 1.12);
     }
     .mik-cards {
       margin-top: 0;

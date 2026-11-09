@@ -23,7 +23,7 @@ export const FACEBOOK_URL =
 
 /** Dane firmy — wspólne dla wszystkich węzłów (rejestrowe z §1 analizy). */
 export const BUSINESS = {
-  name: "Pracownia EH/A",
+  name: "Pracownia EHa",
   legalName: "Pracownia Łukasz Jarosz-Jarszewski",
   description:
     "Remonty domów z historią: ciesielstwo, murarstwo, sklepienia, " +

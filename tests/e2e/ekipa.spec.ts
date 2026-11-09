@@ -37,7 +37,7 @@ test.describe("bez JS strona jest kompletna treściowo", () => {
     page,
   }) => {
     await page.goto(PATH, { waitUntil: "domcontentloaded" });
-    await expect(page.locator("main h1")).toHaveText("Ekipa EH/A.");
+    await expect(page.locator("main h1")).toHaveText("Ekipa EHa.");
     for (const h2 of [
       "Od sieci korporacyjnych do konstrukcji słupowo-ryglowych",
       "Geologiczna precyzja i zrozumienie materii",

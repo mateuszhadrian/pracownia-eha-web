@@ -1,7 +1,7 @@
 {
-  "name": "Pracownia EH/A",
-  "short_name": "EH/A",
-  "description": "Pracownia EH/A — remonty domów z historią: ciesielstwo, murarstwo, sklepienia, fizyka budowli i instalacje.",
+  "name": "Pracownia EHa",
+  "short_name": "EHa",
+  "description": "Pracownia EHa — remonty domów z historią: ciesielstwo, murarstwo, sklepienia, fizyka budowli i instalacje.",
   "lang": "pl",
   "start_url": "/",
   "scope": "/",

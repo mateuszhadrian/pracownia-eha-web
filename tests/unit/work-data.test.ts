@@ -27,7 +27,7 @@ describe("workDocTitle", () => {
   it("tytuł, miejscowość i rok + marka", () => {
     expect(
       workDocTitle({ title: "Dom z bala", place: "Czernica", year: "2023" }),
-    ).toBe("Dom z bala (Czernica, 2023) — Pracownia EH/A");
+    ).toBe("Dom z bala (Czernica, 2023) — Pracownia EHa");
   });
 });
 

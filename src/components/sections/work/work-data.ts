@@ -150,7 +150,7 @@ export function entryToProject(entry: {
 /** `<title>` podstrony realizacji — także `document.title` przy otwartym
  *  detalu (open-detail.ts czyta go z `data-doc-title` templatu). */
 export function workDocTitle(p: Pick<WorkProject, "title" | "place" | "year">) {
-  return `${p.title} (${p.place}, ${p.year}) — Pracownia EH/A`;
+  return `${p.title} (${p.place}, ${p.year}) — Pracownia EHa`;
 }
 
 /** Meta description podstrony: pierwszy akapit przycięty na granicy słowa

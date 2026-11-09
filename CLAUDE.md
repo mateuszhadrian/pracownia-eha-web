@@ -2710,6 +2710,60 @@ max(--svh,550px)·0.5267 − 72px)` + tytuł `min(…, 7.8cqi)`
   3 × 2 platformy (workflow linux `mode=changed` dla
   `tests/visual/work-index.spec.ts` → darwin na końcu).
 
+- **Teksty klienta (Realizacje / Kontakt / Tradycja) + marka „EHa" —
+  WYKONANE** (2026-11-09, branch `fix/teksty-klienta-3`). 32 podmiany
+  tekstów + 6 usunięć wg listy klienta; ZERO nowych mechanik.
+  - **Marka w tekstach = „EHa"** (było „EH/A") na całym serwisie: tytuły
+    kart, opisy, JSON-LD `name`, manifest, aria, alt, maile formularza
+    (nadawca/temat/podpis), polityka. Wersaliki z małym „a" wpisane wprost
+    („PRACOWNIA EHa", „REALIZACJA EHa") — nigdzie nie stoją pod
+    `text-transform: uppercase`. **Rysunek logo (SVG/favicon/og-image)
+    dalej pokazuje „EH/A"** — to grafika. ⚠️ Po deployu fraza monitora
+    UptimeRobot „Pracownia EH/A" przestaje występować — zmienić na
+    „Pracownia EHa".
+  - **Strona główna CELOWO bez zmian treści** (zajawki `Home*.astro`
+    i tytuł karty `/` jak na `main`, łącznie z „EH/A" w zajawce Ekipy) —
+    klient przyśle gotowe teksty `/`; przy ich podmianie zamienić też
+    pozostałe „EH/A". Pasek i stopka na `/` są już „EHa" (wspólne).
+  - `/kontakt/`: pod kaflami telefonów od razu blok e-mail (desktop: ta
+    sama granica co dotąd); usunięte pudło godzin z tagiem, „ODPOWIADAMY
+    W CIĄGU 2 DNI…", sekcja „Wolisz formę pisemną?" z ryciną kałamarza
+    (asset `kalamaz-rycina1-m.webp` nieużywany, plik zostaje),
+    „Pracujemy na Dolnym Śląsku…"; `<noscript>` przeniesiony do bloku
+    e-mail; komunikat po wysyłce bez godzin; przycisk „Wyślij →".
+  - `/tradycja-i-ekologia/`: manifest = JEDEN akapit, na desktopie
+    `column-count: 2` w kolumnach 2–3 gridu (dwie osobne kreskowane linie
+    przez `::before`/`::after`); upcycling bez dolnej części (`.up-g2`,
+    kadr „NOWA WIĘŹBA…", cegła/relokacja; badge relokacji zostaje na
+    desktopowym kadrze, na mobile znika z akapitem); trwałość = 2 akapity
+    w `column-count: 2` z `orphans/widows: 1` (bez tego 3 vs 5 wierszy)
+    i BEZ odstępu między akapitami na desktopie (decyzja Mateusza);
+    „Efektywność energetyczna" — oba akapity identycznym krojem
+    i rozmiarem (reguła `.mik-p1` desktop usunięta); diagram:
+    STRONA WEWNĘTRZNA / ŚCIANA / STRONA ZEWNĘTRZNA (mieszczą się).
+    Dywiz między słowami w tekstach klienta → pauza „—" (spójność).
+  - Testy: `kontakt.spec.ts` (nowe h2, kontrakt „usunięte bloki nie
+    wracają", e-mail bezpośrednio pod telefonami — grubość ramki, nie
+    styl: preflight daje każdemu `border-style: solid`; sonda rycin
+    zawężona do gołębia, test tagu godzin usunięty), `tradycja.spec.ts`
+    (h1/h2, sentinel pudła upcyclingu = podpis kadru, kontrakt progu na
+    `.tw-grid`), stringi „EHa" w 8 plikach. Bramki 2026-11-09:
+    format/lint/typecheck/unit 126 / e2e 889 passed — porażki wyłącznie
+    znane: sonda `/api/kontakt` przy `BASE_URL` (4399 zajęty przez
+    hadrianm-web) + D-CH5 firefox (flake, 3/3 w izolacji).
+  - **ZASIĘG BASELINE'ÓW (zmierzony)**: 76 czerwonych + 33 „zielone,
+    ale nieaktualne" (próg zerowy) = 109 na platformę. Czerwone:
+    `chrome-dropdown` ×3, `chrome-sheet` ×2, `chrome-sheet-akordeon` ×2,
+    `ekipa-top/-full` ×6+6, `-full-open` ×3, `kompetencje-top` ×6,
+    `-full-open` SE, `kontakt-top/-full` ×6+6, `obsluga-top` ×6,
+    `-full` 1366, `polityka-top` 1920/firefox, `tradycja-top/-full`
+    ×6+6, `-full-open` ×3, `work-index-top/-full` ×6+6. Pod progiem:
+    `index-full` ×6, `not-found-full` ×6, `kompetencje-full` ×6,
+    `polityka-full` ×6 + `-top` 1366, `obsluga-full` ×5,
+    `kompetencje-full-open` pixel-5/14, `chrome-sheet-akordeon` 14 —
+    wszystko to stopka/menu „EHa" i teksty z „EHa". Zero px: `index-top`,
+    `work-detail-*`, `chrome-bar`, `not-found-top`.
+
 ## Dokumentacja
 
 - Decyzje projektu (zapadłe — nie otwieraj na nowo):
