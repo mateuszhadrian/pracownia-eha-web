@@ -523,7 +523,7 @@ test("stopka: kolumny stron = lista menu, bez Obsługi budowy", async ({
   await gotoReady(page);
   const kol = page.locator("footer .ft-cols .ft-gc");
   await expect(kol.nth(0).locator("a")).toHaveText([
-    "Ekipa EH/A",
+    "Ekipa EHa",
     "Tradycja i ekologia",
     "Polityka prywatności",
   ]);

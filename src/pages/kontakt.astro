@@ -19,8 +19,6 @@
 import house4 from "@/assets/dom-ryc-house4.webp";
 import golab from "@/assets/golab-poczt-rycina1.webp";
 import golabM from "@/assets/golab-poczt-rycina1-m.webp";
-import kalamaz from "@/assets/kalamaz-rycina1.webp";
-import kalamazM from "@/assets/kalamaz-rycina1-m.webp";
 // Rycina telefonu na CIEMNYM hero w dwóch wariantach: desktop
 // spłaszczony na biel (invert + screen neutralizuje tło — wzorzec
 // HomeKontakt), mobile Z ALFĄ (przy otwartym sheecie starszy WebKit gubi
@@ -37,14 +35,6 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import { MESSAGE_MAX, NAME_MAX, PLACE_MAX } from "@/lib/contact-form";
 import { FACEBOOK_URL, INSTAGRAM_URL, localBusiness } from "@/lib/jsonld";
 import { POLICY_PATH } from "@/lib/routes";
-
-// Powtarzane mono-tagi — jedno źródło, żeby kopie nie mogły się rozjechać.
-// Tag godzin idzie w DWÓCH członach: na mobile stoją jeden pod drugim
-// (korekta sesji poprawek — patrz .kt-tag-hours w stylach), na desktopie
-// skleja je kropka rozdzielająca.
-const TAG_HOURS_1 = "KONTAKT 7 DNI W TYGODNIU";
-const TAG_HOURS_2 = "BUDOWA PN–PT 8–16";
-const TAG_REPLY = "ODPOWIADAMY W CIĄGU 2 DNI ROBOCZYCH";
 
 // Dane strukturalne (Etap 6): HomeAndConstructionBusiness — adres, geo,
 // godziny, NIP, sameAs. CELOWO bez telefonu i e-maila (D-CH5: JSON-LD
@@ -104,9 +94,9 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
       <div class="kt-hero-in">
         <h1 data-rev>Skontaktuj się z&nbsp;nami</h1>
         <p class="kt-hero-lead" data-rev data-rev-d="1">
-          Wierzymy, że wielkie projekty zaczynają się od dobrej rozmowy.
-          Zadzwoń, aby porozmawiać o Twojej wizji, sprawdzić statykę
-          historycznej struktury lub omówić logistykę relokacji budynku.
+          Planujesz remont starego domu? Skontaktuj się z nami — omówimy zakres
+          prac i pomożemy dobrać odpowiednie rozwiązania, uwzględniając
+          specyfikę budynku.
         </p>
       </div>
     </header>
@@ -132,7 +122,7 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
               i adres nie istnieją w statycznym HTML). Bez JS przeglądarka
               i czytnik traktują je jak zwykły tekst — czyli dokładnie tak,
               jak trzeba; `href` dokłada fillContactSlots(), a powód
-              tłumaczy <noscript> w panelu godzin. */
+              tłumaczy <noscript> w bloku e-mail. */
           }
           <a class="kt-tel" data-tel="maciek">
             <span class="kt-tel-in">
@@ -151,7 +141,7 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
           {/* eslint-enable astro/jsx-a11y/anchor-is-valid */}
         </div>
 
-        <div class="kt-hours">
+        <div class="kt-mail">
           <noscript>
             <p class="kt-noscript">
               Numery telefonów, adres e-mail i wysyłka formularza wymagają
@@ -159,21 +149,6 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
               automatami zbierającymi adresy.
             </p>
           </noscript>
-          <p class="kt-p kt-hours-p">
-            Nie ograniczamy kontaktu godzinami pracy — telefon odbierzemy też
-            wieczorem i w weekend. Na budowach jesteśmy zwykle pon.–pt.
-            8:00–16:00, a dla naszych inwestorów jesteśmy wsparciem na każdym
-            etapie.
-          </p>
-          <p class="kt-tag kt-tag-hours">
-            <span>{TAG_HOURS_1}</span><span
-              class="kt-tag-sep"
-              aria-hidden="true">&#32;·&#32;</span
-            ><span>{TAG_HOURS_2}</span>
-          </p>
-        </div>
-
-        <div class="kt-mail">
           <p class="kt-lb dOnly">E-MAIL</p>
           {
             /* eslint-disable astro/jsx-a11y/anchor-is-valid --
@@ -181,7 +156,6 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
           }
           <a class="kt-mail-a" data-mail><span data-slot>adres e-mail</span></a>
           {/* eslint-enable astro/jsx-a11y/anchor-is-valid */}
-          <p class="kt-tag">{TAG_REPLY}</p>
         </div>
 
         <div class="kt-reg">
@@ -209,7 +183,7 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
             <p class="kt-lb kt-lb-acc">OBSZAR DZIAŁANIA</p>
             <p class="kt-area-t">
               Dolny Śląsk<br />okolice Jeleniej Góry<br /><span
-                >dojazd do ok. godziny drogi</span
+                >w odległości do godziny jazdy</span
               >
             </p>
           </div>
@@ -224,38 +198,8 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
         </div>
       </div>
 
-      {/* ── kolumna główna: tekst + formularz + dane firmowe + social ── */}
+      {/* ── kolumna główna: formularz + social ── */}
       <div class="kt-main">
-        <section class="kt-write">
-          <img
-            class="kt-ryc kt-write-ryc mOnly"
-            data-ryc="r"
-            data-plxr
-            src={kalamazM.src}
-            width={kalamazM.width}
-            height={kalamazM.height}
-            alt=""
-            loading="lazy"
-            decoding="async"
-          />
-          <img
-            class="kt-ryc kt-write-ryc dOnly"
-            data-rycsb="r"
-            src={kalamaz.src}
-            width={kalamaz.width}
-            height={kalamaz.height}
-            alt=""
-            loading="lazy"
-            decoding="async"
-          />
-          <h2 data-rev>Wolisz formę pisemną?</h2>
-          <p class="kt-p">
-            Wyślij nam e-mail z opisem swojej inwestycji, lokalizacją i
-            ewentualnymi załącznikami (rzuty, zdjęcia). Odpowiemy tak szybko,
-            jak to możliwe.
-          </p>
-        </section>
-
         <section class="kt-formsec" id="formularz">
           <div class="kt-frame">
             {
@@ -273,7 +217,7 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
               novalidate
             >
               <div class="kt-form-hd">
-                <h2 data-rev>Albo wypełnij formularz</h2>
+                <h2 data-rev>Wypełnij formularz</h2>
               </div>
 
               <div class="kt-fields">
@@ -332,7 +276,7 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
                     maxlength={MESSAGE_MAX}
                     required
                     aria-describedby="kt-msg-err"
-                    placeholder="Opisz swój problem lub zadaj pytanie. Im więcej szczegółów, tym lepiej."
+                    placeholder="Zadaj nam pytanie lub opisz, jakie usługi Cię interesują."
                   ></textarea>
                   <span class="kt-err" id="kt-msg-err"
                     >Napisz kilka zdań o budynku — minimum 10 znaków.</span
@@ -372,10 +316,10 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
                 <button
                   class="kt-send"
                   type="submit"
-                  data-send="Wyślij zapytanie →"
+                  data-send="Wyślij →"
                   data-sending="Wysyłamy…"
                 >
-                  <span class="lb">Wyślij zapytanie →</span>
+                  <span class="lb">Wyślij →</span>
                 </button>
               </div>
 
@@ -390,22 +334,13 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
             <div class="kt-done">
               <h2 class="kt-done-h" tabindex="-1">Wiadomość wysłana.</h2>
               <p class="kt-p">
-                Dziękujemy — odezwiemy się najszybciej, jak to możliwe. Zwykle w
-                1–2 dni robocze; na budowie jesteśmy pn.–pt. 8:00–16:00.
+                Dziękujemy — odezwiemy się najszybciej, jak to możliwe.
               </p>
               <button class="kt-again" type="button"
                 >Wyślij kolejną wiadomość</button
               >
             </div>
           </div>
-        </section>
-
-        <section class="kt-firm">
-          <p class="kt-p kt-firm-p">
-            Pracujemy na Dolnym Śląsku, w okolicach Jeleniej Góry — w sercu
-            krainy domów przysłupowych. Dojeżdżamy na budowy w promieniu około
-            godziny drogi od Jeleniej Góry.
-          </p>
         </section>
 
         <section class="kt-social">
@@ -430,10 +365,10 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
             decoding="async"
           />
           <div class="kt-social-txt">
-            <h2 data-rev>Śledź nasze realizacje</h2>
+            <h2 data-rev>Obserwuj nas</h2>
             <p class="kt-p">
-              Zobacz, jak przywracamy życie i duszę wiekowym budynkom i jak
-              wygląda upcycling na wielką skalę w naszym wykonaniu.
+              Bądź na bieżąco z naszymi realizacjami i zobacz, jak przywracamy
+              blask historycznym budynkom.
             </p>
           </div>
           <div class="kt-social-l">
@@ -453,7 +388,7 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
     <aside class="kt-rodo-band">
       <p>
         Administratorem Twoich danych osobowych jest Pracownia Łukasz
-        Jarosz-Jarszewski (Pracownia EH/A), NIP 527-244-99-69. Dane przetwarzane
+        Jarosz-Jarszewski (Pracownia EHa), NIP 527-244-99-69. Dane przetwarzane
         są w celu odpowiedzi na Twoje zapytanie. Więcej informacji znajdziesz w
         naszej <a href={POLICY_PATH}>Polityce Prywatności</a>.
       </p>
@@ -533,50 +468,6 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
     font-size: 14px;
     line-height: 1.7;
     color: var(--muted);
-  }
-  /* mono-tagi z kreskowanym podkreśleniem (godziny, czas odpowiedzi).
-     Eksportowe rgba(33,29,24,.55) przy mono 10 px nie przechodzi AA na
-     papierze — korekta klasy 4.4–4.6 (allowlista axe zostaje pusta). */
-  /* Tag godzin łamany JAWNIE na mobile (korekta sesji poprawek,
-     zgłoszenie Mateusza). Zmierzone szerokości przy jednym wierszu:
-     tekst 326 px, kolumna 320→260 px, 360→300, 375→315, 390→326 —
-     czyli od 375 px w dół zawijał się sam, zrzucając do drugiego wiersza
-     ogon „8–16", a przy 375 px SAMO „16". Przy 390 px stoi dokładnie
-     na styk (326 = 326), więc jedna zmiana metryki fontu wystarczy,
-     żeby pękło też tam. Zamiast liczyć na zawijanie dzielimy tag na dwa
-     człony i układamy je w kolumnie; desktop skleja je kropką. */
-  .kt-tag-hours > span:not(.kt-tag-sep) {
-    /* człon nigdy nie łamie się w środku — nawet gdyby kiedyś zawinął
-       się sam (wąska kolumna sticky przy 1024 px), pęknie na kropce,
-       a nie zostawi sieroty „8–16" ani „16" */
-    white-space: nowrap;
-    display: block;
-  }
-  /* Wyłączenie przez :not(), a nie osobną regułą `.kt-tag-sep{display:none}`
-     — ta miałaby specyficzność (0,1,0) i PRZEGRYWAŁA z selektorem wyżej
-     (0,1,1), przez co kropka zostawała jako trzeci wiersz. */
-  .kt-tag-sep {
-    display: none;
-  }
-
-  .kt-tag {
-    margin: 4px 0 0;
-    align-self: flex-start;
-    font-family: var(--font-mono), monospace;
-    font-weight: 500;
-    font-size: 10px;
-    letter-spacing: 0.14em;
-    color: rgba(33, 29, 24, 0.65);
-    border-bottom: 1px dashed rgba(76, 59, 43, 0.45);
-    padding-bottom: 2px;
-  }
-  /* Desktop wraca do jednego wiersza z kropką (design) — w karcie
-     sticky miejsca nie brakuje. */
-  @media (min-width: 1024px) {
-    .kt-tag-hours > span:not(.kt-tag-sep),
-    .kt-tag-hours > .kt-tag-sep {
-      display: inline;
-    }
   }
   .kt-lb {
     margin: 0;
@@ -690,35 +581,23 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
     .kt-call {
       order: 1;
     }
-    .kt-hours {
+    .kt-mail {
       order: 2;
     }
-    .kt-write {
+    .kt-formsec {
       order: 3;
     }
-    .kt-mail {
+    .kt-reg {
       order: 4;
     }
-    .kt-formsec {
-      order: 5;
-    }
-    .kt-firm {
-      order: 6;
-    }
-    .kt-reg {
-      order: 7;
-    }
     .kt-social {
-      order: 8;
+      order: 5;
     }
     /* Szerokości kontenerów mobile eksportu. Sekcje BEZ tła dostają
        padding wewnątrz pełnej szerokości (a nie zwężoną skrzynkę): tylko
        wtedy `overflow: hidden` przycina ryciny na krawędzi EKRANU, jak
        w eksporcie, a nie na krawędzi kolumny tekstu. */
-    .kt-hours,
     .kt-mail,
-    .kt-write,
-    .kt-firm,
     .kt-social {
       width: 100%;
       max-width: var(--wmax);
@@ -854,17 +733,7 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
     }
   }
 
-  /* ── godziny + noscript ── */
-  .kt-hours {
-    display: flex;
-    flex-direction: column;
-    padding-top: 22px;
-  }
-  .kt-hours-p {
-    font-size: 13.5px;
-    line-height: 1.65;
-    color: var(--faint);
-  }
+  /* ── komunikat bez JS (w bloku e-mail) ── */
   .kt-noscript {
     margin: 0 0 12px;
     padding: 10px 12px;
@@ -874,22 +743,12 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
     line-height: 1.6;
     color: var(--muted);
   }
-  @media (min-width: 1024px) {
-    .kt-hours {
-      gap: 12px;
-      padding: var(--pan-y) var(--pan-x);
-      border-bottom: 1px dashed rgba(33, 29, 24, 0.3);
-    }
-    .kt-hours-p {
-      font-size: calc(var(--body) * 0.92);
-      text-wrap: pretty;
-    }
-  }
 
   /* ── e-mail ── */
   .kt-mail {
     display: flex;
     flex-direction: column;
+    padding-top: 22px;
   }
   .kt-mail-a {
     align-self: flex-start;
@@ -1024,46 +883,6 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
     }
     .kt-legal-l li {
       padding-bottom: 5px;
-    }
-  }
-
-  /* ── „napisz wiadomość" ── */
-  .kt-write {
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  @media (max-width: 1023.98px) {
-    /* kreskowana linia nad sekcją (eksport ma ją jako osobny element) */
-    .kt-write::before {
-      content: "";
-      border-top: 1px dashed rgba(33, 29, 24, 0.3);
-      margin: 26px 0 14px;
-    }
-  }
-  .kt-write h2 {
-    font-size: 27px;
-    max-width: 230px;
-  }
-  .kt-write .kt-p {
-    max-width: 290px;
-  }
-  @media (min-width: 1024px) {
-    .kt-write {
-      gap: clamp(12px, 1.2vw, 19px);
-    }
-    .kt-write h2 {
-      font-size: var(--h2);
-      line-height: 1.12;
-      max-width: clamp(400px, 40vw, 600px);
-    }
-    .kt-write .kt-p {
-      font-size: var(--body);
-      line-height: var(--lhb);
-      max-width: clamp(440px, 46vw, 700px);
-      text-wrap: pretty;
     }
   }
 
@@ -1341,30 +1160,6 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
     }
   }
 
-  /* ── dane firmowe ── */
-  .kt-firm {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding-top: 30px;
-  }
-  .kt-firm-p {
-    font-size: 14.5px;
-  }
-  @media (min-width: 1024px) {
-    .kt-firm {
-      gap: clamp(14px, 1.4vw, 22px);
-      padding-top: clamp(30px, 3vw, 48px);
-      border-top: 1px dashed rgba(33, 29, 24, 0.3);
-    }
-    .kt-firm-p {
-      font-size: var(--body);
-      line-height: var(--lhb);
-      text-align: justify;
-      hyphens: auto;
-    }
-  }
-
   /* ── social ── */
   .kt-social {
     position: relative;
@@ -1495,12 +1290,6 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
     mix-blend-mode: multiply;
     pointer-events: none;
   }
-  .kt-write-ryc {
-    right: -30px;
-    top: 48px;
-    width: 150px;
-    opacity: 0.4;
-  }
   .kt-area-ryc {
     right: -56px;
     bottom: -16px;
@@ -1539,11 +1328,6 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
          na ciemnym hero (wzorzec HomeKontakt) */
       mix-blend-mode: screen;
     }
-    .kt-write-ryc {
-      right: clamp(4px, 1vw, 18px);
-      top: calc(-1 * clamp(6px, 0.8vw, 14px));
-      width: clamp(160px, 14vw, 220px);
-    }
     .kt-area-ryc {
       right: -40px;
       bottom: -16px;
@@ -1555,36 +1339,19 @@ const jsonLd = localBusiness(Astro.site ?? Astro.url);
       width: clamp(170px, 15vw, 240px);
     }
 
-    /* ── Ryciny desktopowe NIE mogą być ucinane od DOŁU (korekta sesji
-       poprawek, zgłoszenie Mateusza). Przyczyna: `.kt-write`
-       i `.kt-social` mają `overflow: hidden`, a ryciny są od nich
-       WYŻSZE — zmierzone na trzech szerokościach: kałamarz 254–292 px
-       w sekcji 142–164 px (wystaje 101–114 px), gołąb 272–318 px
-       w sekcji 211–245 px (wystaje 75–94 px). Poziomą krawędzią cięcia
-       kończył się rysunek w pół kreski.
-       `overflow: hidden` zostaje potrzebny na MOBILE (tam ryciny celowo
-       wychodzą za krawędź EKRANU — patrz komentarz przy szerokościach
-       kontenerów), a na desktopie żadna nie wystaje w bok: kałamarz ma
-       `right: clamp(4px,1vw,18px)`, gołąb `right: 0`. Zwalniamy więc
-       wyłącznie oś PIONOWĄ. Para `overflow-x: clip` + `overflow-y:
-       visible` jest tu obowiązkowa: przy `overflow-x: hidden`
-       przeglądarka i tak podmieniłaby `visible` na `auto` i zrobiła ze
-       sekcji scroller (`clip` tego nie wymusza). ── */
-    .kt-write,
+    /* ── Rycina gołębia NIE może być ucinana od DOŁU (korekta sesji
+       poprawek, zgłoszenie Mateusza): `.kt-social` ma `overflow:
+       hidden`, a rycina jest od sekcji WYŻSZA (272–318 px w sekcji
+       211–245 px). `overflow: hidden` zostaje potrzebny na MOBILE (tam
+       rycina celowo wychodzi za krawędź EKRANU), a na desktopie nie
+       wystaje w bok (`right: 0`) — zwalniamy więc wyłącznie oś
+       PIONOWĄ. Para `overflow-x: clip` + `overflow-y: visible` jest
+       obowiązkowa: przy `overflow-x: hidden` przeglądarka podmieniłaby
+       `visible` na `auto` i zrobiła z sekcji scroller. Pod `.kt-social`
+       jest dość wolnego papieru do stopki. ── */
     .kt-social {
       overflow-x: clip;
       overflow-y: visible;
-    }
-    /* Kałamarz ma się CHOWAĆ ZA pudłem formularza (decyzja Mateusza),
-       a nie leżeć na nim: `.kt-formsec` był `position: static`, więc
-       jego tło malowało się w warstwie tła bloków — POD absolutną
-       ryciną. Po nadaniu `position: relative` (bez z-index) oba są
-       pozycjonowane z `z-index: auto` i decyduje kolejność drzewa:
-       `.kt-write` stoi wcześniej, więc jego rycina ląduje POD
-       formularzem. Gołąb schowka nie potrzebuje — pod `.kt-social`
-       jest 195 px wolnego papieru do stopki, a wystaje 80 px. */
-    .kt-formsec {
-      position: relative;
     }
   }
 

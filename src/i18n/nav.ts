@@ -28,7 +28,7 @@ export const ABOUT_LABEL = "O nas";
 
 /** Podstrony „O nas" (dropdown desktop / akordeon w menu mobilnym). */
 export const aboutNavItems: NavItem[] = [
-  { id: "ekipa", label: "Ekipa EH/A", href: EKIPA_PATH },
+  { id: "ekipa", label: "Ekipa EHa", href: EKIPA_PATH },
   { id: "tradycja", label: "Tradycja i ekologia", href: TRADYCJA_PATH },
 ];
 

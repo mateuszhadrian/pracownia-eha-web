@@ -39,12 +39,12 @@ test.describe("bez JS strona jest kompletna treściowo", () => {
     page,
   }) => {
     await page.goto(PATH, { waitUntil: "domcontentloaded" });
-    await expect(page.locator("main h1")).toHaveText("Tradycja i ekologia.");
+    await expect(page.locator("main h1")).toHaveText("Tradycja i ekologia");
     for (const h2 of [
-      "Fizyka budowli. Dom, który naprawdę oddycha",
-      "Upcycling na wielką skalę. Drugie życie architektury",
+      "Naturalne materiały dopasowane do budynku",
+      "Ponowne użycie materiałów",
       "Trwałość. Prawdziwa miara ekologii",
-      "Zdrowy mikroklimat i bezpieczna przystań",
+      "Efektywność energetyczna w starym domu",
     ]) {
       await expect(
         page.locator("main h2").filter({ hasText: h2 }),
@@ -54,19 +54,24 @@ test.describe("bez JS strona jest kompletna treściowo", () => {
     // w gridzie desktop) — na każdym profilu widoczna jest dokładnie jedna
     await expect(
       page.locator("p:visible", {
-        hasText: "potężnym siłom naprężeń przez setki lat.",
+        hasText: "konieczność ponownego wykonywania tych samych prac.",
       }),
     ).toHaveCount(1);
-    // mikroklimat = jeden markup (bez duplikacji)
+    // efektywność energetyczna = jeden markup (bez duplikacji)
     await expect(
-      page.getByText("na optymalnym dla człowieka poziomie."),
+      page.getByText("specyfiki i wymagań technicznych."),
     ).toBeVisible();
+    // poprawki klienta 2026-11-09: dolna część upcyclingu (cegła
+    // rozbiórkowa, relokacja, kadr „NOWA WIĘŹBA…") usunięta
+    await expect(
+      page.getByText("NOWA WIĘŹBA NAD STULETNIM ZRĘBEM"),
+    ).toHaveCount(0);
     // diagram kompletny statycznie: widoczna dokładnie jedna kopia
     // z pięcioma warstwami (druga kopia siedzi w drzewie drugiego progu)
     await expect(page.locator(".dg-box:visible")).toHaveCount(1);
     await expect(page.locator(".dg-box:visible .dg-lay")).toHaveCount(5);
     await expect(
-      page.locator(".dg-lay:visible", { hasText: "MUR HISTORYCZNY" }),
+      page.locator(".dg-lay:visible", { hasText: "ŚCIANA" }),
     ).toHaveCount(1);
     // wszystkie przyciski zwijania siedzą w SSR z atrybutem hidden
     const btns = page.locator("[data-clp-btn]");
@@ -171,7 +176,11 @@ test.describe("zwijane akapity — układ mobile", () => {
       has: page.locator("#sec-upcycling"),
     });
     const btn = host.locator("[data-clp-btn]");
-    const tail = host.getByText("najwyższa możliwa forma szacunku");
+    // ostatnia pozycja pudła = podpis kadru z Czernicy (poprawki klienta
+    // 2026-11-09 — dolna część sekcji usunięta)
+    const tail = host.getByText(
+      "CZERNICA — REKONSTRUKCJA PRZEWIEZIONEGO ZRĘBU",
+    );
 
     await expect(tail).not.toBeInViewport();
     await btn.scrollIntoViewIfNeeded();
@@ -213,7 +222,7 @@ test.describe("desktop pokazuje pełny tekst", () => {
     // treść pokazują kopie dOnly (pudła mOnly są schowane)
     await expect(
       page.locator("p:visible", {
-        hasText: "potężnym siłom naprężeń przez setki lat.",
+        hasText: "konieczność ponownego wykonywania tych samych prac.",
       }),
     ).toHaveCount(1);
   });
@@ -388,9 +397,9 @@ test("próg desktopowy: warianty przełączają się dokładnie na CONTENT_DESKT
     {
       band: ".trd-band",
       photo: ".fiz-photo",
-      grid: ".up-g2",
+      grid: ".tw-grid",
     },
     { band: "block", photo: "none", grid: "none" },
-    { band: "none", photo: "block", grid: "grid" },
+    { band: "none", photo: "block", grid: "block" },
   );
 });

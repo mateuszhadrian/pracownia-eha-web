@@ -30,7 +30,7 @@ useChromium1920Only(
 test(`${POLICY_PATH}: lang, tytuł, canonical`, async ({ page }) => {
   await gotoReady(page, POLICY_PATH);
   await expect(page.locator("html")).toHaveAttribute("lang", "pl");
-  await expect(page).toHaveTitle("Polityka prywatności — Pracownia EH/A");
+  await expect(page).toHaveTitle("Polityka prywatności — Pracownia EHa");
   await expect(page.locator('head link[rel="canonical"]')).toHaveAttribute(
     "href",
     `${SITE}${POLICY_PATH}`,

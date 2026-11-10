@@ -292,7 +292,7 @@ describe("kontakt: mail #2 (auto-potwierdzenie)", () => {
       name: "PILNE!!!",
       message: "Wygrałeś milion — kliknij tutaj żeby odebrać nagrodę!",
     });
-    expect(pl.subject).toBe("Dziękujemy za wiadomość — Pracownia EH/A");
+    expect(pl.subject).toBe("Dziękujemy za wiadomość — Pracownia EHa");
   });
 
   it("zawiera kopię wiadomości (cytowaną w text, escapowaną w html)", () => {

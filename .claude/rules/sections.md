@@ -245,15 +245,23 @@ która przeżyła kopię w całości (work) i mechaniki formularza (contact).
   przenoś do eager loadu.
 - Pola mobile mają PODŁOGĘ `font-size: 16px` (Safari iOS zoomuje stronę
   przy focusie mniejszego pola i zostawia ją zoomniętą).
+- **Karta kontaktowa po poprawkach klienta (2026-11-09)**: pod kaflami
+  telefonów stoi OD RAZU blok e-mail — pudło godzin (z tagiem
+  „KONTAKT 7 DNI…"), podpis „ODPOWIADAMY W CIĄGU 2 DNI ROBOCZYCH",
+  sekcja „Wolisz formę pisemną?" (z ryciną kałamarza) i akapit
+  „Pracujemy na Dolnym Śląsku…" USUNIĘTE; `<noscript>` z wyjaśnieniem
+  slotów przeniesiony do bloku e-mail. Nie odtwarzaj ich z eksportu
+  (kontrakt w `kontakt.spec.ts`).
 - **Mono-tagi z kropką rozdzielającą łam JAWNIE, nie zawijaniem**
-  (`.kt-tag-hours` tutaj, `.kt-hours` w zajawce 06 na `/`): dwa człony
-  z `white-space: nowrap` + separator w osobnym `<span>`, mobile
-  w kolumnie, desktop inline. Jeden ciąg zawijał się w środku i zrzucał
-  do drugiego wiersza sierotę „8–16", a przy 375 px SAMO „16".
-  Separator wyłączaj przez `:not(.kt-tag-sep)` na regule blokowej —
-  osobna reguła `.kt-tag-sep{display:none}` ma niższą specyficzność
-  i kropka zostaje jako trzeci wiersz.
-- **Ryciny desktopowe nie mogą być ucinane od dołu**: sekcje mają
+  (`.kt-hours` w zajawce 06 na `/`; na `/kontakt/` tag godzin usunięty):
+  dwa człony z `white-space: nowrap` + separator w osobnym `<span>`,
+  mobile w kolumnie, desktop inline. Jeden ciąg zawijał się w środku
+  i zrzucał do drugiego wiersza sierotę „8–16", a przy 375 px SAMO „16".
+  Separator wyłączaj przez `:not(.*-sep)` na regule blokowej — osobna
+  reguła `{display:none}` ma niższą specyficzność i kropka zostaje jako
+  trzeci wiersz.
+- **Ryciny desktopowe nie mogą być ucinane od dołu** (dziś: gołąb
+  w `.kt-social`): sekcje mają
   `overflow: hidden` dla MOBILE (tam ryciny wychodzą za krawędź ekranu),
   a na desktopie zwalniamy oś pionową parą `overflow-x: clip` +
   `overflow-y: visible` — `hidden` + `visible` NIE działa (przeglądarka

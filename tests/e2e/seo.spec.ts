@@ -114,7 +114,7 @@ test("ikony marki i manifest odpowiadają 200 i mają właściwy format", async 
   const manifest = await request.get("/site.webmanifest");
   expect(manifest.status()).toBe(200);
   const parsed = JSON.parse(await manifest.text());
-  expect(parsed.name).toBe("Pracownia EH/A");
+  expect(parsed.name).toBe("Pracownia EHa");
   expect(parsed.start_url).toBe("/");
   // Kolory manifestu = papier strony, jak <meta name="theme-color">.
   // Białe #fff dawało na Androidzie biały pas (korekta Etapu 4.2) —
