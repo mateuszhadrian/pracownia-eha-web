@@ -1,0 +1,18 @@
+{
+  "slug": "instalacja-ogrzewania-sciennego",
+  "order": 100,
+  "title": "Wykonanie instalacji ogrzewania ściennego",
+  "place": "Nowa Kamienica",
+  "year": "2026",
+  "paras": [
+    "Wykonaliśmy instalację ogrzewania ściennego w murowano-drewnianym budynku. Rozwiązanie dostosowaliśmy do wybranego przez inwestora rodzaju źródła ciepła, czyli pompy ciepła oraz konstrukcji budynku. Na podstawie wykonanych obliczeń dobraliśmy izolację i parametry ogrzewania tak, aby zapewnić oczekiwany komfort cieplny.",
+    "Wszystkie pomieszczenia ociepliliśmy od wewnątrz wełną drzewną. Izolacja ogranicza straty ciepła przez ściany, a włókna drzewne dzięki właściwościom paroprzepuszczalnym pomagają łagodzić wahania wilgotności w pomieszczeniach. Następnie, bezpośrednio pod tynkiem wapiennym, zamontowaliśmy system ogrzewania ściennego. Ogrzewając dużą powierzchnię ścian, możemy zapewnić komfort cieplny przy niższej temperaturze w instalacji.",
+    "Przy ogrzewaniu podłogowym musielibyśmy uwzględnić dodatkowy opór cieplny drewnianych desek. Bez odpowiedniej izolacji pod instalacją ogrzewalibyśmy również strop i pomieszczenie poniżej, utrudniając niezależne sterowanie temperaturą poszczególnych pomieszczeń."
+  ],
+  "gallery": [
+    {
+      "type": "photo",
+      "image": "https://media.pracownia-eha.pl/realizacje/nk-instalacja.jpeg"
+    }
+  ]
+}
