@@ -1,0 +1,22 @@
+{
+  "slug": "Odbudowa-i-remont-historycznego-domu",
+  "order": 110,
+  "title": "Odbudowa i remont historycznego budynku",
+  "place": "Biedrzychowice",
+  "year": "2026",
+  "paras": [
+    "Jako główny wykonawca odpowiadaliśmy za kompleksowy remont i rozbudowę historycznego domu ujętego w gminnej ewidencji zabytków. Ze względu na stan budynku, zakres zaplanowanych zmian oraz tempo realizacji był to wieloetapowy projekt, który wymagał koordynacji prac konstrukcyjnych, murarskich, ciesielskich, ślusarskich, stolarskich i instalacyjnych.",
+    "W tej realizacji połączyliśmy konserwację zachowanych elementów budynku, odbudowę tradycyjnych konstrukcji oraz tworzenie nowych fragmentów z wykorzystaniem współczesnych technologii.",
+    "Przez pierwsze trzy miesiące przygotowywaliśmy budynek do zaplanowanych prac. Konieczne było m.in. rozebranie dachu i części ścian, demontaż stropów oraz oryginalnej konstrukcji szachulcowej i wykonanie drenażu.",
+    "W kolejnych etapach:\n- wykonaliśmy potrzebne prace murarskie i ciesielskie\n- odbudowaliśmy ścianę szachulcową,\n- wykonaliśmy montaż stropów nad pierwszą i drugą kondygnacją,\n- zamontowaliśmy stalową konstrukcją wsporczą.\n- zamontowaliśmy nową więźbę dachową."
+  ],
+  "gallery": [
+    {
+      "type": "photo",
+      "image": "https://media.pracownia-eha.pl/realizacje/biedrzychowice.jpeg"
+    }
+  ],
+  "related": [
+    "konstrukcja-stalowa"
+  ]
+}
