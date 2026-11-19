@@ -9,6 +9,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { PAPER_BG_SPEED } from "../../src/components/sections/home/home-config";
 import {
+  IMG_LOADING_DELAY_MS,
   VIDEO_LOADING_DELAY_MS,
   WORK_DESKTOP_MIN_PX,
   WORK_GALLERY_DASHES_MAX,
@@ -771,7 +772,9 @@ test.describe("wskaźnik ładowania wideo w podglądzie", () => {
     await expect(hint).toHaveText("POCZEKAJ, ŁADUJĘ WIDEO", {
       useInnerText: true,
     });
-    await expect(slajd.locator(".dt-dots b")).toHaveCount(3);
+    // zawężone do plakietki wideo: kadr niesie też plakietkę ładowania
+    // KLATKI (.dt-wait) z własnymi trzema kropkami
+    await expect(hint.locator(".dt-dots b")).toHaveCount(3);
 
     // START: własne `playing` — plakietka dopala minimalny czas
     // widoczności i dopiero potem ustępuje miejsca stanowi „gra"
@@ -835,6 +838,255 @@ test.describe("wskaźnik ładowania wideo w podglądzie", () => {
 });
 
 // ── detal mobile: bottom sheet, karuzela, gesty ──
+// ── wskaźnik ładowania KADRU: zdjęcie i klatka-miniatura filmu
+// (zgłoszenie Mateusza: przy wolno ładującej się miniaturze widać było
+// sam ciemny kontener). Kadr WIDOCZNY dłużej niż IMG_LOADING_DELAY_MS bez
+// obrazu dostaje klasę `is-img-loading` i plakietkę w kroju podpowiedzi
+// wideo; gasi ją `load` albo `error`. Obrazy wstrzymujemy przez
+// `page.route` — na preview endpointy /cdn-cgi/ i tak nie istnieją
+// (404 w milisekundach), więc bez wstrzymania plakietki nie ma wcale.
+// Testy biorą DRUGI kadr galerii: pierwszy ma ten sam adres co kafel
+// listy, więc bywa już w pamięci przeglądarki. ──
+test.describe("wskaźnik ładowania kadru galerii (zdjęcie / klatka filmu)", () => {
+  // 1×1 px PNG — czym odpowiadamy po zwolnieniu wstrzymanych żądań
+  const PIKSEL = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+    "base64",
+  );
+  const DWA_ZDJECIA = ENTRIES.find(
+    (e) => e.gallery.length > 1 && e.gallery[1].type === "photo",
+  );
+
+  /** Wstrzymuje żądania obrazów pasujące do wzorca; zwrócona funkcja
+   *  zwalnia je — obrazem (domyślnie) albo błędem sieci. */
+  async function wstrzymaj(page: Page, wzorzec: RegExp) {
+    let trzyma = true;
+    let blad = false;
+    const czekaja: (() => void)[] = [];
+    await page.route(wzorzec, async (route) => {
+      if (trzyma) await new Promise<void>((r) => czekaja.push(r));
+      if (blad) await route.abort();
+      else await route.fulfill({ body: PIKSEL, contentType: "image/png" });
+    });
+    return (jak: "obraz" | "blad" = "obraz") => {
+      blad = jak === "blad";
+      trzyma = false;
+      czekaja.splice(0).forEach((r) => r());
+    };
+  }
+
+  /** Doprowadza galerię detalu do kadru `idx`: desktop strzałkami,
+   *  mobile przewinięciem toru (karuzela). */
+  async function dojedz(
+    detail: ReturnType<Page["locator"]>,
+    idx: number,
+    isMobile: boolean,
+  ) {
+    const kadr = detail.locator("[data-gal] [data-slide]").nth(idx);
+    if (isMobile) {
+      await kadr.scrollIntoViewIfNeeded();
+    } else {
+      for (let i = 0; i < idx; i++) {
+        await detail.locator("[data-nextshot]").click();
+      }
+    }
+    return kadr;
+  }
+
+  test("kadr bez obrazu dostaje plakietkę „ładuję zdjęcie”, obraz ją gasi", async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!DWA_ZDJECIA, "brak wpisu z drugim zdjęciem w galerii");
+    await gotoReady(page, PATH);
+    const zwolnij = await wstrzymaj(page, /\/cdn-cgi\/image\//);
+    const detail = await openDetail(
+      page,
+      await showEntry(page, DWA_ZDJECIA!.slug),
+    );
+    const kadr = await dojedz(detail, 1, !!isMobile);
+
+    await expect(kadr).toHaveClass(/is-img-loading/);
+    const plakietka = kadr.locator("[data-wait]");
+    await expect(plakietka).toBeVisible();
+    // kapitaliki robi text-transform, kropki rysuje ::before (jak przy
+    // wskaźniku wideo) — stąd wersaliki i liczenie kropek osobno
+    await expect(plakietka).toHaveText("POCZEKAJ, ŁADUJĘ ZDJĘCIE", {
+      useInnerText: true,
+    });
+    await expect(plakietka.locator(".dt-dots b")).toHaveCount(3);
+    // plakietka leży POD obrazem (pierwsza w DOM kadru) i nie łapie
+    // zdarzeń — tap w kadr dalej otwiera podgląd
+    const uklad = await kadr.evaluate((el) => {
+      const w = el.querySelector<HTMLElement>("[data-wait]")!;
+      return {
+        pierwsza: el.firstElementChild === w,
+        zdarzenia: getComputedStyle(w).pointerEvents,
+      };
+    });
+    expect(uklad).toEqual({ pierwsza: true, zdarzenia: "none" });
+
+    zwolnij();
+    await expect(kadr).not.toHaveClass(/is-img-loading/);
+    await expect(plakietka).toBeHidden();
+  });
+
+  test("błąd ładowania też gasi plakietkę (nie wisi w nieskończoność)", async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!DWA_ZDJECIA, "brak wpisu z drugim zdjęciem w galerii");
+    await gotoReady(page, PATH);
+    const zwolnij = await wstrzymaj(page, /\/cdn-cgi\/image\//);
+    const detail = await openDetail(
+      page,
+      await showEntry(page, DWA_ZDJECIA!.slug),
+    );
+    const kadr = await dojedz(detail, 1, !!isMobile);
+    await expect(kadr).toHaveClass(/is-img-loading/);
+    zwolnij("blad");
+    await expect(kadr).not.toHaveClass(/is-img-loading/);
+  });
+
+  test("podgląd pełnoekranowy: klon kadru czeka z tą samą plakietką", async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!DWA_ZDJECIA, "brak wpisu z drugim zdjęciem w galerii");
+    await gotoReady(page, PATH);
+    const zwolnij = await wstrzymaj(page, /\/cdn-cgi\/image\//);
+    const detail = await openDetail(
+      page,
+      await showEntry(page, DWA_ZDJECIA!.slug),
+    );
+    const kadr = await dojedz(detail, 1, !!isMobile);
+    await expect(kadr).toHaveClass(/is-img-loading/);
+    // tap w kadr Z PLAKIETKĄ otwiera podgląd (plakietka nie łapie zdarzeń)
+    await kadr.click();
+    const lb = detail.locator("[data-lightbox]");
+    await expect(lb).toBeVisible();
+    const klon = lb.locator(".lb-slide").nth(1).locator(".lb-media");
+    await expect(klon).toHaveClass(/is-img-loading/);
+    await expect(klon.locator("[data-wait]")).toBeVisible();
+
+    zwolnij();
+    await expect(klon).not.toHaveClass(/is-img-loading/);
+    await expect(kadr).not.toHaveClass(/is-img-loading/);
+    // po zamknięciu podglądu w detalu nie zostaje żaden wiszący stan
+    await page.keyboard.press("Escape");
+    await expect(lb).toBeHidden();
+    await expect(detail.locator(".is-img-loading")).toHaveCount(0);
+  });
+
+  test("plakietka zapala się dopiero po progu, a obraz szybszy niż próg nie zapala jej wcale", async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(
+      !!isMobile,
+      "pomiar od wejścia kadru w pole widzenia — na desktopie wyznacza je klik strzałki",
+    );
+    test.skip(!DWA_ZDJECIA, "brak wpisu z drugim zdjęciem w galerii");
+    await gotoReady(page, PATH);
+    await wstrzymaj(page, /\/cdn-cgi\/image\//);
+    const detail = await openDetail(
+      page,
+      await showEntry(page, DWA_ZDJECIA!.slug),
+    );
+    // przed wejściem w pole widzenia drugi kadr NIE jest uzbrojony —
+    // licznik od otwarcia zapalałby plakietki na wszystkich dalszych
+    // kadrach i migałyby przy każdym przełączeniu
+    await page.waitForTimeout(IMG_LOADING_DELAY_MS + 300);
+    const kadr = detail.locator("[data-gal] [data-slide]").nth(1);
+    await expect(kadr).not.toHaveClass(/is-img-loading/);
+
+    // Czas do zapłonu mierzony W PRZEGLĄDARCE (MutationObserver) — asercja
+    // „jeszcze nie ma" ścigałaby się z timerem (lekcja wskaźnika wideo).
+    const zaplon = await kadr.evaluate(
+      (el: HTMLElement) =>
+        new Promise<number>((res) => {
+          const t0 = performance.now();
+          const obs = new MutationObserver(() => {
+            if (!el.classList.contains("is-img-loading")) return;
+            obs.disconnect();
+            res(performance.now() - t0);
+          });
+          obs.observe(el, { attributes: true, attributeFilter: ["class"] });
+          document
+            .querySelector<HTMLElement>("#work-detail [data-nextshot]")!
+            .click();
+          window.setTimeout(() => {
+            obs.disconnect();
+            res(-1);
+          }, 5000);
+        }),
+    );
+    expect(zaplon).toBeGreaterThanOrEqual(IMG_LOADING_DELAY_MS - 60);
+
+    // OBRAZ SZYBSZY NIŻ PRÓG: wracamy na pierwszy kadr, otwieramy detal od
+    // nowa i podajemy `load` zaraz po wejściu kadru w pole widzenia —
+    // plakietka nie może się zapalić ani na chwilę.
+    await page.keyboard.press("Escape");
+    await expect(detail).toBeHidden();
+    const detail2 = await openDetail(
+      page,
+      await showEntry(page, DWA_ZDJECIA!.slug),
+    );
+    const zapalona = await detail2
+      .locator("[data-gal] [data-slide]")
+      .nth(1)
+      .evaluate(
+        (el: HTMLElement, czekaj: number) =>
+          new Promise<boolean>((res) => {
+            let byla = false;
+            const obs = new MutationObserver(() => {
+              if (el.classList.contains("is-img-loading")) byla = true;
+            });
+            obs.observe(el, { attributes: true, attributeFilter: ["class"] });
+            document
+              .querySelector<HTMLElement>("#work-detail [data-nextshot]")!
+              .click();
+            // kadr wjeżdża w pole widzenia w pierwszych klatkach przejazdu
+            window.setTimeout(() => {
+              el.querySelector("img")!.dispatchEvent(new Event("load"));
+            }, 120);
+            window.setTimeout(() => {
+              obs.disconnect();
+              res(byla);
+            }, czekaj);
+          }),
+        IMG_LOADING_DELAY_MS + 500,
+      );
+    expect(zapalona).toBe(false);
+  });
+
+  test("klatka filmu: plakietka „ładuję miniaturę filmu” obok podpowiedzi", async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!VIDEO_ENTRY, "brak wpisu z wideo w kolekcji");
+    const entry = VIDEO_ENTRY!;
+    const videoIdx = entry.gallery.findIndex((g) => g.type === "video");
+    await gotoReady(page, PATH);
+    const zwolnij = await wstrzymaj(page, /\/cdn-cgi\/media\//);
+    const detail = await openDetail(page, await showEntry(page, entry.slug));
+    const kadr = await dojedz(detail, videoIdx, !!isMobile);
+
+    await expect(kadr).toHaveClass(/is-img-loading/);
+    const plakietka = kadr.locator("[data-wait]");
+    await expect(plakietka).toBeVisible();
+    await expect(plakietka).toHaveText("POCZEKAJ, ŁADUJĘ MINIATURĘ FILMU", {
+      useInnerText: true,
+    });
+    // znaki filmu zostają — plakietka klatki ich nie zastępuje
+    await expect(kadr.locator("[data-cam]")).toBeVisible();
+    await expect(kadr.locator("[data-cam-hint]")).toBeVisible();
+
+    zwolnij();
+    await expect(kadr).not.toHaveClass(/is-img-loading/);
+  });
+});
+
 test.describe("detal mobile: bottom sheet, karuzela, gesty", () => {
   test.skip(({ isMobile }) => !isMobile, "sheet tylko na mobile");
 

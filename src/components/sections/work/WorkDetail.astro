@@ -112,8 +112,34 @@ const relHeadId = `dt-rel-h-${p.slug}`;
           item.type === "video"
             ? videoFrameAt(item.video, item.duration)
             : undefined;
+        // Wskaźnik ładowania KADRU (zdjęcie / klatka filmu) — plakietka
+        // w kroju podpowiedzi wideo, na środku pustego kadru. Stoi PIERWSZA
+        // w DOM, czyli POD obrazem: załadowane zdjęcie samo ją zakrywa,
+        // więc nigdy nie leży na gotowym kadrze. Pokazuje ją klasa
+        // `.is-img-loading` na rodzicu (open-detail.ts, reguły w bloku
+        // is:global WorkDetailOverlay.astro — działa też na klonach
+        // w podglądzie pełnoekranowym). Film bez klatki (dev: endpoint
+        // /cdn-cgi/media nie istnieje) nie ma na co czekać — bez plakietki.
+        const czekaNa =
+          item.type === "photo"
+            ? "Poczekaj, ładuję zdjęcie"
+            : klatka
+              ? "Poczekaj, ładuję miniaturę filmu"
+              : undefined;
         return (
           <div class="dt-slide" data-slide>
+            {czekaNa && (
+              <span class="dt-wait" data-wait aria-hidden="true">
+                <span class="dt-wait-in">
+                  {czekaNa}
+                  <i class="dt-dots">
+                    <b />
+                    <b />
+                    <b />
+                  </i>
+                </span>
+              </span>
+            )}
             {item.type === "video" ? (
               <>
                 {/* Galeria żyje w <template>, więc obraz nie jest pobierany
@@ -529,6 +555,36 @@ const relHeadId = `dt-rel-h-${p.slug}`;
   .dt-dots b::before {
     content: ".";
   }
+  /* Wskaźnik ładowania kadru: warstwa na cały kadr (centruje plakietkę),
+     POD obrazem (pierwsza w DOM), bez zdarzeń — tap w kadr dalej otwiera
+     podgląd. Domyślnie niewidoczna; odsłania ją `.is-img-loading` na
+     rodzicu (reguły is:global w WorkDetailOverlay.astro). Schowana przez
+     visibility + opacity, nie display: wejście ma krótkie przejście, żeby
+     plakietka nie „pstrykała" przy ładowaniu tuż za progiem. */
+  .dt-wait {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    pointer-events: none;
+    visibility: hidden;
+    opacity: 0;
+  }
+  /* ta sama plakietka co podpowiedź wideo (.dt-hint) — jeden znak */
+  .dt-wait-in {
+    padding: 5px 9px;
+    background: rgba(12, 10, 8, 0.55);
+    font-family: var(--font-mono), monospace;
+    font-weight: 500;
+    font-size: 9px;
+    line-height: 1.3;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    text-align: center;
+    color: #f5efe3;
+  }
   .dt-time {
     display: none;
   }
@@ -941,6 +997,9 @@ const relHeadId = `dt-rel-h-${p.slug}`;
     }
     .dt-hint-m {
       display: none;
+    }
+    .dt-wait-in {
+      font-size: 10px;
     }
     .dt-time {
       display: block;
