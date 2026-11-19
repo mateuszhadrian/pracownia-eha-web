@@ -31,6 +31,7 @@
 // `window.overlay` typowane w scripts/overlay.ts (declare global).
 import { WORK_INDEX_PATH, workDetailPath } from "@/lib/routes";
 import {
+  IMG_LOADING_DELAY_MS,
   VIDEO_LOADING_DELAY_MS,
   VIDEO_LOADING_MIN_MS,
   VIDEO_LOADING_TIMEOUT_MS,
@@ -126,6 +127,98 @@ function onTrackScroll(e: Event) {
     .forEach((d, i) => d.classList.toggle("on", i === shot));
 }
 
+/* ── wskaźnik ładowania KADRU: zdjęcie i klatka-miniatura filmu ──
+   Zgłoszenie Mateusza: gdy miniatura ładuje się długo (zimny cache
+   transformacji Cloudflare, słabe łącze), widać było sam ciemny kontener
+   i nie wiadomo, czy coś jeszcze dojdzie. Kadr, który jest WIDOCZNY
+   dłużej niż IMG_LOADING_DELAY_MS bez obrazu, dostaje klasę
+   `is-img-loading` (plakietka „Poczekaj, ładuję zdjęcie…" — markup
+   w WorkDetail.astro, reguły w WorkDetailOverlay.astro); zdejmuje ją
+   `load` albo `error`. Działa w galerii detalu (oba progi) i na klonach
+   w podglądzie pełnoekranowym.
+   Próg liczy się od WEJŚCIA KADRU W POLE WIDZENIA (IntersectionObserver),
+   nie od otwarcia detalu: zdjęcia galerii są `loading="lazy"`, więc
+   przeglądarka zaczyna je pobierać dopiero wtedy — licznik od otwarcia
+   zapalałby plakietkę na wszystkich dalszych kadrach i przy każdym
+   przełączeniu migałaby na ułamek sekundy.
+   Zmiana ADDYTYWNA (szóste świadome odstępstwo od „work 1:1"): dochodzi
+   obserwacja obrazów i klasa stanu, przepływ otwierania, klonowania
+   i nawigacji nietknięty. */
+
+const IMG_LOADING_CLASS = "is-img-loading";
+
+/** Kadry czekające na obraz: rodzic obrazu → timer zapłonu plakietki. */
+const imgWaits = new Map<
+  HTMLElement,
+  { img: HTMLImageElement; show?: number }
+>();
+
+// Jeden obserwator na moduł. `intersectionRatio > 0`, a nie samo
+// `isIntersecting`: kadr STYKAJĄCY się krawędzią z polem widzenia (następny
+// slajd toru na desktopie) jest „intersecting" przy zerowej powierzchni.
+const imgIO =
+  typeof IntersectionObserver === "function"
+    ? new IntersectionObserver(
+        (entries) => {
+          entries.forEach((e) => {
+            if (e.intersectionRatio <= 0) return;
+            const box = e.target as HTMLElement;
+            imgIO?.unobserve(box);
+            armImg(box);
+          });
+        },
+        { threshold: 0.01 },
+      )
+    : null;
+
+function settleImg(box: HTMLElement) {
+  const st = imgWaits.get(box);
+  if (!st) return;
+  if (st.show !== undefined) window.clearTimeout(st.show);
+  imgIO?.unobserve(box);
+  box.classList.remove(IMG_LOADING_CLASS);
+  imgWaits.delete(box);
+}
+
+function armImg(box: HTMLElement) {
+  const st = imgWaits.get(box);
+  if (!st || st.show !== undefined) return;
+  st.show = window.setTimeout(() => {
+    // kadr mógł zniknąć (zamknięty detal/podgląd), a obraz dojść bez
+    // zdarzenia, które byśmy złapali — wtedy tylko sprzątamy
+    if (!box.isConnected || st.img.complete) {
+      settleImg(box);
+      return;
+    }
+    box.classList.add(IMG_LOADING_CLASS);
+  }, IMG_LOADING_DELAY_MS);
+}
+
+/** Bierze pod obserwację obrazy kadrów w `root` (tor galerii albo tor
+ *  podglądu). Kadr bez plakietki ([data-wait]) nie jest kadrem galerii. */
+function watchImages(root: ParentNode) {
+  root.querySelectorAll<HTMLImageElement>("img").forEach((img) => {
+    const box = img.parentElement;
+    if (!box || !box.querySelector(":scope > [data-wait]")) return;
+    // `complete` = obraz już jest ALBO już wiadomo, że go nie będzie
+    // (błąd) — w obu przypadkach nie ma na co czekać
+    if (img.complete || imgWaits.has(box)) return;
+    imgWaits.set(box, { img });
+    img.addEventListener("load", () => settleImg(box), { once: true });
+    img.addEventListener("error", () => settleImg(box), { once: true });
+    if (imgIO) imgIO.observe(box);
+    else armImg(box);
+  });
+}
+
+/** Sprząta obserwację kadrów leżących w `root` (albo wszystkich) — przed
+ *  wymianą treści: timery nie mają już czego malować. */
+function dropImgWaits(root?: Node | null) {
+  Array.from(imgWaits.keys()).forEach((box) => {
+    if (!root || root.contains(box)) settleImg(box);
+  });
+}
+
 /* ── montaż treści projektu w hoście ── */
 
 function mount(slug: string): boolean {
@@ -138,6 +231,7 @@ function mount(slug: string): boolean {
   if (!tpl || !el || !host || !panel) return false;
 
   pauseVideos();
+  dropImgWaits(); // kadry poprzedniego projektu zaraz znikną
   // sprzątnij ewentualną galerię przeniesioną do panelu (poprzedni projekt)
   panel.querySelector(":scope > .dt-gal, :scope > [data-gal]")?.remove();
   host.replaceChildren(tpl.content.cloneNode(true));
@@ -153,9 +247,11 @@ function mount(slug: string): boolean {
   if (pc && idx >= 0 && context.length)
     pc.textContent = `REALIZACJA ${pad(idx + 1)} / ${pad(context.length)}`;
 
-  host
-    .querySelector<HTMLElement>("[data-track]")
-    ?.addEventListener("scroll", onTrackScroll, { passive: true });
+  // tor szukany w panelu, nie w hoście: na desktopie galeria jest już
+  // przeniesiona do lewej kolumny (poza host)
+  const track = panel.querySelector<HTMLElement>("[data-track]");
+  track?.addEventListener("scroll", onTrackScroll, { passive: true });
+  if (track) watchImages(track);
 
   current = slug;
   shot = 0;
@@ -169,6 +265,7 @@ function cleanup() {
   const el = overlayEl();
   if (!el) return;
   pauseVideos();
+  dropImgWaits();
   el.querySelector<HTMLElement>(
     "[data-overlay-panel] > .dt-gal, [data-overlay-panel] > [data-gal]",
   )?.remove();
@@ -731,6 +828,9 @@ function openLightbox(startIdx: number, autoplay = false) {
   lbOpen = true;
   lbIndex = startIdx;
   paintLb(true);
+  // klony kadrów też mogą czekać na obraz (dalsze zdjęcia galerii są
+  // leniwe — w galerii mogły się jeszcze nie pobrać)
+  watchImages(lbTrack);
   // kolejność z korekty Mateusza: najpierw startuje film, potem widać
   // pełny ekran już GRAJĄCEGO klipu (wciąż w geście usera — autoplay OK)
   if (autoplay) {
@@ -784,6 +884,7 @@ function closeLightbox() {
   lb.style.transform = "";
   lb.hidden = true;
   lbOpen = false;
+  dropImgWaits(lbTrackEl());
   lbTrackEl()?.replaceChildren();
   el.querySelector<HTMLElement>("[data-lb-dashes]")?.replaceChildren();
   paintShot();

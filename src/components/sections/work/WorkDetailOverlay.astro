@@ -717,6 +717,43 @@ import { ui } from "@/i18n/ui";
       opacity: 1;
     }
   }
+
+  /* ── WSKAŹNIK ŁADOWANIA KADRU: zdjęcie i klatka-miniatura filmu ──
+     (zgłoszenie Mateusza: przy wolno ładującej się miniaturze widać było
+     sam ciemny kontener). Klasę `.is-img-loading` nadaje open-detail.ts
+     RODZICOWI obrazu — `.dt-slide` w galerii detalu, `.lb-media`
+     w podglądzie pełnoekranowym — gdy kadr jest widoczny dłużej niż
+     IMG_LOADING_DELAY_MS, a obraz wciąż nie doszedł; zdejmuje ją `load`
+     albo `error`. Plakietka leży POD obrazem (pierwsza w DOM kadru),
+     więc gotowe zdjęcie zakrywa ją samo — stąd brak minimalnego czasu
+     widoczności, który ma wskaźnik wideo. is:global z tego samego powodu
+     co wyżej: `.lb-media` powstaje w runtime bez atrybutu scope. */
+  #work-detail .is-img-loading > .dt-wait {
+    visibility: visible;
+    opacity: 1;
+  }
+  /* W podglądzie film ma WŁASNY wskaźnik (prawy górny róg) — przy
+     ładowaniu i odtwarzaniu wideo plakietka klatki ustępuje, żeby na
+     kadrze nie stały dwa komunikaty naraz. */
+  #work-detail .lb-slide.is-loading .is-img-loading > .dt-wait,
+  #work-detail .lb-slide.is-playing .is-img-loading > .dt-wait {
+    visibility: hidden;
+    opacity: 0;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    #work-detail .is-img-loading > .dt-wait {
+      transition: opacity 0.2s ease;
+    }
+    #work-detail .is-img-loading > .dt-wait .dt-dots b:nth-child(1) {
+      animation: dtDot1 1.2s linear infinite;
+    }
+    #work-detail .is-img-loading > .dt-wait .dt-dots b:nth-child(2) {
+      animation: dtDot2 1.2s linear infinite;
+    }
+    #work-detail .is-img-loading > .dt-wait .dt-dots b:nth-child(3) {
+      animation: dtDot3 1.2s linear infinite;
+    }
+  }
   @media (prefers-reduced-motion: reduce) {
     #work-detail .lb-track,
     #work-detail .lb-dashes button {

@@ -50,6 +50,16 @@ export const VIDEO_LOADING_MIN_MS = 600;
  *  to iOS Low Power Mode, który potrafi odrzucić `play()` po cichu. */
 export const VIDEO_LOADING_TIMEOUT_MS = 15_000;
 
+/** Ile kadr galerii (zdjęcie albo klatka-miniatura filmu) może być
+ *  WIDOCZNY bez obrazu, zanim pokażemy na nim plakietkę „ładuję…".
+ *  Ten sam próg co przy wideo i z tego samego powodu: obraz z ciepłego
+ *  cache dochodzi w ułamku tego czasu i komunikat tylko by mignął.
+ *  Liczony od chwili, gdy kadr wszedł w pole widzenia (galeria ładuje
+ *  zdjęcia leniwie, więc dopiero wtedy przeglądarka w ogóle zaczyna
+ *  pobierać). Minimalnego czasu widoczności tu NIE MA — plakietka leży
+ *  pod obrazem, gotowe zdjęcie zakrywa ją samo. */
+export const IMG_LOADING_DELAY_MS = 400;
+
 /** Jak długo przycisk „Udostępnij realizację" pokazuje „Link skopiowany"
  *  po skopiowaniu adresu do schowka (desktop; na telefonie leci systemowe
  *  menu udostępniania i stanu „skopiowano" nie ma). */

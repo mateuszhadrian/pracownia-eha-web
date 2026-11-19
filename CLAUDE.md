@@ -2764,6 +2764,39 @@ max(--svh,550px)·0.5267 − 72px)` + tytuł `min(…, 7.8cqi)`
     wszystko to stopka/menu „EHa" i teksty z „EHa". Zero px: `index-top`,
     `work-detail-*`, `chrome-bar`, `not-found-top`.
 
+- **Loader miniatur w galerii realizacji — WYKONANE** (2026-11-19, branch
+  `feat/loader-miniatur`; zgłoszenie Mateusza: wolno ładująca się
+  miniatura zostawiała sam ciemny kontener). Kadr galerii detalu widoczny
+  dłużej niż `IMG_LOADING_DELAY_MS` (400 ms) bez obrazu pokazuje na
+  środku plakietkę w kroju wskaźnika wideo: „POCZEKAJ, ŁADUJĘ ZDJĘCIE…",
+  a na kadrze filmu „…ŁADUJĘ MINIATURĘ FILMU…" (klatka `.dt-poster`).
+  Działa w galerii (sheet i modal) oraz na klonach w podglądzie
+  pełnoekranowym; gasi ją `load` albo `error`. Szczegóły i trzy pułapki:
+  `.claude/rules/sections.md` (Work). SZÓSTE świadome odstępstwo od
+  „mechanizm work 1:1", addytywne (`watchImages`/`dropImgWaits`
+  w `open-detail.ts`, przepływ otwierania/klonowania/nawigacji nietknięty).
+  - Zakres ŚWIADOMIE zawężony do detalu: kafle `/realizacje/` i zajawki
+    `/` nie mają wskaźnika (mają tytuł i gradient na kadrze, a na
+    desktopie środek zajmuje pill „ZOBACZ REALIZACJĘ") — do decyzji
+    Mateusza, czy dołożyć.
+  - Plakietka wideo i plakietka kadru dzielą kropki `.dt-dots` — obie
+    renderują je z odstępami („. . ."; Astro zostawia spację między
+    `<b>`), stan zastany wskaźnika wideo, celowo identyczny.
+  - Koszt zmierzony (build `main` vs gałąź): `open-detail` 12 063 →
+    12 978 B raw / 4 086 → 4 392 B gzip; `/realizacje/index.html`
+    67 075 → 73 060 B raw (plakietka w każdym kadrze każdego template'u).
+  - Testy: 5 kontraktów w `work-index.spec.ts` (plakietka + gaszenie
+    obrazem, gaszenie błędem, klon w podglądzie, próg mierzony
+    W PRZEGLĄDARCE + „obraz szybszy niż próg nie zapala", klatka filmu).
+    ⚠️ Kontrakt klatki filmu robi dziś SKIP — w treści produkcyjnej nie
+    ma ani jednego wpisu z wideo (klient podmienił wpisy testowe);
+    ścieżka zweryfikowana ręcznie na buildzie z fixture'em (chromium
+    desktop + webkit mobile). Z tego samego powodu skipują wszystkie
+    testy wideo w e2e.
+  - Bramki 2026-11-19: format/lint/typecheck/unit(126)/build/e2e
+    **916 passed, 0 failed**. **Zasięg baseline'ów = ZERO, zmierzony**
+    progiem zerowym na `work-index`/`index`/`chrome` (49 zrzutów, 0 px).
+
 ## Dokumentacja
 
 - Decyzje projektu (zapadłe — nie otwieraj na nowo):

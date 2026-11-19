@@ -175,6 +175,27 @@ która przeżyła kopię w całości (work) i mechaniki formularza (contact).
   animuje CSS (trzy `@keyframes` o różnym PROGU zapalenia, a nie jedna
   animacja z `animation-delay` — delay przesuwa cały cykl i kropki
   gasłyby po kolei) i rysuje je `::before`, nie tekst w DOM.
+- **Wskaźnik ładowania KADRU** (zdjęcie i klatka-miniatura filmu;
+  2026-11-19): kadr galerii WIDOCZNY dłużej niż `IMG_LOADING_DELAY_MS`
+  bez obrazu dostaje klasę `is-img-loading` na RODZICU obrazu
+  (`.dt-slide` w galerii, `.lb-media` w podglądzie) i pokazuje plakietkę
+  `.dt-wait` w kroju podpowiedzi wideo („POCZEKAJ, ŁADUJĘ ZDJĘCIE" /
+  „…MINIATURĘ FILMU" — oba teksty w SSR). Gasi ją `load` ALBO `error`.
+  Trzy rzeczy, których nie wolno „uprościć": (1) próg liczy się od
+  WEJŚCIA KADRU W POLE WIDZENIA (IntersectionObserver), nie od otwarcia
+  detalu — zdjęcia są `loading="lazy"`, więc licznik od otwarcia zapalałby
+  plakietki na wszystkich dalszych kadrach i migałyby przy każdym
+  przełączeniu; (2) `.dt-wait` jest PIERWSZYM dzieckiem kadru, czyli leży
+  POD obrazem — gotowe zdjęcie zakrywa ją samo, dlatego nie ma tu
+  minimalnego czasu widoczności ze wskaźnika wideo; nie przenoś jej za
+  `<img>`; (3) reguły stanu siedzą w bloku `is:global`
+  `WorkDetailOverlay.astro` (`.lb-media` powstaje w runtime bez atrybutu
+  scope). W podglądzie plakietka klatki ustępuje wskaźnikowi wideo
+  (`.is-loading` / `.is-playing` na `.lb-slide`) — dwa komunikaty naraz
+  nie stoją. Na preview endpointy `/cdn-cgi/` dają 404 w milisekundach,
+  więc plakietka nie pojawia się na żadnym zrzucie wizualnym; testy e2e
+  wstrzymują obrazy przez `page.route`. Kafle listy i zajawki `/` tego
+  wskaźnika NIE MAJĄ (zakres: galeria detalu + podgląd).
 
 ## Chrome (navbar/stopka) — Etap 4.1
 
