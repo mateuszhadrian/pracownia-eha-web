@@ -177,6 +177,33 @@ browser has been closed` na każdym profilu iPhone — padło i `e2e`,
   i workflow baseline'ów). Wszystkie baseline'y linux powstały na 24.04.
   Przejście na nowszy obraz = bump Playwrighta + przeliczenie
   WSZYSTKICH baseline'ów linux, osobnym PR-em.
+- **Czerwony `e2e` bez ani jednego padniętego testu = limit czasu, nie
+  regresja** (2026-11-19). Job ma `timeout-minutes: 40`, krok
+  `playwright install --with-deps` 15. Zwykły przebieg to ~21 min
+  (install <1, e2e 12–14, visual 5–6); stary limit 25 uciął job, gdy apt
+  pobierał 126 MB zależności przeglądarek 6,5 min (lustro Ubuntu
+  322 kB/s), a rerun wypadł na limicie kroku. Rozpoznanie w minutę:
+  `gh run view <id> --json jobs` → czasy kroków; krok `cancelled` po
+  równych 25/40 min albo „has timed out" w logu instalacji. Lekarstwo =
+  rerun (`gh run rerun <id> --failed`), nie szukanie błędu w kodzie.
+  Paczki `.deb` są od tej sesji cache'owane między biegami
+  (`~/.cache/apt-playwright`, klucz tygodniowy) — kroki cache są
+  bezpieczne na porażkę i wypisują w logu liczbę paczek („paczek z cache:
+  N"); N = 0 przy ciepłym cache znaczy, że mechanizm przestał działać.
+  e2e rośnie z treścią klienta POWOLI (6 → 9 realizacji: ~11,5 → ~12,5 min),
+  visual wcale (zamrożony fixture).
+- **`lighthouse` czerwony na TBT przy niezmienionej stronie = wolny
+  runner.** 2026-11-15 trzy z pięciu biegów na `main` padły na
+  `total-blocking-time` „/" (303 / 463 / 805 ms przy limicie 200), choć
+  między biegami zielonymi i czerwonymi strona główna była TA SAMA
+  (commity dotyczyły realizacji z `order` 100–120, a „/" pokazuje trzy
+  pierwsze; zielone i czerwone biegi przeplatały się co kilkanaście
+  sekund). Wynik idzie za
+  `environment.benchmarkIndex` z raportu: 3556 i 3856 → TBT 0;
+  2795 → 303; 1951 → 463; 589 → 805. Zanim uznasz TBT za regresję,
+  odczytaj `benchmarkIndex` z raportu (link „Uploading median LHR" w logu
+  joba) — poniżej ~3000 liczba nie jest miarodajna. Próg 200 NIETKNIĘTY
+  (decyzja Mateusza, czy go luzować).
 - Wersje `playwright` i `@playwright/test` podnoś PARĄ (jeden zestaw
   binariów); bump = też tag obrazu Dockera w procedurze baseline'ów.
 - Profile Playwright: 6 (chromium-1920/1366, firefox, webkit-SE/14,

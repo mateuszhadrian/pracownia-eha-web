@@ -2797,6 +2797,21 @@ max(--svh,550px)·0.5267 − 72px)` + tytuł `min(…, 7.8cqi)`
     **916 passed, 0 failed**. **Zasięg baseline'ów = ZERO, zmierzony**
     progiem zerowym na `work-index`/`index`/`chrome` (49 zrzutów, 0 px).
 
+- **CI: limity joba `e2e` + cache paczek apt — WYKONANE** (2026-11-19,
+  branch `ci/e2e-limity-i-cache-apt`). PR #38 dwa razy zaświecił na
+  czerwono bez żadnego padniętego testu: lustro Ubuntu oddawało zależności
+  przeglądarek 322 kB/s i job wypadł poza limit 25 min, a rerun poza limit
+  kroku instalacji (10 min). Zmiany wyłącznie w `.github/workflows/`:
+  `timeout-minutes` joba 25 → **40**, kroku instalacji 10 → **15** (także
+  w `update-visual-baselines.yml`), plus cache paczek `.deb` między
+  biegami. Rozpoznanie obu klas fałszywych alarmów (limit czasu `e2e`
+  i TBT `lighthouse` na wolnym runnerze): `.claude/rules/testing.md`.
+  ⚠️ Cache apt NIE był testowany przed pushem (workflow nie da się
+  uruchomić lokalnie) — pierwszy bieg zapisuje cache, dopiero DRUGI
+  pokazuje trafienie („paczek z cache: N" > 0 i krótki krok instalacji).
+  `prod-smoke.yml` ma ten sam krok instalacji BEZ cache i bez limitu —
+  nietknięty.
+
 ## Dokumentacja
 
 - Decyzje projektu (zapadłe — nie otwieraj na nowo):

@@ -32,9 +32,15 @@ jobs:
   e2e:
     needs: quality
     runs-on: ubuntu-24.04
-    # Normalny czas joba: ~13 min (install z cache 1–3 min + e2e + visual).
+    # Normalny czas joba: ~21 min (install <1 min + e2e ~12–14 + visual ~5–6;
+    # pomiar 2026-11-19 przy 9 realizacjach — e2e rośnie powoli z treścią
+    # klienta, visual stoi na zamrożonym fixturze). Limit 25 min zostawiał
+    # ~4 min zapasu i 2026-11-19 uciął job o kilkadziesiąt sekund przed końcem
+    # testów wizualnych, bo apt pobierał zależności przeglądarek 6,5 min
+    # zamiast 30 s. 40 = najgorszy realny przebieg (install do limitu kroku
+    # 15 + e2e 14 + visual 6 + rozruch 2) z małym zapasem.
     # Backstop na zawieszenia infrastruktury (apt/CDN wisiały >1h, 2026-07-13).
-    timeout-minutes: 25
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -59,10 +65,50 @@ jobs:
       # potrzebne — Playwright bierze zależności z repozytoriów Ubuntu.
       - name: Wyłącz feedy packages.microsoft.com (flaky)
         run: sudo bash -c 'grep -rl packages.microsoft.com /etc/apt/sources.list.d/ | xargs -r rm -f'
-      # Z cache 1–3 min; zimny cache (bump Playwrighta) do ~6 min. Dłużej =
-      # zawieszony apt/CDN — lepiej ubić i zrobić rerun niż czekać godzinę.
+      # ── Cache pakietów systemowych przeglądarek (.deb) ──
+      # `--with-deps` pobiera przy KAŻDYM biegu ~126 MB zależności WebKita
+      # i Firefoksa z lustra Ubuntu. Zwykle 30 s, ale 2026-11-19 lustro
+      # oddawało 322 kB/s: pierwszy bieg stracił na tym 6,5 min i wypadł poza
+      # limit joba, drugi nie zmieścił się w limicie kroku. Trzymamy więc
+      # pobrane paczki między biegami: apt przed pobraniem sprawdza archiwum
+      # i bierze z niego każdą paczkę, której rozmiar i suma zgadzają się
+      # z indeksem — nieaktualną po prostu pobiera od nowa, więc cache nie
+      # może podać złej wersji. Klucz tygodniowy + restore-keys: co tydzień
+      # powstaje jeden świeży wpis, a bieg startuje z ostatniego dostępnego.
+      # Wszystkie kroki cache są BEZPIECZNE NA PORAŻKĘ (|| true): w najgorszym
+      # razie job zachowuje się jak przed tą zmianą.
+      - name: Tydzień (klucz cache apt)
+        id: wk
+        run: echo "week=$(date -u +%G-%V)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/apt-playwright
+          key: apt-playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}-${{ steps.wk.outputs.week }}
+          restore-keys: |
+            apt-playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}-
+      - name: apt — podłóż paczki z cache
+        run: |
+          mkdir -p ~/.cache/apt-playwright
+          # jawnie: apt ma ZOSTAWIAĆ pobrane paczki (inaczej nie ma czego cache'ować)
+          echo 'APT::Keep-Downloaded-Packages "true";' | sudo tee /etc/apt/apt.conf.d/91ci-keep-debs >/dev/null || true
+          sudo cp -n ~/.cache/apt-playwright/*.deb /var/cache/apt/archives/ 2>/dev/null || true
+          echo "paczek z cache: $(ls ~/.cache/apt-playwright/*.deb 2>/dev/null | wc -l)"
+      # Z cache <1 min; zimny cache albo wolne lustro do ~7 min (zmierzone
+      # 2026-11-19). Dłużej = zawieszony apt/CDN — lepiej ubić i zrobić rerun
+      # niż czekać godzinę.
       - run: pnpm exec playwright install --with-deps chromium webkit firefox
-        timeout-minutes: 10
+        timeout-minutes: 15
+      # autoclean wyrzuca paczki, których lustro już nie oferuje (stare
+      # wersje) — bez tego cache puchłby z tygodnia na tydzień. Paczki są
+      # roota, więc kopia do katalogu użytkownika + chown (akcja cache
+      # pakuje jako zwykły użytkownik).
+      - name: apt — zachowaj paczki do cache
+        run: |
+          sudo apt-get autoclean -y >/dev/null 2>&1 || true
+          rm -f ~/.cache/apt-playwright/*.deb
+          sudo cp /var/cache/apt/archives/*.deb ~/.cache/apt-playwright/ 2>/dev/null || true
+          sudo chown -R "$(id -u):$(id -g)" ~/.cache/apt-playwright || true
+          echo "paczek do cache: $(ls ~/.cache/apt-playwright/*.deb 2>/dev/null | wc -l), $(du -sh ~/.cache/apt-playwright | cut -f1)"
       # E2E funkcjonalne biegają na dist z treścią PRODUKCYJNĄ (czytają ją
       # z src/content/realizacje dynamicznie, więc wpisy klienta ich nie ruszają).
       - run: pnpm test:e2e

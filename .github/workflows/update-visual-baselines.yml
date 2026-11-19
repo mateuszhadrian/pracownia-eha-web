@@ -58,7 +58,7 @@ jobs:
         run: sudo bash -c 'grep -rl packages.microsoft.com /etc/apt/sources.list.d/ | xargs -r rm -f'
       # timeout jak w ci.yml: udokumentowana klasa zawieszeń apt/CDN (>1h).
       - run: pnpm exec playwright install --with-deps chromium webkit firefox
-        timeout-minutes: 10
+        timeout-minutes: 15
       # Zamrożona treść realizacji (tests/fixtures) — jak w jobie e2e w ci.yml.
       - run: pnpm build:visual
       - name: Przelicz baseline'y
